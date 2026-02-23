@@ -19,3 +19,15 @@
 [submodule "btctrader-api-docs"]
 	path = btctrader-api-docs
 	url = https://github.com/BTCTrader/broker-api-docs.git
+[submodule "bingx-api-docs"]
+	path = bingx-api-docs
+	url = https://github.com/BingX-API/docs.git
+[submodule "bingx-swap-api-doc"]
+	path = bingx-swap-api-doc
+	url = https://github.com/BingX-API/BingX-swap-api-doc.git
+[submodule "bingx-standard-contract-doc"]
+	path = bingx-standard-contract-doc
+	url = https://github.com/BingX-API/BingX-Standard-Contract-doc.git
+[submodule "binance-futures-connector-python"]
+	path = binance-futures-connector-python
+	url = https://github.com/binance/binance-futures-connector-python.git
