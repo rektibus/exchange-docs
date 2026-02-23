@@ -1,24 +1,84 @@
 # Derive API Documentation
 
-Auto-fetched from 3 page(s)
+Auto-fetched from 1 page(s)
 
 
 ---
 
-# Source: https://docs.derive.xyz/reference/get-instruments
+# Source: https://docs.derive.xyz/
 
-ERROR: Failed to fetch: 404 Client Error: Not Found for url: https://docs.derive.xyz/reference/get-instruments
+[Jump to Content](#content)
+
+[](/)
+
+[ __Home](/)[ __Documentation](/docs)[ __API Reference](/reference) v2.0-alpha-20260115v2.0-alpha-20260119
+
+* * *
+
+[Log In](/login?redirect_uri=/)[](/)
+
+ __Home
+
+[Log In](/login?redirect_uri=/)
+
+# The Derive Developer Hub
+
+Welcome to the Derive developer hub. You'll find comprehensive guides and documentation to help you start working with Derive as quickly as possible, as well as support if you get stuck. Let's jump right in!
+
+[__API Reference](/reference)[ __Documentation](/docs)
+
+v2.0-alpha-20260119
+
+[ __Home](/)[ __Documentation](/docs)[ __API Reference](/reference)
+
+All
+
+Pages
+
+###### Start typing to search…
+
+### Overview
+
+  * [Introduction](/reference/overview)
+  * [Getting Started](/reference/onboard-via-interface)
+  * [Onboard Manually](/reference/onboard-manually)
+  * [View More…](/reference/overview)
 
 
----
 
-# Source: https://docs.derive.xyz/reference/get-ticker
+### REST API
 
-ERROR: Failed to fetch: 404 Client Error: Not Found for url: https://docs.derive.xyz/reference/get-ticker
+  * [Public](/reference/public)
+  * [Private](/reference/private)
 
 
----
 
-# Source: https://docs.derive.xyz/reference/create-subaccount
+### Guides
 
-ERROR: Failed to fetch: 404 Client Error: Not Found for url: https://docs.derive.xyz/reference/create-subaccount
+  * [Submit Order [Python / Rust]](/reference/submit-order-javascript-copy)
+  * [Submit Order [JavaScript]](/reference/submit-order)
+  * [Transfer Collateral and Positions [Python]](/reference/transfer-collateral)
+  * [View More…](/reference/submit-order-javascript-copy)
+
+
+
+### WebSocket API
+
+  * [Public](/reference/ws-public)
+  * [Private](/reference/ws-private)
+  * [Subscriptions](/reference/ws-sub)
+
+
+
+### Channels
+
+  * [Public](/reference/channel-public)
+  * [Private](/reference/channel-private)
+
+
+
+### ERRORS
+
+  * [Error Codes](/reference/error-codes)
+
+
