@@ -1,0 +1,82 @@
+{
+  "markets": [
+    {
+      "market": "AAVEUSD",
+      "base_asset": "AAVE",
+      "quote_asset": "USD",
+      "tick_rate": "0.01"
+    },
+    {
+      "market": "BCHUSD",
+      "base_asset": "BCH",
+      "quote_asset": "USD",
+      "tick_rate": "0.05"
+    },
+    {
+      "market": "SOLUSD",
+      "base_asset": "SOL",
+      "quote_asset": "USD",
+      "tick_rate": "0.01"
+    },
+    {
+      "market": "UNIUSD",
+      "base_asset": "UNI",
+      "quote_asset": "USD",
+      "tick_rate": "0.01"
+    },
+    {
+      "market": "ETHSGD",
+      "base_asset": "ETH",
+      "quote_asset": "SGD",
+      "tick_rate": "0.05"
+    },
+    {
+      "market": "BTCEUR",
+      "base_asset": "BTC",
+      "quote_asset": "EUR",
+      "tick_rate": "0.25"
+    },
+    {
+      "market": "ETHEUR",
+      "base_asset": "ETH",
+      "quote_asset": "EUR",
+      "tick_rate": "0.05"
+    },
+    {
+      "market": "BTCSGD",
+      "base_asset": "BTC",
+      "quote_asset": "SGD",
+      "tick_rate": "0.25"
+    },
+    {
+      "market": "BTCUSD",
+      "base_asset": "BTC",
+      "quote_asset": "USD",
+      "tick_rate": "0.25"
+    },
+    {
+      "market": "ETHUSD",
+      "base_asset": "ETH",
+      "quote_asset": "USD",
+      "tick_rate": "0.05"
+    },
+    {
+      "market": "LINKUSD",
+      "base_asset": "LINK",
+      "quote_asset": "USD",
+      "tick_rate": "0.01"
+    },
+    {
+      "market": "LTCUSD",
+      "base_asset": "LTC",
+      "quote_asset": "USD",
+      "tick_rate": "0.01"
+    },
+    {
+      "market": "PAXGUSD",
+      "base_asset": "PAXG",
+      "quote_asset": "USD",
+      "tick_rate": "0.01"
+    }
+  ]
+}
