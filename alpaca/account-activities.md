@@ -1,0 +1,130 @@
+# Account Activities
+
+Source: https://docs.alpaca.markets/docs/account-activities
+
+---
+
+## Introduction
+- Welcome- About Alpaca- Alpaca API Platform- Authentication- SDKs and Tools- Additional Resources
+## BROKER API
+- About Broker API- Getting Started with Broker API- Credentials Management- Use Cases- Integration Setup with Alpaca- Broker API FAQs- Mandatory Corporate Actions- Voluntary Corporate Actions- FDIC Sweep Program- Instant Funding- Fully Paid Securities Lending- 24/5 Trading- OmniSub- Fixed Income- Customer Account Opening- Accounts Statuses- International Accounts- Domestic (USA) Accounts- Data Validations- IRA Accounts Overview- Crypto Trading- Crypto Wallets API- Funding Accounts- Journals API- Funding Wallets- ACH Funding- Instant Funding- Trading- Portfolio Rebalancing- SSE Events- Account Status Events for KYCaaS- Daily Processes and Reconcilations- Banking Holiday Funding Processes- Statements and Confirms- Local Currency Trading (LCT)- Example Trading App (Ribbit)- Options Trading Overview- Fixed Income- Tokenization Guide for Issuer- Tokenization Guide for Authorized Participant- Custodial accounts
+## TRADING API
+- About Trading API- Getting Started with Trading API- Working with /account- Working with /assets- Working with /orders- Working with /positions- Paper Trading- Trading Account- Crypto Spot Trading- Crypto Orders- Crypto Pricing Data- Crypto Spot Trading Fees- Options Trading- Options Orders- Options Level 3 Trading- Non-Trade Activities for Option Events- Account Activities- Fractional Trading- Margin and Short Selling- Placing Orders- DMA Gateway / Advanced Order Types- User Protection- Websocket Streaming- Trading API FAQs- Position Average Entry Price Calculation- Regulatory Fees- Alpaca&#x27;s MCP Server
+## Market Data API
+- About Market Data API- Getting Started with Market Data API- Historical API- Historical Stock Data- Historical Crypto Data- Historical Option Data- Historical News Data- WebSocket Stream- Real-time Stock Data- Real-time Crypto Data- Real-time News- Real-time Option Data- Market Data FAQ
+## Connect API
+- About Connect API- Registering Your App- Using OAuth2 and Trading API
+## FIX API
+- About FIX API- FIX Specification
+# Account Activities
+The account activities API provides access to a historical record of transaction activities that have impacted your account.
+# The TradeActivity Object
+
+## Sample TradeActivity
+
+JSON
+```
+`{
+  "activity_type": "FILL",
+  "cum_qty": "1",
+  "id": "20190524113406977::8efc7b9a-8b2b-4000-9955-d36e7db0df74",
+  "leaves_qty": "0",
+  "price": "1.63",
+  "qty": "1",
+  "side": "buy",
+  "symbol": "LPCN",
+  "transaction_time": "2019-05-24T15:34:06.977Z",
+  "order_id": "904837e3-3b76-47ec-b432-046db621571b",
+  "type": "fill"
+}`
+```
+
+## Properties
+
+AttributeTypeDescription
+ | `activity_type` | string | For trade activities, this will always be `FILL`
+ | `cum_qty` | string<number> | The cumulative quantity of shares involved in the execution.
+ | `id` | string | An ID for the activity. Always in `::` format. Can be sent as `page_token` in requests to facilitate the paging of results.
+ | `leaves_qty` | string<number> | For `partially_filled` orders, the quantity of shares that are left to be filled.
+ | `price` | string<number> | The per-share price that the trade was executed at.
+ | `qty` | string<number> | The number of shares involved in the trade execution.
+ | `side` | string | `buy` or `sell`
+ | `symbol` | string | The symbol of the security being traded.
+ | `transaction_time` | string<timestamp> | The time at which the execution occurred.
+ | `order_id` | string<uuid> | The id for the order that filled.
+ | `type` | string | `fill` or `partial_fill`
+
+# The NonTradeActivity (NTA) Object
+
+## Sample NTA
+
+JSON
+```
+`{
+  "activity_type": "DIV",
+  "id": "20190801011955195::5f596936-6f23-4cef-bdf1-3806aae57dbf",
+  "date": "2019-08-01",
+  "net_amount": "1.02",
+  "symbol": "T",
+  "cusip": "C00206R102",
+  "qty": "2",
+  "per_share_amount": "0.51"
+}`
+```
+
+## Properties
+
+AttributeTypeDescription
+ | `activity_type` | string | See below for a list of possible values.
+ | `id` | string | An ID for the activity. Always in `::` format. Can be sent as `page_token` in requests to facilitate the paging of results.
+ | `date` | string<timestamp> | The date on which the activity occurred or on which the transaction associated with the activity settled.
+ | `net_amount` | string<number> | The net amount of money (positive or negative) associated with the activity.
+ | `symbol` | string | The symbol of the security involved with the activity. Not present for all activity types.
+ | `cusip` | string | The CUSIP of the security involved with the activity. Not present for all activity types.
+ | `qty` | string<number> | For dividend activities, the number of shares that contributed to the payment. Not present for other activity types.
+ | `per_share_amount` | string<number> | For dividend activities, the average amount paid per share. Not present for other activity types.
+
+# Pagination of Results
+
+Pagination is handled using the `page_token` and `page_size` parameters.
+`page_token` represents the ID of the end of your current page of results. If specified with a direction of desc, for example, the results will end before the activity with the specified ID. If specified with a direction of `asc`, results will begin with the activity immediately after the one specified. `page_size` is the maximum number of entries to return in the response. If `date` is not specified, the default and maximum value is 100. If `date` is specified, the default behavior is to return all results, and there is no maximum page size.
+
+# Activity Types
+
+`activity_type`Description
+ | `FILL` | Order fills (both partial and full fills)
+ | `TRANS` | Cash transactions (both CSD and CSW)
+ | `MISC` | Miscellaneous or rarely used activity types (All types except those in TRANS, DIV, or FILL)
+ | `ACATC` | ACATS IN/OUT (Cash)
+ | `ACATS` | ACATS IN/OUT (Securities)
+ | `CFEE` | Crypto fee
+ | `CSD` | Cash deposit(+)
+ | `CSW` | Cash withdrawal(-)
+ | `DIV` | Dividends
+ | `DIVCGL` | Dividend (capital gain long term)
+ | `DIVCGS` | Dividend (capital gain short term)
+ | `DIVFEE` | Dividend fee
+ | `DIVFT` | Dividend adjusted (Foreign Tax Withheld)
+ | `DIVNRA` | Dividend adjusted (NRA Withheld)
+ | `DIVROC` | Dividend return of capital
+ | `DIVTW` | Dividend adjusted (Tefra Withheld)
+ | `DIVTXEX` | Dividend (tax exempt)
+ | `FEE` | Fee denominated in USD
+ | `FOPT` | Free of Payment Transfer
+ | `INT` | Interest (credit/margin)
+ | `INTNRA` | Interest adjusted (NRA Withheld)
+ | `INTTW` | Interest adjusted (Tefra Withheld)
+ | `JNL` | Journal entry
+ | `JNLC` | Journal entry (cash)
+ | `JNLS` | Journal entry (stock)
+ | `MA` | Merger/Acquisition
+ | `NC` | Name change
+ | `OPASN` | Option assignment
+ | `OPEXP` | Option expiration
+ | `OPXRC` | Option exercise
+ | `PTC` | Pass Thru Charge
+ | `PTR` | Pass Thru Rebate
+ | `REORG` | Reorg CA
+ | `SC` | Symbol change
+ | `SSO` | Stock spinoff
+ | `SSP` | Stock splitUpdated 17 days ago Non-Trade Activities for Option EventsFractional Trading- Ask AI
