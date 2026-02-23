@@ -31,3 +31,24 @@
 [submodule "binance-futures-connector-python"]
 	path = binance-futures-connector-python
 	url = https://github.com/binance/binance-futures-connector-python.git
+[submodule "binance-us-api-docs"]
+	path = binance-us-api-docs
+	url = https://github.com/binance-us/binance-us-api-docs.git
+[submodule "coinex-api-docs"]
+	path = coinex-api-docs
+	url = https://github.com/coinexcom/coinex_exchange_api.git
+[submodule "huobi-api-docs"]
+	path = huobi-api-docs
+	url = https://github.com/huobiapi/docs.git
+[submodule "whitebit-api-docs"]
+	path = whitebit-api-docs
+	url = https://github.com/whitebit-exchange/api-docs.git
+[submodule "whitebit-docs"]
+	path = whitebit-docs
+	url = https://github.com/whitebit-exchange/api-docs.git
+[submodule "blofin-docs"]
+	path = blofin-docs
+	url = https://github.com/blofin/blofin-api-docs.git
+[submodule "bitfinex-docs"]
+	path = bitfinex-docs
+	url = https://github.com/bitfinexcom/bitfinex-api-node.git
