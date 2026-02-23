@@ -1,0 +1,320 @@
+openapi: 3.0.1
+info:
+  title: Public Data API
+  description: LMAX Group Public Data API
+  version: "0.1"
+  x-logo:
+    url: lmax.group.logo.png
+    altText: LMAX Group
+    href: https://www.lmax.com/
+servers:
+- url: https://public-data-api.london-demo.lmax.com
+- url: https://public-data-api.london-digital.lmax.com
+tags:
+- name: REST Endpoints
+  description: REST endpoints are available for instrument reference data and order
+    book pricing
+- name: WebSocket
+  description: Websocket endpoints are available to stream order book snapshots and
+    ticker information for one or more instruments.
+paths:
+  /v1/ticker/{instrument_id}:
+    get:
+      tags:
+      - REST Endpoints
+      summary: Get Ticker
+      description: Get the latest ticker information for an instrument.
+      operationId: getTicker
+      parameters:
+      - name: instrument_id
+        in: path
+        description: Instrument identifier
+        required: true
+        schema:
+          type: string
+        example: eur-usd
+      responses:
+        "200":
+          description: Ticker
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ticker"
+        "204":
+          description: No ticker information available
+        "404":
+          description: Instrument not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "503":
+          description: The service is currently unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+  /v1/orderbook/{instrument_id}:
+    get:
+      tags:
+      - REST Endpoints
+      summary: Get Order Book
+      description: |
+        Get prices for a requested instrument currently on the platform. The prices are updated once per second. Once a day, most of our instruments close for 5 minutes. A closing price is determined at this time and this will be reflected in the price until the instrument reopens.
+      operationId: getOrderBook
+      parameters:
+      - name: instrument_id
+        in: path
+        description: Instrument identifier
+        required: true
+        schema:
+          type: string
+        example: eur-usd
+      responses:
+        "200":
+          description: Order book snapshot
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicApiOrderBook"
+        "404":
+          description: Instrument not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "503":
+          description: The service is currently unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+  /v1/time:
+    get:
+      tags:
+      - REST Endpoints
+      summary: Current time
+      description: Get current time.
+      operationId: getTime
+      responses:
+        "200":
+          description: Current time
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TimeResponse"
+  /v1/instruments/{instrument_id}:
+    get:
+      tags:
+      - REST Endpoints
+      summary: Get Instrument
+      description: Get a requested instrument currently available on the platform.
+      operationId: getInstrument
+      parameters:
+      - name: instrument_id
+        in: path
+        description: Instrument identifier
+        required: true
+        schema:
+          type: string
+        example: eur-usd
+      responses:
+        "200":
+          description: Instrument
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Instrument"
+        "404":
+          description: Instrument not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "503":
+          description: The service is currently unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+  /v1/instruments:
+    get:
+      tags:
+      - REST Endpoints
+      summary: List Instruments
+      description: List all instruments currently available on the platform.
+      operationId: listInstruments
+      responses:
+        "200":
+          description: A list of all instruments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Instrument"
+        "503":
+          description: The service is currently unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+components:
+  schemas:
+    Ticker:
+      type: object
+      properties:
+        instrument_id:
+          type: string
+          description: Instrument identifier
+        timestamp:
+          type: string
+          description: ISO8601 timestamp with millisecond resolution
+          format: date-time
+        best_bid:
+          type: string
+          description: Current best bid price
+        best_ask:
+          type: string
+          description: Current best ask price
+        trade_id:
+          type: string
+          description: Trade identifier
+        last_quantity:
+          type: string
+          description: Last quantity traded
+        last_price:
+          type: string
+          description: Last price traded
+        session_open:
+          type: string
+          description: Session open price
+        session_low:
+          type: string
+          description: Session low trade price
+        session_high:
+          type: string
+          description: Session high trade price
+      description: Ticker
+    ApiError:
+      type: object
+      properties:
+        error_code:
+          type: string
+          description: Error code
+          example: BAD_REQUEST
+        error_message:
+          type: string
+          description: Error description
+          example: Error message
+      description: API error response
+    OrderBookPricePoint:
+      title: Price and Quantity
+      type: object
+      properties:
+        price:
+          type: string
+          description: Price
+        quantity:
+          type: string
+          description: Units at the price point
+      description: Price and quantity
+    PublicApiOrderBook:
+      type: object
+      properties:
+        instrument_id:
+          type: string
+          description: Instrument identifier
+        timestamp:
+          type: string
+          description: ISO8601 timestamp with millisecond resolution
+        status:
+          type: string
+          description: Current status of the order book
+          enum:
+          - OPEN
+          - SUSPENDED
+          - CLOSED
+          - SETTLED
+          - WITHDRAWN
+        bids:
+          type: array
+          description: Bids listed from best to worst price (descending)
+          items:
+            $ref: "#/components/schemas/OrderBookPricePoint"
+        asks:
+          type: array
+          description: Asks listed from best to worst price (ascending)
+          items:
+            $ref: "#/components/schemas/OrderBookPricePoint"
+      description: Order book snapshot
+    TimeResponse:
+      type: object
+      properties:
+        epoch_millis:
+          type: string
+          description: Epoch milliseconds
+        timestamp:
+          type: string
+          description: ISO8601 timestamp with millisecond resolution
+      description: Time
+    Instrument:
+      type: object
+      properties:
+        instrument_id:
+          type: string
+          description: Instrument identifier
+          example: eur-gbp
+        symbol:
+          type: string
+          description: Symbol of the underlying security
+          example: EUR/GBP
+        security_id:
+          type: string
+          description: Exchange identifier for the instrument
+          example: "4003"
+        currency:
+          type: string
+          description: The unit you will pay in when ordering this instrument. The
+            instrument price is measured in units of currency.
+          example: GBP
+        unit_of_measure:
+          type: string
+          description: The unit you will receive if you buy some of this instrument.
+          example: EUR
+        asset_class:
+          type: string
+          description: Asset class of this instrument
+          example: CURRENCY
+          enum:
+          - COMMODITY
+          - CURRENCY
+          - CURRENCY_FUTURE
+          - EQUITY
+          - INDEX
+          - NDF
+        quantity_increment:
+          type: string
+          description: Quantity increment is the smallest amount you can buy or sell.
+            It also specifies the minimum trade quantity.
+          example: "0.1"
+        price_increment:
+          type: string
+          description: Price increment is the smallest fraction of a price that can
+            be specified for an order. Also known as the price 'tick'.
+          example: "0.01"
+        ticker_enabled:
+          type: boolean
+          description: Indicates if ticker data is available for this instrument
+        fixing_source:
+          type: string
+          description: Fixing source
+      description: An Instrument is a specification for trading a particular commodity.
+        A contract (also known as the contract size) represents the number of units
+        of the commodity which may be traded. Hence contracts may represent the quantity
+        of a trade as an alternative to measuring the trade in units of the underlying
+        commodity. Similarly a tick is the smallest number of units of price by which
+        the amount an Instrument may be traded for can differ. The price at which
+        a trade occurs for a given instrument can also be measured in ticks and the
+        ratio between ticks and the underlying price unit is known as the effective
+        price increment.

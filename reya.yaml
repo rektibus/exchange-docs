@@ -1,0 +1,1777 @@
+openapi: 3.0.3
+info:
+  title: Reya DEX Trading API v2
+  version: 2.1.3
+  contact:
+    name: Reya Network
+    url: https://reya.xyz
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+  - url: https://api.reya.xyz/v2
+    description: Production server
+  - url: https://api-test.reya.xyz/v2
+    description: Testnet server
+tags:
+  - name: Specs
+    description: OpenAPI and AsyncAPI specs
+  - name: Reference Data
+    description: Market definitions, global parameters, liquidity parameters, etc.
+  - name: Market Data
+    description: Prices, market-level trades, depth, candles, etc.
+  - name: Wallet Data
+    description: Accounts, positions, trades, etc.
+  - name: Order Entry
+    description: Order entry operations
+paths:
+  /openapi-spec.yaml:
+    get:
+      summary: Get OpenAPI specification
+      description: Returns the complete OpenAPI specification for this API in YAML format
+      operationId: getOpenApiSpec
+      tags:
+        - Specs
+      responses:
+        '200':
+          description: OpenAPI specification in YAML format
+          content:
+            application/yaml:
+              schema:
+                type: string
+                format: binary
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /asyncapi-spec.yaml:
+    get:
+      summary: Get AsyncAPI specification
+      description: Returns the complete AsyncAPI specification for WebSocket API in YAML format
+      operationId: getAsyncApiSpec
+      tags:
+        - Specs
+      responses:
+        '200':
+          description: AsyncAPI specification in YAML format
+          content:
+            application/yaml:
+              schema:
+                type: string
+                format: binary
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /marketDefinitions:
+    get:
+      summary: Get market definitions
+      operationId: getMarketDefinitions
+      tags:
+        - Reference Data
+      responses:
+        '200':
+          description: List of market definitions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MarketDefinition'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /spotMarketDefinitions:
+    get:
+      summary: Get spot market definitions
+      operationId: getSpotMarketDefinitions
+      tags:
+        - Reference Data
+      responses:
+        '200':
+          description: List of spot market definitions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SpotMarketDefinition'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /assetDefinitions:
+    get:
+      summary: Get asset definitions
+      operationId: getAssetDefinitions
+      tags:
+        - Reference Data
+      responses:
+        '200':
+          description: List of asset definitions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AssetDefinition'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /liquidityParameters:
+    get:
+      summary: Get liquidity parameters
+      operationId: getLiquidityParameters
+      tags:
+        - Reference Data
+      responses:
+        '200':
+          description: List of liquidity parameters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LiquidityParameters'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /globalFeeParameters:
+    get:
+      summary: Get global fee parameters
+      operationId: getGlobalFeeParameters
+      tags:
+        - Reference Data
+      responses:
+        '200':
+          description: Global fee parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalFeeParameters'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /feeTiers:
+    get:
+      summary: Get fee tiers
+      operationId: getFeeTierParameters
+      tags:
+        - Reference Data
+      responses:
+        '200':
+          description: List of fee tier parameters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FeeTierParameters'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /markets/summary:
+    get:
+      summary: Get market summaries
+      description: Statistics and throttled market data for all markets. Recalculated every 0.5s
+      operationId: getMarketsSummary
+      tags:
+        - Market Data
+      responses:
+        '200':
+          description: List of market summaries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MarketSummary'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /market/{symbol}/summary:
+    get:
+      summary: Get market summary
+      description: Statistics and throttled data for a specific market. Recalculated every 0.5s
+      operationId: getMarketSummary
+      tags:
+        - Market Data
+      parameters:
+        - $ref: '#/components/parameters/SymbolParam'
+      responses:
+        '200':
+          description: Market summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketSummary'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /prices:
+    get:
+      summary: Get all prices
+      operationId: getPrices
+      tags:
+        - Market Data
+      responses:
+        '200':
+          description: List of prices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Price'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /prices/{symbol}:
+    get:
+      summary: Get price by symbol
+      operationId: getPrice
+      tags:
+        - Market Data
+      parameters:
+        - $ref: '#/components/parameters/SymbolParam'
+      responses:
+        '200':
+          description: Price information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Price'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /market/{symbol}/perpExecutions:
+    get:
+      summary: Get perp executions for market
+      description: Returns up to 100 perp executions for a given market.
+      operationId: getMarketPerpExecutions
+      tags:
+        - Market Data
+      parameters:
+        - $ref: '#/components/parameters/SymbolParam'
+        - $ref: '#/components/parameters/StartTimeParam'
+        - $ref: '#/components/parameters/EndTimeParam'
+      responses:
+        '200':
+          description: List of perp executions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PerpExecutionList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /market/{symbol}/depth:
+    get:
+      summary: Get market depth snapshot
+      description: Returns an L2 order book snapshot with aggregated price levels for the specified market.
+      operationId: getMarketDepth
+      tags:
+        - Market Data
+      parameters:
+        - $ref: '#/components/parameters/SymbolParam'
+      responses:
+        '200':
+          description: Depth snapshot
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Depth'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /market/{symbol}/spotExecutions:
+    get:
+      summary: Get spot executions for market
+      description: Returns up to 100 spot executions for a given market.
+      operationId: getMarketSpotExecutions
+      tags:
+        - Market Data
+      parameters:
+        - $ref: '#/components/parameters/SymbolParam'
+        - $ref: '#/components/parameters/StartTimeParam'
+        - $ref: '#/components/parameters/EndTimeParam'
+      responses:
+        '200':
+          description: List of spot executions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpotExecutionList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /candleHistory/{symbol}/{resolution}:
+    get:
+      summary: Get historical candles
+      description: Returns up to 200 candles for a given market, sorted by time in descending order, and ending at the specified end time.
+      operationId: getCandles
+      tags:
+        - Market Data
+      parameters:
+        - $ref: '#/components/parameters/SymbolParam'
+        - $ref: '#/components/parameters/ResolutionParam'
+        - $ref: '#/components/parameters/EndTimeParam'
+      responses:
+        '200':
+          description: Historical candle data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandleHistoryData'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /wallet/{address}/accounts:
+    get:
+      summary: Get wallet accounts
+      operationId: getWalletAccounts
+      tags:
+        - Wallet Data
+      parameters:
+        - $ref: '#/components/parameters/AddressParam'
+      responses:
+        '200':
+          description: List of accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Account'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /wallet/{address}/perpExecutions:
+    get:
+      summary: Get wallet perp executions
+      description: Returns up to 100 perp executions for a given wallet.
+      operationId: getWalletPerpExecutions
+      tags:
+        - Wallet Data
+      parameters:
+        - $ref: '#/components/parameters/AddressParam'
+        - $ref: '#/components/parameters/StartTimeParam'
+        - $ref: '#/components/parameters/EndTimeParam'
+      responses:
+        '200':
+          description: List of perpetual executions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PerpExecutionList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /wallet/{address}/spotExecutions:
+    get:
+      summary: Get wallet spot executions
+      description: Returns up to 100 spot executions for a given wallet.
+      operationId: getWalletSpotExecutions
+      tags:
+        - Wallet Data
+      parameters:
+        - $ref: '#/components/parameters/AddressParam'
+        - $ref: '#/components/parameters/StartTimeParam'
+        - $ref: '#/components/parameters/EndTimeParam'
+      responses:
+        '200':
+          description: List of spot executions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpotExecutionList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /wallet/{address}/positions:
+    get:
+      summary: Get wallet positions
+      operationId: getWalletPositions
+      tags:
+        - Wallet Data
+      parameters:
+        - $ref: '#/components/parameters/AddressParam'
+      responses:
+        '200':
+          description: List of positions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Position'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /wallet/{address}/accountBalances:
+    get:
+      summary: Get wallet account balances
+      description: Returns all account real balances for a wallet.
+      operationId: getWalletAccountBalances
+      tags:
+        - Wallet Data
+      parameters:
+        - $ref: '#/components/parameters/AddressParam'
+      responses:
+        '200':
+          description: List of account balances
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AccountBalance'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /wallet/{address}/openOrders:
+    get:
+      summary: Get wallet open orders
+      description: Returns all pending orders for a wallet.
+      operationId: getWalletOpenOrders
+      tags:
+        - Wallet Data
+      parameters:
+        - $ref: '#/components/parameters/AddressParam'
+      responses:
+        '200':
+          description: List of open orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /wallet/{address}/configuration:
+    get:
+      summary: Get wallet configuration
+      description: Returns trading configuration for a wallet
+      operationId: getWalletConfiguration
+      tags:
+        - Wallet Data
+      parameters:
+        - $ref: '#/components/parameters/AddressParam'
+      responses:
+        '200':
+          description: Wallet configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletConfiguration'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /createOrder:
+    post:
+      summary: Create order
+      description: Create a new order (IOC, GTC, SL, TP)
+      operationId: createOrder
+      tags:
+        - Order Entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+      responses:
+        '200':
+          description: Order creation response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateOrderResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /cancelOrder:
+    post:
+      summary: Cancel order
+      description: Cancel an existing order
+      operationId: cancelOrder
+      tags:
+        - Order Entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelOrderRequest'
+      responses:
+        '200':
+          description: Order cancellation response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CancelOrderResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /cancelAll:
+    post:
+      summary: Cancel all orders
+      description: Cancel all orders matching the specified filters (mass cancel)
+      operationId: cancelAll
+      tags:
+        - Order Entry
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MassCancelRequest'
+      responses:
+        '200':
+          description: Mass cancel response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MassCancelResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  parameters:
+    SymbolParam:
+      name: symbol
+      in: path
+      required: true
+      description: Trading symbol (e.g., BTCRUSDPERP)
+      schema:
+        $ref: '#/components/schemas/Symbol'
+        example: BTCRUSDPERP
+    AddressParam:
+      name: address
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Address'
+        example: '0x6c51275fd01d5dbd2da194e92f920f8598306df2'
+    StartTimeParam:
+      name: startTime
+      in: query
+      required: false
+      description: Return results after this sequence number (for pagination)
+      schema:
+        $ref: '#/components/schemas/UnsignedInteger'
+        example: 1756733379000
+    EndTimeParam:
+      name: endTime
+      in: query
+      required: false
+      description: Return results before this sequence number (for pagination)
+      schema:
+        $ref: '#/components/schemas/UnsignedInteger'
+        example: 1756733679000
+    ResolutionParam:
+      name: resolution
+      in: path
+      required: true
+      description: Candle resolution
+      schema:
+        type: string
+        enum:
+          - 1m
+          - 5m
+          - 15m
+          - 30m
+          - 1h
+          - 4h
+          - 1d
+        example: 1m
+  schemas:
+    RequestError:
+      title: RequestError
+      $id: '#RequestError'
+      x-parser-schema-id: RequestError
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          $ref: '#/components/schemas/RequestErrorCode'
+        message:
+          type: string
+          description: Human-readable error message
+          example: Invalid symbol format
+      additionalProperties: true
+    ServerError:
+      title: ServerError
+      $id: '#ServerError'
+      x-parser-schema-id: ServerError
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          $ref: '#/components/schemas/ServerErrorCode'
+        message:
+          type: string
+          description: Human-readable error message
+          example: Invalid symbol format
+      additionalProperties: true
+    MarketDefinition:
+      title: MarketDefinition
+      $id: '#MarketDefinition'
+      x-parser-schema-id: MarketDefinition
+      type: object
+      required:
+        - symbol
+        - marketId
+        - minOrderQty
+        - qtyStepSize
+        - tickSize
+        - liquidationMarginParameter
+        - initialMarginParameter
+        - maxLeverage
+        - oiCap
+      properties:
+        symbol:
+          $ref: '#/components/schemas/Symbol'
+        marketId:
+          $ref: '#/components/schemas/UnsignedInteger'
+          description: Numerical identifier for each market, only needed to generate signatures
+          example: 1
+        minOrderQty:
+          $ref: '#/components/schemas/UnsignedDecimal'
+          example: '0.001'
+        qtyStepSize:
+          $ref: '#/components/schemas/UnsignedDecimal'
+          description: Minimum size increment
+          example: '0.001'
+        tickSize:
+          $ref: '#/components/schemas/UnsignedDecimal'
+          description: Minimum price increment
+          example: '0.01'
+        liquidationMarginParameter:
+          $ref: '#/components/schemas/UnsignedDecimal'
+          description: Minimum percentage of notional that needs to be covered to avoid liquidation procedures for a given market; below this value, your account is subject to liquidation procedures. When cross margining, all requirements across markets are covered by the same balance, and all positions are subject to liquidations.
+          example: '0.05'
+        initialMarginParameter:
+          $ref: '#/components/schemas/UnsignedDecimal'
+          description: Minimum percentage of notional that needs to be covered post trade; if the account does not satisfy this requirement, trades will not get executed.
+          example: '0.04'
+        maxLeverage:
+          $ref: '#/components/schemas/UnsignedInteger'
+          description: Maximum leverage allowed
+          example: 40
+        oiCap:
+          $ref: '#/components/schemas/UnsignedDecimal'
+          description: Maximum one-sided open interest in units for a given market.
+          example: '10000'
+      additionalProperties: true
+    SpotMarketDefinition:
+      title: SpotMarketDefinition
+      $id: '#SpotMarketDefinition'
+      x-parser-schema-id: SpotMarketDefinition
+      type: object
+      required:
+        - symbol
+        - marketId
+        - baseAsset
+        - quoteAsset
+        - minOrderQty
+        - qtyStepSize
+        - tickSize
+      properties:
+        symbol:
+          $ref: '#/components/schemas/Symbol'
+        marketId:
+          $ref: '#/components/schemas/UnsignedInteger'
+          description: Numerical identifier for each spot market
+          example: 1
+        baseAsset:
+          type: string
+          description: Base asset symbol
+          example: ETH
+        quoteAsset:
+          type: string
+          description: Quote asset symbol
+          example: RUSD
+        minOrderQty:
+          $ref: '#/components/schemas/UnsignedDecimal'
+          description: Minimum order quantity (base asset)
+          example: '0.001'
+        qtyStepSize:
+          $ref: '#/components/schemas/UnsignedDecimal'
+          description: Minimum size increment (base asset)
+          example: '0.001'
+        tickSize:
+          $ref: '#/components/schemas/UnsignedDecimal'
+          description: Minimum price increment
+          example: '0.01'
+      additionalProperties: true
+    AssetDefinition:
+      title: AssetDefinition
+      $id: '#AssetDefinition'
+      x-parser-schema-id: AssetDefinition
+      type: object
+      required:
+        - asset
+        - priceHaircut
+        - liquidationDiscount
+        - status
+        - decimals
+        - displayDecimals
+      properties:
+        asset:
+          $ref: '#/components/schemas/Asset'
+          example: WSTETH
+        spotMarketSymbol:
+          $ref: '#/components/schemas/Symbol'
+        priceHaircut:
+          $ref: '#/components/schemas/UnsignedDecimal'
+          description: Notional discount to the value of a collateral when used to satisfy the margin requirements; it does not imply any token conversion, but is rather an accounting adjustment.
+          example: '0.05'
+        liquidationDiscount:
+          $ref: '#/components/schemas/UnsignedDecimal'
+          description: Discount in the token price when liquidating collateral.
+          example: '0.03'
+        status:
+          type: string
+          enum:
+            - ENABLED
+            - WITHDRAWAL_ONLY
+          description: Status of asset (ENABLED = deposits and withdrawals allowed, WITHDRAWAL_ONLY = only withdrawals allowed)
+          example: ENABLED
+        decimals:
+          $ref: '#/components/schemas/UnsignedInteger'
+          description: Number of decimal places for record keeping amounts of this asset (e.g. 18 for ETH, 6 for RUSD)
+          example: 18
+        displayDecimals:
+          $ref: '#/components/schemas/UnsignedInteger'
+          description: Number of decimal places shown for display purposes in frontends
+          example: 4
+      additionalProperties: true
+    FeeTierParameters:
+      title: FeeTierParameters
+      $id: '#FeeTierParameters'
+      x-parser-schema-id: FeeTierParameters
+      type: object
+      required:
+        - tierId
+        - takerFee
+        - makerFee
+        - volume14d
+        - tierType
+      properties:
+        tierId:
+          $ref: '#/components/schemas/UnsignedInteger'
+          example: 1
+        takerFee:
+          $ref: '#/components/schemas/SignedDecimal'
+          description: Taker fee rate (fee will be qty * takerFee)
+          example: '0.0004'
+        makerFee:
+          $ref: '#/components/schemas/SignedDecimal'
+          description: Maker fee rate (fee will be qty * makerFee)
+          example: '0.0002'
+        volume14d:
+          $ref: '#/components/schemas/UnsignedDecimal'
+          description: 14-day volume level required this fee tier to be applied to a wallet
+          example: '10000.0'
+        tierType:
+          $ref: '#/components/schemas/TierType'
+      additionalProperties: true
+    GlobalFeeParameters:
+      title: GlobalFeeParameters
+      $id: '#GlobalFeeParameters'
+      x-parser-schema-id: GlobalFeeParameters
+      type: object
+      required:
+        - ogDiscount
+        - refereeDiscount
+        - referrerRebate
+        - affiliateReferrerRebate
+      properties:
+        ogDiscount:
+          $ref: '#/components/schemas/UnsignedDecimal'
+          description: OG user discount
+          example: '0.3'
+        refereeDiscount:
+          $ref: '#/components/schemas/UnsignedDecimal'
+          description: Referee discount
+          example: '0.1'
+        referrerRebate:
+          $ref: '#/components/schemas/UnsignedDecimal'
+          description: Referrer rebate
+          example: '0.1'
+        affiliateReferrerRebate:
+          $ref: '#/components/schemas/UnsignedDecimal'
+          description: Affiliate referrer rebate
+          example: '0.15'
+      additionalProperties: true
+    LiquidityParameters:
+      title: LiquidityParameters
+      $id: '#LiquidityParameters'
+      x-parser-schema-id: LiquidityParameters
+      type: object
+      required:
+        - symbol
+        - depth
+        - velocityMultiplier
+      properties:
+        symbol:
+          $ref: '#/components/schemas/Symbol'
+        depth:
+          $ref: '#/components/schemas/UnsignedDecimal'
+          description: Parameter determining the liquidity distribution along the AMM pricing curve, in particular expanding or contracting the max exposure parameter that would otherwise be determined by the capital available.
+          example: '1000.0'
+        velocityMultiplier:
+          $ref: '#/components/schemas/UnsignedDecimal'
+          description: Parameter determining the sensitivity of the dynamic funding rate to the size of the imbalances; higher multiplier means that the funding rate will diverge faster, all else being equal.
+          example: '1.5'
+      additionalProperties: true
+    WalletConfiguration:
+      title: WalletConfiguration
+      $id: '#WalletConfiguration'
+      x-parser-schema-id: WalletConfiguration
+      type: object
+      required:
+        - feeTierId
+        - ogStatus
+        - affiliateStatus
+        - refereeStatus
+      properties:
+        feeTierId:
+          $ref: '#/components/schemas/UnsignedInteger'
+          description: Fee tier identifier
+          example: 1
+        ogStatus:
+          type: boolean
+          description: OG status
+          example: true
+        affiliateStatus:
+          type: boolean
+          description: Affiliate status
+          example: false
+        refereeStatus:
+          type: boolean
+          description: Referee status
+          example: false
+      additionalProperties: true
+    MarketSummary:
+      title: MarketSummary
+      $id: '#MarketSummary'
+      x-parser-schema-id: MarketSummary
+      type: object
+      required:
+        - symbol
+        - updatedAt
+        - longOiQty
+        - shortOiQty
+        - oiQty
+        - fundingRate
+        - longFundingValue
+        - shortFundingValue
+        - fundingRateVelocity
+        - volume24h
+      properties:
+        symbol:
+          $ref: '#/components/schemas/Symbol'
+        updatedAt:
+          $ref: '#/components/schemas/UnsignedInteger'
+          description: Time when the market summary was last calculated (milliseconds)
+          example: 1747927089946
+        longOiQty:
+          $ref: '#/components/schemas/UnsignedDecimal'
+          description: Long open interest in lots
+          example: '154.741'
+        shortOiQty:
+          $ref: '#/components/schemas/UnsignedDecimal'
+          description: Short open interest in lots
+          example: '154.706'
+        oiQty:
+          $ref: '#/components/schemas/UnsignedDecimal'
+          description: Total open interest quantity
+          example: '154.741'
+        fundingRate:
+          $ref: '#/components/schemas/SignedDecimal'
+          description: Current hourly funding rate
+          example: '-0.000509373441021089'
+        longFundingValue:
+          $ref: '#/components/schemas/SignedDecimal'
+          description: Current reference value of funding accrued by one unit of exposure; there is one funding value per market and per direction, with short v long funding values differing possibly due to Auto-Deleveraging (ADL)
+          example: '412142.26'
+        shortFundingValue:
+          $ref: '#/components/schemas/SignedDecimal'
+          description: Current reference value of funding accrued by one unit of exposure; there is one funding value per market and per direction, with short v long funding values differing possibly due to Auto-Deleveraging (ADL)
+          example: '412142.26'
+        fundingRateVelocity:
+          $ref: '#/components/schemas/SignedDecimal'
+          description: Funding rate velocity
+          example: '-0.00000006243'
+        volume24h:
+          $ref: '#/components/schemas/UnsignedDecimal'
+          example: '917833.49891'
+        pxChange24h:
+          $ref: '#/components/schemas/SignedDecimal'
+          example: '92.6272285500004'
+        throttledOraclePrice:
+          $ref: '#/components/schemas/SignedDecimal'
+          description: Last oracle price, at the moment of the last market summary update
+          example: '2666.48162040777'
+        throttledPoolPrice:
+          $ref: '#/components/schemas/SignedDecimal'
+          description: Last pool price, at the moment of the last market summary update
+          example: '2666.48166680625'
+        pricesUpdatedAt:
+          $ref: '#/components/schemas/UnsignedInteger'
+          description: Timestamp of the last price update (milliseconds)
+          example: 1747927089597
+      additionalProperties: true
+    Position:
+      title: Position
+      $id: '#Position'
+      x-parser-schema-id: Position
+      type: object
+      required:
+        - exchangeId
+        - symbol
+        - accountId
+        - qty
+        - side
+        - avgEntryPrice
+        - avgEntryFundingValue
+        - lastTradeSequenceNumber
+      properties:
+        exchangeId:
+          $ref: '#/components/schemas/UnsignedInteger'
+          example: 1
+        symbol:
+          $ref: '#/components/schemas/Symbol'
+        accountId:
+          $ref: '#/components/schemas/UnsignedInteger'
+          example: 12345
+        qty:
+          $ref: '#/components/schemas/UnsignedDecimal'
+          example: '1.5'
+        side:
+          $ref: '#/components/schemas/Side'
+        avgEntryPrice:
+          $ref: '#/components/schemas/SignedDecimal'
+          example: '43000.00'
+        avgEntryFundingValue:
+          $ref: '#/components/schemas/SignedDecimal'
+          description: 'Average of funding values at the entry times of currently open exposure, which serves as a baseline from which to compute the accrued funding in the position: units x (fundingValue - avgEntryFundingValue)'
+          example: '100.25'
+        lastTradeSequenceNumber:
+          $ref: '#/components/schemas/UnsignedInteger'
+          description: Sequence number of last execution taken into account for the position.
+          example: 152954
+      additionalProperties: true
+    Order:
+      title: Order
+      $id: '#Order'
+      x-parser-schema-id: Order
+      type: object
+      required:
+        - exchangeId
+        - symbol
+        - accountId
+        - orderId
+        - side
+        - limitPx
+        - orderType
+        - status
+        - createdAt
+        - lastUpdateAt
+      properties:
+        exchangeId:
+          $ref: '#/components/schemas/UnsignedInteger'
+          example: 1
+        symbol:
+          $ref: '#/components/schemas/Symbol'
+        accountId:
+          $ref: '#/components/schemas/UnsignedInteger'
+          example: 12345
+        orderId:
+          type: string
+          example: 123456789-123123123
+        qty:
+          $ref: '#/components/schemas/UnsignedDecimal'
+          example: '1.0'
+        execQty:
+          $ref: '#/components/schemas/UnsignedDecimal'
+          description: Executed quantity in the current order update.
+          example: '0.5'
+        cumQty:
+          $ref: '#/components/schemas/UnsignedDecimal'
+          description: Total Executed quantity accross all fills where the order is involved.
+          example: '0.5'
+        side:
+          $ref: '#/components/schemas/Side'
+        limitPx:
+          $ref: '#/components/schemas/SignedDecimal'
+          example: '43000.00'
+        orderType:
+          $ref: '#/components/schemas/OrderType'
+        triggerPx:
+          $ref: '#/components/schemas/SignedDecimal'
+          description: Price at which TP/SL orders will be triggered, should not be set for other order types.
+          example: '50000.0'
+        timeInForce:
+          $ref: '#/components/schemas/TimeInForce'
+          description: Order time in force, exclusively used for LIMIT orders
+          example: GTC
+        reduceOnly:
+          type: boolean
+          description: Whether this is a reduce-only order, exclusively used for LIMIT IOC orders.
+          example: false
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        createdAt:
+          $ref: '#/components/schemas/UnsignedInteger'
+          description: Creation timestamp (milliseconds)
+          example: 1747927089946
+        lastUpdateAt:
+          $ref: '#/components/schemas/UnsignedInteger'
+          description: Last update timestamp (milliseconds)
+          example: 1747927089946
+      additionalProperties: true
+    Account:
+      title: Account
+      $id: '#Account'
+      x-parser-schema-id: Account
+      type: object
+      required:
+        - accountId
+        - name
+        - type
+      properties:
+        accountId:
+          $ref: '#/components/schemas/UnsignedInteger'
+          example: 12345
+        name:
+          type: string
+          example: Margin Account 1
+        type:
+          $ref: '#/components/schemas/AccountType'
+      additionalProperties: true
+    AccountBalance:
+      title: AccountBalance
+      $id: '#AccountBalance'
+      x-parser-schema-id: AccountBalance
+      type: object
+      required:
+        - accountId
+        - asset
+        - realBalance
+        - balanceDEPRECATED
+      properties:
+        accountId:
+          $ref: '#/components/schemas/UnsignedInteger'
+          example: 12345
+        asset:
+          $ref: '#/components/schemas/Asset'
+          example: WSTETH
+        realBalance:
+          $ref: '#/components/schemas/UnsignedDecimal'
+          description: Sum of account net deposits (transfers, deposits and withdrawals) and realized pnl from closed positions. Realized pnl only applies to RUSD given it is the only settlement asset
+          example: '1.25'
+        balanceDEPRECATED:
+          $ref: '#/components/schemas/UnsignedDecimal'
+          description: Sum of account net deposits (transfers, deposits and withdrawals). This field is deprecated and will be removed in a future release
+          example: '1.25'
+      additionalProperties: true
+    PerpExecutionList:
+      title: PerpExecutionList
+      $id: '#PerpExecutionList'
+      x-parser-schema-id: PerpExecutionList
+      type: object
+      required:
+        - data
+        - meta
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/PerpExecution'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+      additionalProperties: true
+    SpotExecutionList:
+      title: SpotExecutionList
+      $id: '#SpotExecutionList'
+      x-parser-schema-id: SpotExecutionList
+      type: object
+      required:
+        - data
+        - meta
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpotExecution'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+      additionalProperties: true
+    Price:
+      title: Price
+      $id: '#Price'
+      x-parser-schema-id: Price
+      type: object
+      required:
+        - symbol
+        - updatedAt
+        - oraclePrice
+      properties:
+        symbol:
+          $ref: '#/components/schemas/Symbol'
+        oraclePrice:
+          $ref: '#/components/schemas/SignedDecimal'
+          description: Price given by the Stork feeds, used both as the peg price for prices on Reya, as well as Mark Prices. The Stork price feed is usually the perp prices across three major CEXs
+          example: '43000.00'
+        poolPrice:
+          $ref: '#/components/schemas/SignedDecimal'
+          description: The price currently quoted by the AMM for zero volume, from which trades are priced (equivalent to mid price in an order book); a trade of any size will be move this price up or down depending on the direction.
+          example: '42999.50'
+        updatedAt:
+          $ref: '#/components/schemas/UnsignedInteger'
+          description: Last update timestamp (milliseconds)
+          example: 1747927089946
+      additionalProperties: true
+    CandleHistoryData:
+      title: CandleHistoryData
+      $id: '#CandleHistoryData'
+      x-parser-schema-id: CandleHistoryData
+      type: object
+      required:
+        - t
+        - o
+        - h
+        - l
+        - c
+      properties:
+        t:
+          type: array
+          items:
+            $ref: '#/components/schemas/UnsignedInteger'
+          description: Array of timestamps (seconds)
+          example:
+            - 1747804140
+            - 1747804200
+            - 1747804260
+        o:
+          type: array
+          items:
+            $ref: '#/components/schemas/SignedDecimal'
+          description: Array of opening prices
+          example:
+            - '2557.997'
+            - '2555.386'
+            - '2560.118'
+        h:
+          type: array
+          items:
+            $ref: '#/components/schemas/SignedDecimal'
+          description: Array of high prices
+          example:
+            - '2558.000'
+            - '2560.699'
+            - '2560.729'
+        l:
+          type: array
+          items:
+            $ref: '#/components/schemas/SignedDecimal'
+          description: Array of low prices
+          example:
+            - '2554.637'
+            - '2553.436'
+            - '2559.368'
+        c:
+          type: array
+          items:
+            $ref: '#/components/schemas/SignedDecimal'
+          description: Array of closing prices
+          example:
+            - '2555.387'
+            - '2560.118'
+            - '2560.439'
+      additionalProperties: true
+    CreateOrderRequest:
+      title: CreateOrderRequest
+      $id: '#CreateOrderRequest'
+      x-parser-schema-id: CreateOrderRequest
+      type: object
+      required:
+        - exchangeId
+        - accountId
+        - isBuy
+        - limitPx
+        - orderType
+        - signature
+        - nonce
+        - signerWallet
+      properties:
+        exchangeId:
+          $ref: '#/components/schemas/UnsignedInteger'
+          example: 1
+        symbol:
+          $ref: '#/components/schemas/Symbol'
+        accountId:
+          $ref: '#/components/schemas/UnsignedInteger'
+          example: 12345
+        isBuy:
+          type: boolean
+          description: Whether this is a buy order
+          example: true
+        limitPx:
+          $ref: '#/components/schemas/SignedDecimal'
+          example: '50000.0'
+        qty:
+          $ref: '#/components/schemas/UnsignedDecimal'
+          example: '0.1'
+        orderType:
+          $ref: '#/components/schemas/OrderType'
+          example: LIMIT
+        timeInForce:
+          $ref: '#/components/schemas/TimeInForce'
+          description: Order time in force, exclusively used for LIMIT orders
+          example: GTC
+        triggerPx:
+          $ref: '#/components/schemas/SignedDecimal'
+          description: Trigger price, only for TP/SL orders
+          example: '50000.0'
+        reduceOnly:
+          type: boolean
+          description: Whether this is a reduce-only order, exclusively used for LIMIT IOC orders.
+          example: false
+        signature:
+          type: string
+          description: See signatures and nonces section for more details on how to generate.
+          example: 0x1234...
+        nonce:
+          type: string
+          description: Order nonce, see signatures and nonces section for more details.
+          example: '1234567890'
+        signerWallet:
+          $ref: '#/components/schemas/Address'
+        expiresAfter:
+          $ref: '#/components/schemas/UnsignedInteger'
+          description: Expiration timestamp (exclusively for PERP IOC orders and all SPOT orders). In seconds since epoch. The order will only be filled before this timestamp.
+          example: 1676923200
+        clientOrderId:
+          $ref: '#/components/schemas/UnsignedInteger'
+          description: Client-provided order ID for tracking and correlation. Optional field that allows clients to assign their own unique identifier to orders.
+          example: '123456789'
+      additionalProperties: true
+    CreateOrderResponse:
+      title: CreateOrderResponse
+      $id: '#CreateOrderResponse'
+      x-parser-schema-id: CreateOrderResponse
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        execQty:
+          $ref: '#/components/schemas/UnsignedDecimal'
+          description: Executed quantity in the current order update.
+          example: '0.5'
+        cumQty:
+          $ref: '#/components/schemas/UnsignedDecimal'
+          description: Total Executed quantity accross all fills where the order is involved.
+          example: '0.5'
+        orderId:
+          type: string
+          description: Created order ID (currently generated for all order types except IOC)
+          example: 123456789-123123123
+        clientOrderId:
+          $ref: '#/components/schemas/UnsignedInteger'
+          description: Client-provided order ID echoed back from the request
+          example: '123456789'
+      additionalProperties: true
+    CancelOrderRequest:
+      title: CancelOrderRequest
+      $id: '#CancelOrderRequest'
+      x-parser-schema-id: CancelOrderRequest
+      type: object
+      required:
+        - signature
+      properties:
+        orderId:
+          type: string
+          description: Internal matching engine order ID to cancel. Provide either orderId OR clientOrderId, not both. For spot markets, this is the order ID returned in the CreateOrderResponse.
+          example: '490346525705109504'
+        clientOrderId:
+          $ref: '#/components/schemas/UnsignedInteger'
+          description: Client-provided order ID for tracking and correlation. Provide either orderId OR clientOrderId, not both. This is the same clientOrderId provided in CreateOrderRequest.
+          example: '123456789'
+        accountId:
+          $ref: '#/components/schemas/UnsignedInteger'
+          description: Account ID that owns the order. Required for spot markets.
+          example: 12345
+        symbol:
+          $ref: '#/components/schemas/Symbol'
+          description: Market symbol for the order.Required for spot market orders. If not provided, assumes perp market for backwards compatibility.
+        signature:
+          type: string
+          description: See signatures section for more details on how to generate.
+          example: 0x5678...
+        nonce:
+          type: string
+          description: See signatures and nonces section for more details. Compulsory for spot orders.
+          example: '1234567890'
+        expiresAfter:
+          $ref: '#/components/schemas/UnsignedInteger'
+          description: Expiration timestamp (exclusively for SPOT orders). In seconds since epoch.
+          example: 1676923200
+      additionalProperties: true
+    CancelOrderResponse:
+      title: CancelOrderResponse
+      $id: '#CancelOrderResponse'
+      x-parser-schema-id: CancelOrderResponse
+      type: object
+      required:
+        - status
+        - orderId
+      properties:
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        orderId:
+          type: string
+          description: Cancelled order ID
+          example: 123456789-123123123
+        clientOrderId:
+          type: integer
+          description: Client-provided order ID echoed back from the request
+          example: '123456789'
+      additionalProperties: true
+    MassCancelRequest:
+      title: MassCancelRequest
+      $id: '#MassCancelRequest'
+      x-parser-schema-id: MassCancelRequest
+      type: object
+      required:
+        - signature
+        - nonce
+        - accountId
+        - expiresAfter
+      properties:
+        accountId:
+          $ref: '#/components/schemas/UnsignedInteger'
+          description: Account ID to cancel orders for.
+          example: 12345
+        symbol:
+          $ref: '#/components/schemas/Symbol'
+          description: Symbol to cancel orders for. If not specified, cancels orders for all symbols.
+        signature:
+          type: string
+          description: See signatures and nonces section for more details on how to generate.
+          example: 0x1234...
+        nonce:
+          type: string
+          description: See signatures and nonces section for more details.
+          example: '1234567890'
+        expiresAfter:
+          $ref: '#/components/schemas/UnsignedInteger'
+          description: Expiration timestamp. In seconds since epoch.
+          example: 1676923200
+      additionalProperties: true
+      description: Request to cancel all orders matching the specified filters
+    MassCancelResponse:
+      title: MassCancelResponse
+      $id: '#MassCancelResponse'
+      x-parser-schema-id: MassCancelResponse
+      type: object
+      required:
+        - cancelledCount
+      properties:
+        cancelledCount:
+          $ref: '#/components/schemas/UnsignedInteger'
+          description: Number of orders that were cancelled
+          example: true
+      additionalProperties: true
+    Depth:
+      title: Depth
+      $id: '#Depth'
+      x-parser-schema-id: Depth
+      type: object
+      required:
+        - symbol
+        - type
+        - bids
+        - asks
+        - updatedAt
+      properties:
+        symbol:
+          $ref: '#/components/schemas/Symbol'
+        type:
+          $ref: '#/components/schemas/DepthType'
+        bids:
+          type: array
+          description: Bid side levels aggregated by price, sorted descending by price
+          items:
+            $ref: '#/components/schemas/Level'
+        asks:
+          type: array
+          description: Ask side levels aggregated by price, sorted ascending by price
+          items:
+            $ref: '#/components/schemas/Level'
+        updatedAt:
+          $ref: '#/components/schemas/UnsignedInteger'
+          description: Snapshot generation timestamp (milliseconds)
+          example: 1747927809946
+      additionalProperties: true
+    ServerErrorCode:
+      title: ServerErrorCode
+      $id: '#ServerErrorCode'
+      x-parser-schema-id: ServerErrorCode
+      type: string
+      enum:
+        - INTERNAL_SERVER_ERROR
+      description: Standardized error codes for API responses
+    Symbol:
+      title: Symbol
+      $id: '#Symbol'
+      x-parser-schema-id: Symbol
+      type: string
+      pattern: ^[A-Za-z0-9]+$
+      examples:
+        - BTCRUSDPERP
+        - WETHRUSD
+      description: Trading symbol (e.g., BTCRUSDPERP, WETHRUSD)
+    UnsignedInteger:
+      title: UnsignedInteger
+      $id: '#UnsignedInteger'
+      x-parser-schema-id: UnsignedInteger
+      type: integer
+      minimum: 0
+      examples:
+        - 1747927089946
+        - 1756733379000
+    UnsignedDecimal:
+      title: UnsignedDecimal
+      $id: '#UnsignedDecimal'
+      x-parser-schema-id: UnsignedDecimal
+      type: string
+      pattern: ^\d+(\.\d+)?([eE][+-]?\d+)?$
+      examples:
+        - '1.0'
+        - '0.001'
+        - '154.741'
+        - '1.2345e10'
+        - '6.789e-5'
+    RequestErrorCode:
+      title: RequestErrorCode
+      $id: '#RequestErrorCode'
+      x-parser-schema-id: RequestErrorCode
+      type: string
+      enum:
+        - SYMBOL_NOT_FOUND
+        - NO_ACCOUNTS_FOUND
+        - NO_PRICES_FOUND_FOR_SYMBOL
+        - INPUT_VALIDATION_ERROR
+        - CREATE_ORDER_OTHER_ERROR
+        - CANCEL_ORDER_OTHER_ERROR
+        - ORDER_DEADLINE_PASSED_ERROR
+        - ORDER_DEADLINE_TOO_HIGH_ERROR
+        - INVALID_NONCE_ERROR
+        - UNAVAILABLE_MATCHING_ENGINE_ERROR
+        - UNAUTHORIZED_SIGNATURE_ERROR
+        - NUMERIC_OVERFLOW_ERROR
+      description: Standardized error codes for API responses
+    Asset:
+      title: Asset
+      $id: '#Asset'
+      x-parser-schema-id: Asset
+      type: string
+      pattern: ^[A-Za-z0-9]+$
+      examples:
+        - BTCRUSDPERP
+        - WETHRUSD
+    SignedDecimal:
+      title: SignedDecimal
+      $id: '#Decimal'
+      x-parser-schema-id: SignedDecimal
+      type: string
+      pattern: ^-?\d+(\.\d+)?([eE][+-]?\d+)?$
+      examples:
+        - '43000.00'
+        - '2666.48162040777'
+        - '0.01'
+        - '-1250.75'
+        - '-1.12628295e-9'
+        - '3.14159e+8'
+    TierType:
+      title: TierType
+      $id: '#TierType'
+      x-parser-schema-id: TierType
+      type: string
+      enum:
+        - REGULAR
+        - VIP
+      description: Fee tier type (REGULAR = Standard tier, VIP = VIP tier)
+    Side:
+      title: Side
+      $id: '#Side'
+      x-parser-schema-id: Side
+      type: string
+      enum:
+        - B
+        - A
+      description: Order side (B = Buy/Bid, A = Ask/Sell)
+    ExecutionType:
+      title: ExecutionType
+      $id: '#ExecutionType'
+      x-parser-schema-id: ExecutionType
+      type: string
+      enum:
+        - ORDER_MATCH
+        - LIQUIDATION
+        - ADL
+      description: Type of execution
+    PerpExecution:
+      title: PerpExecution
+      $id: '#PerpExecution'
+      x-parser-schema-id: PerpExecution
+      type: object
+      required:
+        - exchangeId
+        - symbol
+        - accountId
+        - qty
+        - side
+        - fee
+        - price
+        - type
+        - timestamp
+        - sequenceNumber
+      properties:
+        exchangeId:
+          $ref: '#/components/schemas/UnsignedInteger'
+          example: 1
+        symbol:
+          $ref: '#/components/schemas/Symbol'
+        accountId:
+          $ref: '#/components/schemas/UnsignedInteger'
+          example: 12345
+        qty:
+          $ref: '#/components/schemas/UnsignedDecimal'
+          example: '1.0'
+        side:
+          $ref: '#/components/schemas/Side'
+        price:
+          $ref: '#/components/schemas/SignedDecimal'
+          example: '43000.00'
+        fee:
+          $ref: '#/components/schemas/SignedDecimal'
+          example: '0.50'
+        type:
+          $ref: '#/components/schemas/ExecutionType'
+        timestamp:
+          $ref: '#/components/schemas/UnsignedInteger'
+          description: Execution timestamp (milliseconds)
+          example: 1747927089946
+        sequenceNumber:
+          $ref: '#/components/schemas/UnsignedInteger'
+          description: Execution sequence number, increases by 1 for every perp execution in reya chain
+          example: 152954
+      additionalProperties: true
+    PaginationMeta:
+      title: PaginationMeta
+      $id: '#PaginationMeta'
+      x-parser-schema-id: PaginationMeta
+      type: object
+      required:
+        - limit
+        - count
+      properties:
+        limit:
+          $ref: '#/components/schemas/UnsignedInteger'
+          description: Number of items requested
+          example: 100
+        count:
+          $ref: '#/components/schemas/UnsignedInteger'
+          description: Number of items returned
+          example: 50
+        endTime:
+          $ref: '#/components/schemas/UnsignedInteger'
+          description: Timestamp of last result, in milliseconds
+          example: 1756733679000
+        startTime:
+          $ref: '#/components/schemas/UnsignedInteger'
+          description: Timestamp of first result, in milliseconds
+          example: 1756733579000
+      additionalProperties: true
+    DepthType:
+      title: DepthType
+      $id: '#DepthType'
+      x-parser-schema-id: DepthType
+      type: string
+      enum:
+        - SNAPSHOT
+        - UPDATE
+      description: Depth message type (SNAPSHOT = full book, UPDATE = single level change)
+    Level:
+      title: Level
+      $id: '#Level'
+      x-parser-schema-id: Level
+      type: object
+      required:
+        - px
+        - qty
+      properties:
+        px:
+          $ref: '#/components/schemas/SignedDecimal'
+          description: Price level
+          example: '0.1668'
+        qty:
+          $ref: '#/components/schemas/UnsignedDecimal'
+          description: Aggregated quantity at this price level
+          example: '4418.7970'
+      additionalProperties: true
+    SpotExecution:
+      title: SpotExecution
+      $id: '#SpotExecution'
+      x-parser-schema-id: SpotExecution
+      type: object
+      required:
+        - symbol
+        - accountId
+        - makerAccountId
+        - qty
+        - side
+        - fee
+        - price
+        - type
+        - timestamp
+      properties:
+        exchangeId:
+          $ref: '#/components/schemas/UnsignedInteger'
+          example: 1
+        symbol:
+          $ref: '#/components/schemas/Symbol'
+        accountId:
+          $ref: '#/components/schemas/UnsignedInteger'
+          example: 12345
+        makerAccountId:
+          $ref: '#/components/schemas/UnsignedInteger'
+          description: Maker account ID (counterparty)
+          example: 67890
+        orderId:
+          type: string
+          description: Order ID for the taker
+          example: '63552420354981888'
+        makerOrderId:
+          type: string
+          description: Order ID for the maker
+          example: '63552420037263360'
+        side:
+          $ref: '#/components/schemas/Side'
+        qty:
+          $ref: '#/components/schemas/UnsignedDecimal'
+          example: '1.0'
+        price:
+          $ref: '#/components/schemas/SignedDecimal'
+          example: '43000.00'
+        fee:
+          $ref: '#/components/schemas/SignedDecimal'
+          example: '0.0'
+        type:
+          $ref: '#/components/schemas/ExecutionType'
+        timestamp:
+          $ref: '#/components/schemas/UnsignedInteger'
+          description: Execution timestamp (milliseconds)
+          example: 1747927089946
+      additionalProperties: true
+    Address:
+      title: Address
+      $id: '#Address'
+      x-parser-schema-id: Address
+      type: string
+      pattern: ^0x[a-fA-F0-9]{40}$
+      examples:
+        - '0x6c51275fd01d5dbd2da194e92f920f8598306df2'
+    AccountType:
+      title: AccountType
+      $id: '#AccountType'
+      x-parser-schema-id: AccountType
+      type: string
+      enum:
+        - MAINPERP
+        - SUBPERP
+        - SPOT
+      description: SPOT = account that can only trade spot, MAINPERP = main perp account, SUBPERP = sub perp account
+    OrderType:
+      title: OrderType
+      $id: '#OrderType'
+      x-parser-schema-id: OrderType
+      type: string
+      enum:
+        - LIMIT
+        - TP
+        - SL
+      description: Order type, (LIMIT = Limit, TP = Take Profit, SL = Stop Loss)
+      example: TP
+    TimeInForce:
+      title: TimeInForce
+      $id: '#TimeInForce'
+      x-parser-schema-id: TimeInForce
+      type: string
+      enum:
+        - IOC
+        - GTC
+      description: Order time in force (IOC = Immediate or Cancel, GTC = Good Till Cancel)
+      example: GTC
+    OrderStatus:
+      title: OrderStatus
+      $id: '#OrderStatus'
+      x-parser-schema-id: OrderStatus
+      type: string
+      enum:
+        - OPEN
+        - FILLED
+        - CANCELLED
+        - REJECTED
+      description: Order status
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RequestError'
+          example:
+            error: INPUT_VALIDATION_ERROR
+            message: Invalid request parameters
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ServerError'
+          example:
+            error: INTERNAL_SERVER_ERROR
+            message: An unexpected error occurred

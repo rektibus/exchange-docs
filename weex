@@ -1,0 +1,455 @@
+
+
+
+
+Get Server Time
+GET /capi/v2/market/time
+Weight(IP): 1
+
+Request parameters
+
+NONE
+
+Request example
+
+curl "https://api-contract.weex.com/capi/v2/market/time"
+
+
+Response parameters
+
+Parameter	Type	Description
+epoch	String	Unix timestamp in UTC time zone, represented as a decimal number of seconds
+iso	String	ISO 8601 standard time format
+timestamp	Long	Server time
+Unix millisecond timestamp
+Response example
+
+{
+    "epoch": "1716710918.113",
+    "iso": "2024-05-26T08:08:38.113Z",
+    "timestamp": 1716710918113
+}
+
+
+
+Get Futures Information
+GET /capi/v2/market/contracts
+Weight(IP): 10
+
+Request parameters
+
+Parameter	Type	Required?	Description
+symbol	String	No	Trading pair
+Request example
+
+curl "https://api-contract.weex.com/capi/v2/market/contracts?symbol=cmt_btcusdt"
+
+
+Response parameters
+
+Parameter	Type	Description
+symbol	String	Trading pair
+underlying_index	String	Futures crypto
+quote_currency	String	Quote currency
+coin	String	Margin token
+contract_val	String	Futures face value
+delivery	Array	Settlement times
+size_increment	String	Decimal places of the quantity
+tick_size	String	Decimal places of the price
+forwardContractFlag	Boolean	Whether it is USDT-M futures
+priceEndStep	BigDecimal	Step size of the last decimal digit in the price
+minLeverage	Integer	Minimum leverage (default: 1)
+maxLeverage	Integer	Maximum leverage (default: 100)
+buyLimitPriceRatio	String	Ratio of bid price to limit price
+sellLimitPriceRatio	String	Ratio of ask price to limit price
+makerFeeRate	String	Maker rate
+takerFeeRate	String	Taker rate
+minOrderSize	String	Minimum order size (base currency)
+maxOrderSize	String	Maximum order size (base currency)
+maxPositionSize	String	Maximum position size (base currency)
+marketOpenLimitSize	String	Market Order Opening Position Single Limit (base currency)
+Response example
+
+[
+  {
+    "symbol": "cmt_btcusdt",
+    "underlying_index": "BTC",
+    "quote_currency": "USDT",
+    "coin": "USDT",
+    "contract_val": "0",
+    "delivery": [
+      "00:00:00",
+      "08:00:00",
+      "16:00:00"
+    ],
+    "size_increment": "5",
+    "tick_size": "1",
+    "forwardContractFlag": true,
+    "priceEndStep": 1,
+    "minLeverage": 1,
+    "maxLeverage": 500,
+    "buyLimitPriceRatio": "0.015",
+    "sellLimitPriceRatio": "0.015",
+    "makerFeeRate": "0.0002",
+    "takerFeeRate": "0.0006",
+    "minOrderSize": "0.0001",
+    "maxOrderSize": "100000",
+    "maxPositionSize": "1000000"
+  }
+]
+
+
+
+
+
+Get Trades
+GET /capi/v2/market/trades
+Weight(IP): 5
+
+Request parameters
+
+Parameter	Type	Required?	Description
+symbol	String	Yes	Trading pair
+limit	Integer	No	The size of the data ranges from 1 to 1000, with a default of 100
+Request example
+
+curl "https://api-contract.weex.com/capi/v2/market/trades?symbol=cmt_btcusdt&limit=100"
+
+
+Response parameters
+
+Parameter	Type	Description
+ticketId	String	Filled order ID
+time	Long	The time at which the order was filled
+Unix millisecond timestamp
+price	String	The price at which the order was filled
+size	String	The quantity that was filled (base currency)
+value	String	Filled amount (quote currency)
+symbol	String	Trading pair
+isBestMatch	Boolean	Was the trade the best price match?
+isBuyerMaker	Boolean	Was the buyer the maker?
+contractVal	String	Futures face value (unit: contracts)
+Response example
+
+[
+    {
+        "ticketId": "124b129e-3999-4d14-a4b5-9bdda68e5e26",
+        "time": 1716604853286,
+        "price": "68734.8",
+        "size": "0.001",
+        "value": "68.7348",
+        "symbol": "cmt_btcusdt",
+        "isBestMatch": true,
+        "isBuyerMaker": true,
+        "contractVal": "0.000001"
+    }
+]
+
+
+Get Open Interest
+GET /capi/v2/market/open_interest
+Weight(IP): 2
+
+Request parameters
+
+Parameter	Type	Required?	Description
+symbol	String	Yes	Trading pair
+Request example
+
+curl "https://api-contract.weex.com/capi/v2/market/open_interest?symbol=cmt_1000satsusdt"
+
+
+Response parameters
+
+Parameter	Type	Description
+symbol	String	Trading pair
+base_volume	String	Total open interest of the platform Specific coins
+target_volume	String	Quote Currency Holdings
+timestamp	String	Timestamp
+Unix millisecond timestamp
+Response example
+
+[
+    {
+        "symbol": "cmt_1000satsusdt",
+        "base_volume": "0",
+        "target_volume": "0",
+        "timestamp": "1716709712753"
+    }
+]
+
+
+
+
+Get Next Funding Time
+Weight(IP): 1
+
+GET /capi/v2/market/funding_time
+Request parameters
+
+Parameter	Type	Required?	Description
+symbol	String	Yes	Trading pair
+Request example
+
+curl "https://api-contract.weex.com/capi/v2/market/funding_time?symbol=cmt_bchusdt"
+
+
+Response parameters
+
+Parameter	Type	Description
+symbol	String	Trading pair
+fundingTime	Long	Settlement time
+Unix millisecond timestamp
+Response example
+
+{
+  "symbol": "cmt_btcusdt",
+  "fundingTime": 1716595200000
+}
+
+
+
+Get Historical Funding Rates
+GET /capi/v2/market/getHistoryFundRate
+Weight(IP): 5
+
+Request parameters
+
+Parameter	Type	Required?	Description
+symbol	String	Yes	Trading pair
+limit	Integer	No	The size of the data ranges from 1 to 100, with a default of 10
+Request example
+
+curl "https://api-contract.weex.com/capi/v2/market/getHistoryFundRate?symbol=cmt_bchusdt&limit=100"
+
+
+Response parameters
+
+Parameter	Type	Description
+symbol	string	Trading pair
+fundingRate	string	Funding rate
+fundingTime	long	Funding fee settlement time
+Unix millisecond timestamp
+Response example
+
+[
+    {
+        "symbol": "cmt_btcusdt",
+        "fundingRate": "0.0001028",
+        "fundingTime": 1716595200000
+    }
+]
+
+
+
+Get Current Funding Rate
+GET /capi/v2/market/currentFundRate
+Weight(IP): 1
+
+Request parameters
+
+Parameter	Type	Required?	Description
+symbol	String	No	Trading pair
+Request example
+
+curl "https://api-contract.weex.com/capi/v2/market/currentFundRate?symbol=cmt_bchusdt"
+
+
+Response parameters
+
+Parameter	Type	Description
+symbol	String	Trading pair
+fundingRate	String	Current funding rates
+collectCycle	Long	Funding rate settlement cycle
+Unit: minute
+timestamp	Long	Funding fee settlement time
+Unix millisecond timestamp
+Response example
+
+[
+  {
+    "symbol": "cmt_btcusdt",
+    "fundingRate": "-0.0001036",
+    "collectCycle": 480,
+    "timestamp": 1750383726052
+  }
+]
+
+
+
+
+WebSocket API
+Overview
+WebSocket is a new protocol in HTML5 that enables full-duplex communication between clients and servers, allowing rapid bidirectional data transmission. Through a simple handshake, a connection can be established between client and server, enabling the server to actively push information to the client based on business rules. Its advantages include:
+
+Small header size (~2 bytes) during data transmission between client and server
+Both client and server can actively send data
+Eliminates the need for repeated TCP connection setup/teardown, conserving bandwidth and server resources
+Strongly recommended for developers to obtain market data, order book depth, and other information
+Domain	WebSocket API	Recommended Use
+Public Channel	wss://ws-contract.weex.com/v2/ws/public	Primary domain, public channels
+Private Channel	wss://ws-contract.weex.com/v2/ws/private	Primary domain, private channels
+Connection
+Connection Specifications:
+
+Connection limit: 300 connection requests/IP/5 minutes, maximum 100 concurrent connections per IP
+
+Subscription limit: 240 operations/hour/connection, maximum 100 channels per connection
+
+Public channel requirement: Public channel connections require header authentication(User-Agent)
+
+
+
+
+
+Private channel requirement: Private channel connections require header authentication
+
+To maintain stable and effective connections, we recommend:
+
+After successful WebSocket connection establishment, the server will periodically send Ping messages to the client in the format: {"event":"ping","time":"1693208170000"}, where "time" represents the server's timestamp. Upon receiving this message, the client should respond with a Pong message: {"event":"pong","time":"1693208170000"}. The server will actively terminate connections that fail to respond more than 5 times.
+
+Header Authentication for Private Channels
+User-Agent:Client identification
+
+ACCESS-KEY: Unique identifier for API user authentication (requires application)
+
+ACCESS-PASSPHRASE: Password for the API Key
+
+ACCESS-TIMESTAMP: Unix Epoch timestamp in milliseconds (expires after 30 seconds, must match signature timestamp)
+
+ACCESS-SIGN: Signature string generated as follows:
+
+The message (string to be signed) consists of: timestamp + requestPath
+
+Example timestamp (in milliseconds): const timestamp = '' + Date.now()
+
+Where requestPath is /v2/ws/private
+
+Signature Generation Process
+
+Encrypt the message string using HMAC SHA256 with the secret key:
+Signature = hmac_sha256(secretkey, Message)
+Encode the Signature using Base64:
+Signature = base64.encode(Signature)
+Subscription
+Subscription Specification:
+
+{
+  "event": "subscribe",
+  "channel": "channel_name"
+}
+
+Unsubscription
+Unsubscription Specification:
+
+{
+   "event": "unsubscribe",
+   "channel": "channel_name"
+}
+
+
+Market Channel
+Description
+Retrieves real-time market data including latest price, best bid/ask prices, and 24-hour trading volume. Updates occur within 100-300ms when changes occur (trades, bid/ask updates).
+
+Request Parameters
+
+Parameter	Type	Required	Description
+event	String	Yes	Operation: subscribe / unsubscribe
+channel	String	Yes	Channel name.format: ticker.{contractId}
+Example: ticker.cmt_btcusdt
+Request Example
+
+{  
+  "event": "subscribe",  
+  "channel": "ticker.cmt_btcusdt"  
+}
+
+Response Parameters
+
+Field	Type	Description
+event	String	Operation: subscribed / unsubscribed
+channel	String	Channel name (e.g. ticker.cmt_btcusdt)
+Subscription Response Example
+
+{  
+  "event": "subscribed",  
+  "channel": "ticker.cmt_btcusdt"  
+}  
+
+Push Data Parameters
+
+Field	Type	Description
+event	String	Push action
+channel	String	Channel name (e.g. ticker.cmt_btcusdt)
+data	List	Market data array
+>symbol	String	Product ID
+>priceChange	String	Price change amount
+>priceChangePercent	String	Price change percentage
+>trades	String	24h trade count
+>size	String	24h trading volume
+>value	String	24h trading value
+>high	String	24h highest price
+>low	String	24h lowest price
+>lastPrice	String	Latest traded price
+>markPrice	String	Current mark price
+
+
+
+
+Public Trade Channel
+Description
+
+Platform trade channel (taker orders)
+
+Request Parameters
+
+Parameter	Type	Required	Description
+event	String	Yes	Operation: subscribe, unsubscribe
+channel	String	Yes	Channel name. Product ID
+e.g., trades.cmt_btcusdt
+Request Example
+
+{  
+  "event": "subscribe",  
+  "channel": "trades.cmt_btcusdt"  
+}  
+
+Response Parameters
+
+Field	Type	Description
+event	String	Operation: subscribed, unsubscribed
+channel	String	Channel name
+Subscription Response Example
+
+{  
+  "event": "subscribed",  
+  "channel": "trades.cmt_btcusdt"  
+}  
+
+Push Data Parameters
+
+Field	Type	Description
+event	String	Push data action
+channel	String	Channel name
+data	List	Subscribed data
+>time	String	Trade time
+>price	String	Trade price
+>size	String	Trade quantity
+>value	String	Trade amount
+>buyerMaker	String	Market flag (internal/external)
+Push Response Example
+
+{
+  "event": "payload",
+  "channel": "trades.cmt_btcusdt",
+  "data": [
+    {
+      "time": "1747131727502",
+      "price": "103337.5",
+      "size": "0.01600",
+      "value": "1653.400000",
+      "buyerMaker": false
+    }
+  ]
+}

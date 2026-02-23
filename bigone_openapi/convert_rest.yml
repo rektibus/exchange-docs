@@ -1,0 +1,467 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: Convert REST API
+  description: API for BigONE Convert (Swap) service.
+  contact:
+    email: developer@big.one
+servers:
+  - url: 'https://api.big.one/sapi/v1/convert'
+tags:
+  - name: Quote
+    description: Get quotes for conversion
+  - name: Trades
+    description: Execute and manage trades
+  - name: Assets
+    description: Asset information
+  - name: Ranges
+    description: Trading range limits
+
+paths:
+  /assets:
+    get:
+      tags:
+        - Assets
+      summary: Convert Assets
+      description: Get all convertible assets. Optionally filter by source asset.
+      operationId: getConvertAssets
+      parameters:
+        - in: query
+          name: from_asset
+          description: The source asset symbol to filter by. Optional.
+          required: false
+          schema:
+            type: string
+          example: USDT
+      responses:
+        '200':
+          description: List of convertible assets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ConvertAsset'
+
+  /range:
+    get:
+      tags:
+        - Ranges
+      summary: Convert Range
+      description: Get the minimum and maximum convertible amounts for an asset pair from all available makers.
+      operationId: getConvertRange
+      parameters:
+        - in: query
+          name: from_asset
+          required: true
+          schema:
+            type: string
+          description: The source asset symbol (e.g., USDT).
+          example: USDT
+        - in: query
+          name: to_asset
+          required: true
+          schema:
+            type: string
+          description: The destination asset symbol (e.g., BTC).
+          example: BTC
+      responses:
+        '200':
+          description: Range information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConvertRange'
+
+  /viewer/quote:
+    get:
+      tags:
+        - Quote
+      summary: Convert Quote
+      description: Request a conversion quote for a specified amount. The quote locks the price for a limited time (see ttl_ms).
+      operationId: getConvertQuote
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: from_asset
+          required: true
+          schema:
+            type: string
+          description: The source asset symbol (e.g., USDT).
+          example: USDT
+        - in: query
+          name: to_asset
+          required: true
+          schema:
+            type: string
+          description: The destination asset symbol (e.g., BTC).
+          example: BTC
+        - in: query
+          name: rfq_size
+          required: true
+          schema:
+            type: string
+          description: The amount to convert.
+          example: "333"
+        - in: query
+          name: rfq_size_asset
+          required: true
+          schema:
+            type: string
+          description: The asset of the amount to convert (from_asset or to_asset).
+          example: USDT
+      responses:
+        '200':
+          description: Quote details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConvertQuote'
+
+  /viewer/trade:
+    post:
+      tags:
+        - Trades
+      summary: Create Convert Trade
+      description: Execute a conversion trade using a previously obtained quote. The quote must not have expired.
+      operationId: createConvertTrade
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTradeRequest'
+      responses:
+        '200':
+          description: Trade created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConvertTrade'
+        '400':
+          description: Invalid parameters or convert error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                parameter_error:
+                  value:
+                    code: 10007
+                    message: "Parameter error"
+                asset_not_supported:
+                  value:
+                    code: 54046
+                    message: "Convert asset not supported"
+                price_expired:
+                  value:
+                    code: 54047
+                    message: "Convert price expired"
+                param_inconsistent:
+                  value:
+                    code: 54048
+                    message: "Convert parameter inconsistent"
+                amount_too_small:
+                  value:
+                    code: 54050
+                    message: "Convert amount too small"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Permission denied or system busy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                permission_denied:
+                  value:
+                    code: 10403
+                    message: "Permission denied"
+                system_busy:
+                  value:
+                    code: 54053
+                    message: "Convert system busy"
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    get:
+      tags:
+        - Trades
+      summary: Get Convert Trade Detail
+      description: Get details of a specific conversion trade by ID or quote ID. Either id or quote_id is required.
+      operationId: getConvertTradeDetail
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: id
+          schema:
+            type: integer
+          description: Trade ID (Either id or quote_id is required)
+        - in: query
+          name: quote_id
+          schema:
+            type: string
+          description: Quote ID (Either id or quote_id is required)
+      responses:
+        '200':
+          description: Trade details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConvertTrade'
+
+  /viewer/trades:
+    get:
+      tags:
+        - Trades
+      summary: Get Convert Trades
+      description: Get the authenticated user's conversion trade history, ordered by creation time (newest first).
+      operationId: getConvertTrades
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page_token
+          schema:
+            type: string
+          description: Pagination token obtained from the previous response. Use to retrieve the next page.
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 200
+          description: The maximum number of trades to return per page.
+      responses:
+        '200':
+          description: List of trades
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ConvertTrade'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    Unauthorized:
+      description: Authentication failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: 40004
+            message: "Unauthorized"
+    Forbidden:
+      description: Permission denied
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: 10403
+            message: "Permission denied"
+    BadRequest:
+      description: Invalid parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: 10007
+            message: "Parameter error"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: 10013
+            message: "Resource not found"
+    TooManyRequests:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: 10429
+            message: "Too many requests"
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: 10005
+            message: "Internal error"
+  schemas:
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: Error code
+          example: 10007
+        message:
+          type: string
+          description: Error message
+          example: "Parameter error"
+    ConvertAsset:
+      type: object
+      description: An asset that can be used in the Convert service.
+      properties:
+        asset:
+          type: string
+          description: The asset symbol (e.g., BTC, USDT).
+          example: BTC
+        scale:
+          type: integer
+          description: The decimal precision for this asset (number of decimal places).
+          example: 8
+    
+    ConvertRange:
+      type: object
+      description: The minimum and maximum amounts allowed for a conversion pair.
+      properties:
+        from_asset_max_amount:
+          type: string
+          description: The maximum amount that can be converted from.
+          example: "77654.92"
+        from_asset_min_amount:
+          type: string
+          description: The minimum amount that can be converted from.
+          example: "10.06"
+        to_asset_max_amount:
+          type: string
+          description: The maximum amount that can be received (converted to).
+          example: "0.748828"
+        to_asset_min_amount:
+          type: string
+          description: The minimum amount that will be received (converted to).
+          example: "0.000097"
+
+    ConvertQuote:
+      type: object
+      description: A quote for converting from one asset to another with a locked price.
+      properties:
+        from_asset:
+          type: string
+          description: The source asset symbol.
+          example: USDT
+        to_asset:
+          type: string
+          description: The destination asset symbol.
+          example: BTC
+        px:
+          type: string
+          description: The conversion price (how much to_asset per unit of from_asset).
+          example: "0.00000962"
+        from_sz:
+          type: string
+          description: The source amount to convert.
+          example: "333"
+        to_sz:
+          type: string
+          description: The destination amount to receive.
+          example: "0.00320533"
+        quote_id:
+          type: string
+          description: The unique quote identifier. Required to execute the trade.
+          example: "dd5091d4-1e90-48b3-83bc-bea1312660ab"
+        quote_ts:
+          type: integer
+          description: The timestamp when the quote was generated (Unix milliseconds).
+          format: int64
+          example: 1747208733939
+        ttl_ms:
+          type: integer
+          description: The validity period of the quote in milliseconds.
+          example: 10000
+        rfq_size:
+          type: string
+          description: The requested conversion amount.
+          example: "333"
+        rfq_size_asset:
+          type: string
+          description: The asset of the requested amount.
+          example: USDT
+
+    CreateTradeRequest:
+      type: object
+      required:
+        - quote_id
+      description: Request to execute a conversion trade using a previously obtained quote.
+      properties:
+        quote_id:
+          type: string
+          description: The quote ID from the Get Convert Quote endpoint. The quote must not have expired.
+          example: "97611740-1ae5-4989-812d-2cb1566fd0f3"
+        account_type:
+          type: string
+          description: The account type to use for the conversion. Default is FUND.
+          enum: [FUND, SPOT, ALL]
+          example: FUND
+
+    ConvertTrade:
+      type: object
+      description: A completed or pending conversion trade.
+      properties:
+        id:
+          type: integer
+          description: The unique trade ID.
+          format: int64
+          example: 12345
+        quote_id:
+          type: string
+          description: The quote ID used for this trade.
+          example: "97611740-1ae5-4989-812d-2cb1566fd0f3"
+        from_asset:
+          type: string
+          description: The source asset symbol.
+          example: USDT
+        to_asset:
+          type: string
+          description: The destination asset symbol.
+          example: BTC
+        from_sz:
+          type: string
+          description: The amount converted from.
+          example: "333"
+        to_sz:
+          type: string
+          description: The amount received.
+          example: "0.00320533"
+        px:
+          type: string
+          description: The execution price.
+          example: "0.00000962"
+        ts:
+          type: integer
+          format: int64
+          description: The timestamp when the trade was executed (Unix milliseconds).
+          example: 1705312800000
+        state:
+          type: string
+          description: The current state of the conversion trade.
+          enum: [PENDING, PROCESSING, SUCCEEDED, FAILED]
+          example: SUCCEEDED
+        acct_typ:
+          type: string
+          enum: [FUND, SPOT]
+          description: The account type used for the trade.
+          example: FUND

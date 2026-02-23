@@ -1,0 +1,34 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: Server API
+  description: Server internal status and time API.
+  contact:
+    email: developer@big.one
+servers:
+  - url: 'https://api.big.one/api/v3'
+paths:
+  /ping:
+    get:
+      summary: Get Server Time
+      description: |
+        Returns the current server timestamp in nanoseconds.
+
+        This endpoint is commonly used for:
+        - Checking server connectivity and measuring latency
+        - Synchronizing client clocks with the server
+        - Verifying API availability
+      operationId: getPing
+      responses:
+        '200':
+          description: Server timestamp
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Timestamp:
+                    type: integer
+                    format: int64
+                    description: The current server timestamp in nanoseconds (Unix time with nanosecond precision).
+                    example: 1528102434742412000

@@ -1,0 +1,864 @@
+{
+	"info": {
+		"_postman_id": "582cc347-910e-4c1c-b562-c67aca4407ec",
+		"name": "Coinbase App",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "18811580"
+	},
+	"item": [
+		{
+			"name": "Accounts",
+			"item": [
+				{
+					"name": "List Accounts",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://api.coinbase.com/v2/accounts",
+							"protocol": "https",
+							"host": [
+								"api",
+								"coinbase",
+								"com"
+							],
+							"path": [
+								"v2",
+								"accounts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Show Account",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://api.coinbase.com/v2/accounts/:account_id",
+							"protocol": "https",
+							"host": [
+								"api",
+								"coinbase",
+								"com"
+							],
+							"path": [
+								"v2",
+								"accounts",
+								":account_id"
+							],
+							"variable": [
+								{
+									"key": "account_id",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{token}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Addresses",
+			"item": [
+				{
+					"name": "Create Address",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"address label\" //optional\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://api.coinbase.com/v2/accounts/:account_id/addresses",
+							"protocol": "https",
+							"host": [
+								"api",
+								"coinbase",
+								"com"
+							],
+							"path": [
+								"v2",
+								"accounts",
+								":account_id",
+								"addresses"
+							],
+							"variable": [
+								{
+									"key": "account_id",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Addresses",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://api.coinbase.com/v2/accounts/:account_id/addresses",
+							"protocol": "https",
+							"host": [
+								"api",
+								"coinbase",
+								"com"
+							],
+							"path": [
+								"v2",
+								"accounts",
+								":account_id",
+								"addresses"
+							],
+							"variable": [
+								{
+									"key": "account_id",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Show Address",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://api.coinbase.com/v2/accounts/:account_id/addresses/:address_id",
+							"protocol": "https",
+							"host": [
+								"api",
+								"coinbase",
+								"com"
+							],
+							"path": [
+								"v2",
+								"accounts",
+								":account_id",
+								"addresses",
+								":address_id"
+							],
+							"variable": [
+								{
+									"key": "account_id",
+									"value": ""
+								},
+								{
+									"key": "address_id",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Transactions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://api.coinbase.com/v2/accounts/:account_id/addresses/:address_id/transactions",
+							"protocol": "https",
+							"host": [
+								"api",
+								"coinbase",
+								"com"
+							],
+							"path": [
+								"v2",
+								"accounts",
+								":account_id",
+								"addresses",
+								":address_id",
+								"transactions"
+							],
+							"variable": [
+								{
+									"key": "account_id",
+									"value": ""
+								},
+								{
+									"key": "address_id",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{token}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Transactions",
+			"item": [
+				{
+					"name": "Send Money",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"type\": \"send\", // string, send is a constant type (required)\n    \"to\": \"A blockchain address, or an email of the recipient\", // string, (required)\n    \"amount\": \"Amount to be sent\", // string, (required)\n    \"currency\": \"Currency of the amount\", // string, (required)\n    \"description\": \"Notes to be included in the email to the recipient\", // string, (optional)\n    \"skip_notification\": \"Don't send notification emails for small amounts (e.g., tips)\", // boolean, (optional)\n    \"idem\": \"[Recommended] A token to ensure idempotence. If a previous transaction with the same idem parameter exists for this sender, that previous transaction is returned and a new one is not created. Max length is 100 characters.\", // string, (optional)\n    \"to_financial_institution\": \"If true, send to another financial institution or exchange. Required if this send is to an address and is valued at over USD$3000.\", // boolean, (optional)\n    \"financial_institution_website\": \"financial_institution_website\", // string, (optional)\n    \"destination_tag\": \"For select currencies, destination_tag or memo indicates the beneficiary or destination of a payment for select currencies.\" // string, (optional)\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://api.coinbase.com/v2/accounts/:account_id/transactions",
+							"protocol": "https",
+							"host": [
+								"api",
+								"coinbase",
+								"com"
+							],
+							"path": [
+								"v2",
+								"accounts",
+								":account_id",
+								"transactions"
+							],
+							"variable": [
+								{
+									"key": "account_id",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Transfer Money",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"type\": \"Type 'transfer' is required\", // string, (required)\n    \"to\": \"ID of the receiving account\", // string, (required)\n    \"amount\": \"Amount to be transferred\", //string, (required)\n    \"currency\": \"Currency for the 'amount'\", // string, (required)\n    \"description\": \"Notes to be included in the transfer\" // string, (optional)\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://api.coinbase.com/v2/accounts/:account_id/transactions",
+							"protocol": "https",
+							"host": [
+								"api",
+								"coinbase",
+								"com"
+							],
+							"path": [
+								"v2",
+								"accounts",
+								":account_id",
+								"transactions"
+							],
+							"variable": [
+								{
+									"key": "account_id",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Transactions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://api.coinbase.com/v2/accounts/:account_id/transactions",
+							"protocol": "https",
+							"host": [
+								"api",
+								"coinbase",
+								"com"
+							],
+							"path": [
+								"v2",
+								"accounts",
+								":account_id",
+								"transactions"
+							],
+							"variable": [
+								{
+									"key": "account_id",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Show Transactions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://api.coinbase.com/v2/accounts/:account_id/transactions/:transaction_id",
+							"protocol": "https",
+							"host": [
+								"api",
+								"coinbase",
+								"com"
+							],
+							"path": [
+								"v2",
+								"accounts",
+								":account_id",
+								"transactions",
+								":transaction_id"
+							],
+							"variable": [
+								{
+									"key": "account_id",
+									"value": ""
+								},
+								{
+									"key": "transaction_id",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{token}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Deposits",
+			"item": [
+				{
+					"name": "Deposit Funds",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"amount\": \"Deposit amount\", // string, (required)\n    \"currency\":  \"Currency for the amount\", // string, (required)\n    \"payment_method\": \"ID of payment method to be used for the deposit. List Payment Methods: GET /payment-methods\", // string, (required)\n    \"commit\": \"If false, this deposit is not immediately completed. Use the commit call to complete it. Default value: true\" // boolean, (optional)\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://api.coinbase.com/v2/accounts/:account_id/deposits",
+							"protocol": "https",
+							"host": [
+								"api",
+								"coinbase",
+								"com"
+							],
+							"path": [
+								"v2",
+								"accounts",
+								":account_id",
+								"deposits"
+							],
+							"variable": [
+								{
+									"key": "account_id",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Commit Deposit",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "https://api.coinbase.com/v2/accounts/:account_id/deposits/:deposit_id/commit",
+							"protocol": "https",
+							"host": [
+								"api",
+								"coinbase",
+								"com"
+							],
+							"path": [
+								"v2",
+								"accounts",
+								":account_id",
+								"deposits",
+								":deposit_id",
+								"commit"
+							],
+							"variable": [
+								{
+									"key": "account_id",
+									"value": ""
+								},
+								{
+									"key": "deposit_id",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Deposits",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://api.coinbase.com/v2/accounts/:account_id/deposits",
+							"protocol": "https",
+							"host": [
+								"api",
+								"coinbase",
+								"com"
+							],
+							"path": [
+								"v2",
+								"accounts",
+								":account_id",
+								"deposits"
+							],
+							"variable": [
+								{
+									"key": "account_id",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Show Deposit",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://api.coinbase.com/v2/accounts/:account_id/deposits/:deposit_id",
+							"protocol": "https",
+							"host": [
+								"api",
+								"coinbase",
+								"com"
+							],
+							"path": [
+								"v2",
+								"accounts",
+								":account_id",
+								"deposits",
+								":deposit_id"
+							],
+							"variable": [
+								{
+									"key": "account_id",
+									"value": ""
+								},
+								{
+									"key": "deposit_id",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{token}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Withdrawals",
+			"item": [
+				{
+					"name": "Withdraw Funds",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"amount\": \"Withdrawal amount\", // string, (required)\n    \"currency\": \"Currency for the amount\", // string, (required)\n    \"payment_method\": \"ID of payment method used for the withdrawal. List Payment Methods: GET /payment-methods\", // string, (required)\n    \"commit\": \"If false, this withdrawal is not immediately completed. Use the commit call to complete it. Default value: true\" // boolean, (optional)\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://api.coinbase.com/v2/accounts/:account_id/withdrawals",
+							"protocol": "https",
+							"host": [
+								"api",
+								"coinbase",
+								"com"
+							],
+							"path": [
+								"v2",
+								"accounts",
+								":account_id",
+								"withdrawals"
+							],
+							"variable": [
+								{
+									"key": "account_id",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "New Request",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "https://api.coinbase.com/v2/accounts/:account_id/withdrawals/:withdrawal_id/commit",
+							"protocol": "https",
+							"host": [
+								"api",
+								"coinbase",
+								"com"
+							],
+							"path": [
+								"v2",
+								"accounts",
+								":account_id",
+								"withdrawals",
+								":withdrawal_id",
+								"commit"
+							],
+							"variable": [
+								{
+									"key": "account_id",
+									"value": ""
+								},
+								{
+									"key": "withdrawal_id",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Withdrawals",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://api.coinbase.com/v2/accounts/:account_id/withdrawals",
+							"protocol": "https",
+							"host": [
+								"api",
+								"coinbase",
+								"com"
+							],
+							"path": [
+								"v2",
+								"accounts",
+								":account_id",
+								"withdrawals"
+							],
+							"variable": [
+								{
+									"key": "account_id",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Show Withdrawal",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://api.coinbase.com/v2/accounts/:account_id/withdrawals/:withdrawal_id",
+							"protocol": "https",
+							"host": [
+								"api",
+								"coinbase",
+								"com"
+							],
+							"path": [
+								"v2",
+								"accounts",
+								":account_id",
+								"withdrawals",
+								":withdrawal_id"
+							],
+							"variable": [
+								{
+									"key": "account_id",
+									"value": ""
+								},
+								{
+									"key": "withdrawal_id",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{token}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					"// set empty navigator and window objects",
+					"var navigator = {};",
+					"var window = {};",
+					"// import external jsrsasign-js library",
+					"eval(pm.environment.get(\"jsrsasign-js\"));",
+					"",
+					"console.log(\"Raw privateKey:\", pm.environment.get(\"privateKey\"));",
+					"console.log(\"Raw name:\", pm.environment.get(\"name\"));",
+					"",
+					"// import private key and name for environment variables, parsing them",
+					"var privateKey = JSON.parse(pm.environment.get(\"privateKey\"));",
+					"var name = JSON.parse(pm.environment.get(\"name\"));",
+					"",
+					"console.log(\"Formatted key: \", privateKey)",
+					"console.log(\"Formatted name\", name)",
+					"",
+					"// create header object",
+					"var header = {",
+					"    alg: \"ES256\",",
+					"    typ: \"JWT\",",
+					"    kid: name,",
+					"    nonce: Math.floor(Date.now() / 1000).toString(),",
+					"};",
+					"",
+					"// create uri string for current request",
+					"var host = pm.request.url.host",
+					"var path = pm.request.url.path",
+					"var hostStr = host.join(\".\");",
+					"var pathStr = path.join(\"/\");",
+					"var uri = pm.request.method + \" \" + hostStr + \"/\" + pathStr;",
+					"",
+					"// create data object",
+					"var data = {",
+					"    iss: \"coinbase-cloud\",",
+					"    nbf: Math.floor(Date.now() / 1000),",
+					"    exp: Math.floor(Date.now() / 1000) + 120,",
+					"    sub: name,",
+					"    uri,",
+					"};",
+					"",
+					"// stringigy header and data",
+					"var sHeader = JSON.stringify(header);",
+					"var sPayload = JSON.stringify(data);",
+					"",
+					"// get the private key and sign to create JWT",
+					"var prvKey = KEYUTIL.getKey(privateKey);",
+					"var sJWT = KJUR.jws.JWS.sign(\"ES256\", sHeader, sPayload, prvKey);",
+					"",
+					"console.log(\"Generated Token: \", sJWT)",
+					"",
+					"// set JWT to token environment variable and reference within 'Authorization - Bearer Token'",
+					"pm.environment.set(\"token\", sJWT);"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}

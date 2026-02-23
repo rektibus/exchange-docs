@@ -1,0 +1,1199 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: PXN OpenAPI
+  contact:
+    email: developer@big.one
+servers:
+  - url: 'https://api.big.one/api/v3'
+tags:
+  - name: Market Data
+    description: Public Market Data
+  - name: Account
+    description: Account Balance and Trading Fees
+  - name: Order
+    description: Order Management
+  - name: Trade
+    description: User Trade History
+
+paths:
+  /asset_pairs:
+    get:
+      tags:
+        - Market Data
+      summary: Get All Asset Pairs
+      description: |
+        Returns a list of all available asset pairs with their configuration.
+
+        This endpoint provides essential market configuration for building trading applications. Asset pairs define the trading relationship between two assets: the **base asset** is what you buy or sell, and the **quote asset** is the currency used for pricing.
+
+        **Special Field Usage:**
+
+        * `base_scale` and `quote_scale` control decimal precision for order quantities and prices. Use these values to format order requests correctly. For example, if `base_scale` is 8, quantities like `0.12345678` are valid but `0.123456789` would be rejected.
+
+        * `min_quote_value` and `max_quote_value` define the order value limits. Order value is calculated as `price × quantity` in quote currency. Orders below `min_quote_value` are too small to process, and orders above `max_quote_value` exceed risk limits.
+
+        :::tip
+        Cache this response and refresh periodically. Asset pair configurations change infrequently, so frequent polling is unnecessary.
+        :::
+      operationId: getAssetPairs
+      responses:
+        '200':
+          description: List of asset pairs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AssetPair'
+  /asset_pairs/{asset_pair_name}/ticker:
+    get:
+      tags:
+        - Market Data
+      summary: Get Ticker
+      description: Returns ticker data for a specific asset pair.
+      operationId: getTicker
+      parameters:
+        - in: path
+          name: asset_pair_name
+          required: true
+          schema:
+            type: string
+            default: BTC-USDT
+          description: Asset Pair Name (e.g., BTC-USDT)
+          example: BTC-USDT
+      responses:
+        '200':
+          description: Ticker data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticker'
+  /asset_pairs/tickers:
+    get:
+      tags:
+        - Market Data
+      summary: Get Multiple Tickers
+      description: Returns ticker data for multiple asset pairs. Returns all tickers if pair_names is not specified.
+      operationId: getTickers
+      parameters:
+        - in: query
+          name: pair_names
+          required: false
+          schema:
+            type: string
+          description: Comma-separated list of asset pair names to filter. Returns all tickers if not specified.
+          example: "BTC-USDT,ETH-BTC"
+      responses:
+        '200':
+          description: List of tickers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ticker'
+  /asset_pairs/{asset_pair_name}/depth:
+    get:
+      tags:
+        - Market Data
+      summary: Get Order Book
+      description: Returns the order book (depth) for a specific asset pair.
+      operationId: getDepth
+      parameters:
+        - in: path
+          name: asset_pair_name
+          required: true
+          schema:
+            type: string
+            default: ETH-BTC
+          description: Asset Pair Name
+          example: ETH-BTC
+        - in: query
+          name: limit
+          required: false
+          schema:
+            type: integer
+            default: 50
+            maximum: 200
+          description: Depth limit
+      responses:
+        '200':
+          description: Order book depth
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Depth'
+  /asset_pairs/{asset_pair_name}/trades:
+    get:
+      tags:
+        - Market Data
+      summary: Get Market Trades
+      description: Returns the most recent public trades for a specific asset pair.
+      operationId: getMarketTrades
+      parameters:
+        - in: path
+          name: asset_pair_name
+          required: true
+          schema:
+            type: string
+          description: The asset pair name.
+          example: BTC-USDT
+      responses:
+        '200':
+          description: List of market trades
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MarketTrade'
+  /asset_pairs/{asset_pair_name}/candles:
+    get:
+      tags:
+        - Market Data
+      summary: Get Candles
+      description: Returns candlestick (OHLCV) data for a specific asset pair.
+      operationId: getCandles
+      parameters:
+        - in: path
+          name: asset_pair_name
+          required: true
+          schema:
+            type: string
+          description: The asset pair name.
+          example: BTC-USDT
+        - in: query
+          name: period
+          required: true
+          schema:
+            type: string
+            enum: [day1, hour1, hour12, hour3, hour4, hour6, min1, min15, min30, min5, month1, week1]
+          description: The candle period.
+          example: day1
+        - in: query
+          name: time
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: The latest candle time (ISO 8601). Returns the most recent candles if not specified.
+          example: "2024-01-15T00:00:00Z"
+        - in: query
+          name: limit
+          required: false
+          schema:
+            type: integer
+            default: 100
+            minimum: 1
+            maximum: 500
+          description: The maximum number of candles to return.
+        - in: query
+          name: direction
+          required: false
+          schema:
+            type: string
+            enum: [ASC, DESC]
+          description: The sorting direction for candles. ASC = oldest first, DESC = newest first. Default is DESC.
+          example: DESC
+      responses:
+        '200':
+          description: List of candles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Candle'
+  /viewer/accounts:
+    get:
+      tags:
+        - Account
+      summary: Get All Accounts
+      description: Returns all spot accounts for the user.
+      operationId: getAccounts
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SpotAccount'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /viewer/accounts/{asset_symbol}:
+    get:
+      tags:
+        - Account
+      summary: Get Account by Symbol
+      description: Returns a specific spot account.
+      operationId: getAccountBySymbol
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: asset_symbol
+          required: true
+          schema:
+            type: string
+            default: BTC
+          example: BTC
+      responses:
+        '200':
+          description: Spot Account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpotAccount'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /viewer/orders:
+    get:
+      tags:
+        - Order
+      summary: Get Orders
+      description: Returns paginated orders for a specific asset pair.
+      operationId: getOrders
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: asset_pair_name
+          required: true
+          schema:
+            type: string
+          description: The asset pair name.
+          example: BTC-USDT
+        - in: query
+          name: page_token
+          required: false
+          schema:
+            type: string
+          description: Pagination token from the previous response.
+        - in: query
+          name: side
+          required: false
+          schema:
+            type: string
+            enum: [ASK, BID]
+          description: Filter by order side.
+        - in: query
+          name: state
+          required: false
+          schema:
+            type: string
+            enum: [PENDING, OPENING, CLOSED, NONE_FILLED, ALL]
+            default: PENDING
+          description: Filter by order state.
+        - in: query
+          name: limit
+          required: false
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 200
+          description: The maximum number of orders to return.
+      responses:
+        '200':
+          description: List of orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+    post:
+      tags:
+        - Order
+      summary: Create Order
+      description: Creates a new order.
+      operationId: createOrder
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderBody'
+      responses:
+        '200':
+          description: Created Order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '400':
+          description: Invalid parameters or order error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                parameter_error:
+                  value:
+                    code: 10007
+                    message: "Parameter error"
+                insufficient_funds:
+                  value:
+                    code: 10014
+                    message: "Insufficient funds"
+                duplicate_order:
+                  value:
+                    code: 54041
+                    message: "Duplicate order"
+                liquidity_too_much:
+                  value:
+                    code: 50047
+                    message: "Liquidity taken too much"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Permission denied or order forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                permission_denied:
+                  value:
+                    code: 10403
+                    message: "Permission denied"
+                order_forbidden:
+                  value:
+                    code: 40304
+                    message: "Creating order is forbidden"
+                account_restricted:
+                  value:
+                    code: 40305
+                    message: "Account restricted"
+                pair_suspended:
+                  value:
+                    code: 60100
+                    message: "Asset pair is suspended"
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /viewer/orders/{id}:
+    get:
+      tags:
+        - Order
+      summary: Get Order by ID
+      description: Returns a specific order by ID.
+      operationId: getOrderById
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+          example: 12345678
+      responses:
+        '200':
+          description: Order details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+  /viewer/order:
+    get:
+      tags:
+        - Order
+      summary: Get Order by ID or Client ID
+      description: Returns a specific order.
+      operationId: getOrder
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: order_id
+          schema:
+            type: integer
+            format: int64
+        - in: query
+          name: client_order_id
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Order details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+  /viewer/orders/multi:
+    post:
+      tags:
+        - Order
+      summary: Create Multiple Orders
+      description: Creates multiple orders in a batch.
+      operationId: createMultiOrders
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/CreateOrderBody'
+      responses:
+        '200':
+          description: List of created orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+  /viewer/orders/{id}/cancel:
+    post:
+      tags:
+        - Order
+      summary: Cancel Order by ID (Path)
+      description: Cancels a specific order.
+      operationId: cancelOrderByIdPath
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+          example: 12345678
+      responses:
+        '200':
+          description: Cancelled Order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+  /viewer/order/cancel:
+    post:
+      tags:
+        - Order
+      summary: Cancel Order by ID or Client ID
+      description: Cancels a specific order. **Either `order_id` or `client_order_id` must be provided.**
+      operationId: cancelOrder
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelOrderBody'
+      responses:
+        '200':
+          description: Cancelled Order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+  /viewer/orders/cancel:
+    post:
+      tags:
+        - Order
+      summary: Cancel All Orders
+      description: Cancels all orders for a specific asset pair.
+      operationId: cancelAllOrders
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelAllOrdersBody'
+      responses:
+        '200':
+          description: Cancelled orders summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                  data:
+                    type: object
+                    properties:
+                      cancelled:
+                        type: array
+                        items:
+                          type: integer
+                          format: int64
+                      failed:
+                        type: array
+                        items:
+                          type: object
+  /viewer/trades:
+    get:
+      tags:
+        - Trade
+      summary: Get User Trades
+      description: Returns paginated user trade history for a specific asset pair.
+      operationId: getUserTrades
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: asset_pair_name
+          required: true
+          schema:
+            type: string
+          description: The asset pair name.
+          example: BTC-USDT
+        - in: query
+          name: page_token
+          required: false
+          schema:
+            type: string
+          description: Pagination token from the previous response.
+        - in: query
+          name: limit
+          required: false
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 200
+          description: The maximum number of trades to return.
+      responses:
+        '200':
+          description: List of user trades
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserTrade'
+  /viewer/trading_fees:
+    get:
+      tags:
+        - Account
+      summary: Get Trading Fees
+      description: Returns the trading fee rates for the authenticated user. Optionally filter by asset pair names.
+      operationId: getTradingFees
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: asset_pair_names
+          required: false
+          schema:
+            type: string
+          description: Comma-separated list of asset pair names to filter. Returns all fee rates if not specified.
+          example: "BTC-USDT,ETH-USDT"
+      responses:
+        '200':
+          description: List of trading fees
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TradingFee'
+
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    Unauthorized:
+      description: Authentication failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: 40004
+            message: "Unauthorized"
+    Forbidden:
+      description: Permission denied
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: 10403
+            message: "Permission denied"
+    BadRequest:
+      description: Invalid parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: 10007
+            message: "Parameter error"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: 10013
+            message: "Resource not found"
+    TooManyRequests:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: 10429
+            message: "Too many requests"
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: 10005
+            message: "Internal error"
+  schemas:
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: Error code
+          example: 10007
+        message:
+          type: string
+          description: Error message
+          example: "Parameter error"
+    CreateOrderBody:
+      type: object
+      required: [asset_pair_name, side, amount, type]
+      properties:
+        asset_pair_name:
+          type: string
+          description: The asset pair name (e.g., BTC-USDT).
+          example: BTC-USDT
+        side:
+          type: string
+          description: The order side. ASK = sell, BID = buy.
+          enum: [ASK, BID]
+          example: BID
+        price:
+          type: string
+          description: The limit price for LIMIT or STOP_LIMIT orders. Required for LIMIT and STOP_LIMIT types.
+          example: "50000.00"
+        amount:
+          type: string
+          description: The order amount (quantity of the base asset).
+          example: "0.5"
+        type:
+          type: string
+          description: The order type.
+          enum: [LIMIT, MARKET, STOP_LIMIT, STOP_MARKET]
+          example: LIMIT
+        stop_price:
+          type: string
+          description: The trigger price for STOP_LIMIT or STOP_MARKET orders.
+          example: "49500.00"
+        operator:
+          type: string
+          description: The trigger condition when combined with stop_price. GTE = triggered when price >= stop_price, LTE = triggered when price <= stop_price.
+          enum: [GTE, LTE]
+          example: GTE
+        immediate_or_cancel:
+          type: boolean
+          description: If true, the order must be filled immediately or cancelled. Valid for LIMIT orders only.
+        post_only:
+          type: boolean
+          description: If true, the order will only post to the order book as a maker. If it would take liquidity, it is cancelled.
+        client_order_id:
+          type: string
+          description: A user-specified order ID for tracking and cancellation. Must be unique within 24 hours.
+
+    CancelOrderBody:
+      type: object
+      description: Either order_id or client_order_id must be provided.
+      properties:
+        order_id:
+          type: integer
+          format: int64
+          description: The unique order ID assigned by BigONE.
+          example: 12345678
+        client_order_id:
+          type: string
+          description: The unique client order ID assigned by the user.
+          example: "my-order-001"
+
+    CancelAllOrdersBody:
+      type: object
+      required: [asset_pair_name]
+      description: Request body to cancel all open orders for a specific trading pair.
+      properties:
+        asset_pair_name:
+          type: string
+          description: The asset pair name to cancel all orders for (e.g., BTC-USDT).
+          example: BTC-USDT
+
+    Asset:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Asset ID
+          example: 0df9c3c3-255a-46d7-ab82-dedae169fba9
+        symbol:
+          type: string
+          description: Asset Symbol
+          example: BTC
+        name:
+          type: string
+          description: Asset Name
+          example: Bitcoin
+    AssetPair:
+      type: object
+      description: An asset pair (trading pair) with its configuration.
+      properties:
+        id:
+          type: string
+          description: The unique identifier of the asset pair.
+          example: "d2185614-50c3-4588-b146-b8afe7534da6"
+        name:
+          type: string
+          description: The asset pair name (e.g., BTC-USDT).
+          example: "BTC-USDT"
+        base_scale:
+          type: integer
+          description: The decimal precision for the base asset (quantity).
+          example: 8
+        quote_scale:
+          type: integer
+          description: The decimal precision for the quote asset (price).
+          example: 2
+        base_asset:
+          description: The base asset details.
+          type: object
+          properties:
+            id:
+              type: string
+              description: The asset ID.
+            symbol:
+              type: string
+              description: The asset symbol.
+              example: BTC
+            name:
+              type: string
+              description: The asset name.
+              example: Bitcoin
+        quote_asset:
+          description: The quote asset details.
+          type: object
+          properties:
+            id:
+              type: string
+              description: The asset ID.
+            symbol:
+              type: string
+              description: The asset symbol.
+              example: USDT
+            name:
+              type: string
+              description: The asset name.
+              example: Tether
+        min_quote_value:
+          type: string
+          description: The minimum order value in quote currency.
+          example: "0.001"
+        max_quote_value:
+          type: string
+          description: The maximum order value in quote currency.
+          example: "1000000"
+    PriceLevel:
+      type: object
+      description: A price level with quantity and order count.
+      properties:
+        price:
+          type: string
+          description: The price level.
+          example: "5098.37"
+        quantity:
+          type: string
+          description: The total quantity at this price level.
+          example: "0.0679"
+        order_count:
+          type: integer
+          format: uint64
+          description: The number of orders at this price level.
+          example: 10
+    Ticker:
+      type: object
+      description: 24-hour trading statistics for an asset pair.
+      properties:
+        asset_pair_name:
+          type: string
+          description: The asset pair name.
+          example: "BTC-USDT"
+        bid:
+          description: The current highest bid price level.
+          $ref: '#/components/schemas/PriceLevel'
+        ask:
+          description: The current lowest ask price level.
+          $ref: '#/components/schemas/PriceLevel'
+        open:
+          type: string
+          description: The opening price.
+          example: "3100.0"
+        close:
+          type: string
+          description: The latest price (close).
+          example: "3150.0"
+        high:
+          type: string
+          description: The highest price in the last 24 hours.
+          example: "3200.0"
+        low:
+          type: string
+          description: The lowest price in the last 24 hours.
+          example: "3050.0"
+        volume:
+          type: string
+          description: The trading volume in the last 24 hours (base asset).
+          example: "1500.5"
+        daily_change:
+          type: string
+          description: The price change in the last 24 hours (absolute value).
+          example: "50.0"
+    Depth:
+      type: object
+      description: The order book (depth) for an asset pair showing bids and asks.
+      properties:
+        asset_pair_name:
+          type: string
+          description: The asset pair name.
+          example: "BTC-USDT"
+        bids:
+          type: array
+          description: Buy orders sorted by price (highest bid first).
+          items:
+            $ref: '#/components/schemas/PriceLevel'
+        asks:
+          type: array
+          description: Sell orders sorted by price (lowest ask first).
+          items:
+            $ref: '#/components/schemas/PriceLevel'
+    MarketTrade:
+      type: object
+      description: A public market trade.
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: The trade ID.
+          example: 38199941
+        price:
+          type: string
+          description: The execution price.
+          example: "3378.67"
+        amount:
+          type: string
+          description: The trade amount (base asset quantity).
+          example: "0.019812"
+        taker_side:
+          type: string
+          enum: [ASK, BID]
+          description: The taker's side. ASK = seller, BID = buyer.
+          example: ASK
+        inserted_at:
+          type: string
+          description: The timestamp when the trade was executed (RFC3339 with millisecond precision).
+          example: "2025-12-29T14:50:54.623Z"
+    Candle:
+      type: object
+      description: A candlestick (OHLCV) data point for an asset pair.
+      properties:
+        time:
+          type: string
+          description: The candle timestamp (RFC3339, second precision).
+          example: "2025-12-29T13:00:00Z"
+        open:
+          type: string
+          description: The opening price.
+          example: "3613.94"
+        high:
+          type: string
+          description: The highest price during the period.
+          example: "3615.53"
+        low:
+          type: string
+          description: The lowest price during the period.
+          example: "3613.94"
+        close:
+          type: string
+          description: The closing price.
+          example: "3614.18"
+        volume:
+          type: string
+          description: The trading volume during the period (base asset).
+          example: "0.084582"
+    SpotAccount:
+      type: object
+      description: A spot account balance for an asset.
+      properties:
+        asset_symbol:
+          type: string
+          description: The asset symbol.
+          example: "BTC"
+        balance:
+          type: string
+          description: The available balance for trading.
+          example: "10.034"
+        locked_balance:
+          type: string
+          description: The balance locked in orders or pending operations.
+          example: "0"
+
+    Order:
+      type: object
+      description: Order details including status, execution, and conditional order settings.
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: The unique order ID assigned by BigONE.
+          example: 12345678
+        asset_pair_name:
+          type: string
+          description: The asset pair name.
+          example: BTC-USDT
+        price:
+          type: string
+          description: The order price.
+          example: "50000.00"
+        amount:
+          type: string
+          description: The original order amount (base asset quantity).
+          example: "0.5"
+        filled_amount:
+          type: string
+          description: The amount that has been filled.
+          example: "0.25"
+        avg_deal_price:
+          type: string
+          description: The average fill price of executed portions.
+          example: "49950.00"
+        side:
+          type: string
+          description: The order side. ASK = sell, BID = buy.
+          enum: [ASK, BID]
+          example: BID
+        state:
+          type: string
+          description: The current order state.
+          enum: [FILLED, PENDING, CANCELLED, FIRED, REJECTED]
+          example: PENDING
+        created_at:
+          type: string
+          format: date-time
+          description: The timestamp when the order was created (ISO 8601).
+          example: "2024-01-15T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: The timestamp when the order was last updated (ISO 8601).
+          example: "2024-01-15T10:35:00Z"
+        type:
+          type: string
+          description: The order type.
+          enum: [LIMIT, MARKET, STOP_LIMIT, STOP_MARKET]
+          example: LIMIT
+        stop_price:
+          type: string
+          description: The trigger price for stop orders.
+          example: "49500.00"
+        operator:
+          type: string
+          description: The trigger condition for stop orders. GTE = triggered when price >= stop_price, LTE = triggered when price <= stop_price.
+          enum: [GTE, LTE]
+          example: GTE
+        immediate_or_cancel:
+          type: boolean
+          description: Whether this is an Immediate-or-Cancel order.
+        post_only:
+          type: boolean
+          description: Whether this is a post-only order.
+        client_order_id:
+          type: string
+          description: The user-specified client order ID.
+          example: "my-order-001"
+    UserTrade:
+      type: object
+      description: A trade execution record from the user's perspective.
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: The unique trade ID.
+          example: 38199941
+        asset_pair_name:
+          type: string
+          description: The asset pair name.
+          example: BTC-USDT
+        price:
+          type: string
+          description: The execution price.
+          example: "50000.00"
+        amount:
+          type: string
+          description: The traded amount (base asset quantity).
+          example: "0.5"
+        taker_side:
+          type: string
+          description: The side of the taker (the order that matched). ASK = taker sold, BID = taker bought.
+          enum: [ASK, BID]
+          example: ASK
+        side:
+          type: string
+          description: The side from the maker's perspective. SELF_TRADING indicates both sides of the trade were from the same user.
+          enum: [ASK, BID, SELF_TRADING]
+          example: ASK
+        maker_order_id:
+          type: integer
+          format: int64
+          nullable: true
+          description: The order ID of the maker (the liquidity provider). Null if the maker order was not found.
+          example: 12345670
+        taker_order_id:
+          type: integer
+          format: int64
+          nullable: true
+          description: The order ID of the taker (the liquidity taker).
+          example: 12345671
+        maker_fee:
+          type: string
+          nullable: true
+          description: The fee paid by the maker (negative values indicate rebates). Null if the user was the taker.
+          example: "-0.00005"
+        taker_fee:
+          type: string
+          nullable: true
+          description: The fee paid by the taker. Null if the user was the maker.
+          example: "0.00015"
+        inserted_at:
+          type: string
+          description: The timestamp when the trade was recorded (RFC3339 with millisecond precision).
+          example: "2024-01-15T10:32:00.123Z"
+        created_at:
+          type: string
+          description: Alias for inserted_at (same value).
+          example: "2024-01-15T10:32:00.123Z"
+    TradingFee:
+      type: object
+      description: The trading fee rates for a specific trading pair.
+      properties:
+        asset_pair_name:
+          type: string
+          description: The asset pair name.
+          example: BTC-USDT
+        maker_fee_rate:
+          type: string
+          description: The maker fee rate (negative values indicate rebates). e.g., -0.0001 = -0.01% rebate.
+          example: "-0.0001"
+        taker_fee_rate:
+          type: string
+          description: The taker fee rate. e.g., 0.0005 = 0.05% fee.
+          example: "0.0005"
+
+
+    AuthenticateCustomerRequest:
+      type: object
+      required:
+        - token
+      properties:
+        token:
+          type: string
+          description: "Bearer {token}"
+    SubscribeMarketDepthRequest:
+      type: object
+      required:
+        - market
+      properties:
+        market:
+          type: string
+          description: "Market Symbol (e.g. BTC-USDT)"
+          example: "BTC-USDT"
+    SubscribeMarketCandlesRequest:
+      type: object
+      required:
+        - market
+        - period
+      properties:
+        market:
+          type: string
+          description: "Market Symbol"
+        period:
+          type: string
+          enum: [MIN1, MIN5, MIN15, MIN30, HOUR1, HOUR3, HOUR4, HOUR6, HOUR12, DAY1, WEEK1]
+        limit:
+          type: integer
+          description: "Limit (default 20)"
+    SubscribeMarketsTickerRequest:
+      type: object
+      required:
+        - markets
+      properties:
+        markets:
+          type: array
+          items:
+            type: string
+          description: "List of Market Symbols"
+    SubscribeMarketTradesRequest:
+      type: object
+      required:
+        - market
+      properties:
+        market:
+          type: string
+          description: "Market Symbol"
+        limit:
+          type: integer
+          description: "Limit"
+    SubscribeViewerOrdersRequest:
+      type: object
+      required:
+        - market
+      properties:
+        market:
+          type: string
+          description: "Market Symbol"
+    SubscribeAllViewerOrdersRequest:
+      type: object
+      properties: {}
+    SubscribeViewerAccountsRequest:
+      type: object
+      properties: {}

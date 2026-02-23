@@ -1,0 +1,1326 @@
+openapi: 3.0.3
+info:
+  title: BigONE Contract REST API
+  version: 2.0.0
+  contact:
+    email: developer@big.one
+  description: |
+    API for BigONE Contract Trading. 
+    The base URL for all requests is `https://api.big.one/api/contract/v2`.
+    Authentication is required for all private endpoints.
+
+servers:
+  - url: https://api.big.one/api/contract/v2
+tags:
+  - name: Market Data
+    description: Public Market Data
+  - name: Account
+    description: Account Balance
+  - name: Position
+    description: Position Management
+  - name: Trade
+    description: Trade History
+  - name: Order
+    description: Order Management
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        anomaly:
+          type: string
+          description: Specific error keyword for Contract API business logic.
+          enum:
+            - anomaly.trades/stopped
+            - anomaly.trades/suspended
+            - anomaly.order/price-out-of-range
+            - anomaly.open-order/price-invalid-loss
+            - anomaly.open-order/price-invalid-profit
+            - anomaly.close-position/position-not-found
+            - anomaly.adjust-margin/invalid-lerverage
+            - anomaly.adjust-margin/position-too-large
+            - anomaly.limit-risk/position-too-large
+            - anomaly.adjust-risk-limit/too-small-or-too-large
+            - anomaly.request/invalid-params
+
+    Instrument:
+      type: object
+      properties:
+        usdtPrice:
+          type: number
+          example: 0.99929568
+          description: USDT Index Price
+        symbol:
+          type: string
+          example: BTCUSD
+          description: Contract Instrument Symbol
+        btcPrice:
+          type: number
+          example: 87413.1
+          description: BTC Index Price
+        ethPrice:
+          type: number
+          example: 2921.36
+          description: ETH Index Price
+        nextFundingRate:
+          type: number
+          example: 0.0001
+          description: Estimated next funding rate
+        fundingRate:
+          type: number
+          example: 0.0001974
+          description: Current funding rate
+        latestPrice:
+          type: number
+          example: 87391
+          description: Latest transaction price
+        last24hPriceChange:
+          type: number
+          example: 0.0041
+          description: 24h price change percentage
+        indexPrice:
+          type: number
+          example: 87413.1
+          description: Index price
+        volume24h:
+          type: number
+          example: 3889971
+          description: 24h trading volume (in contract size)
+        turnover24h:
+          type: number
+          example: 44.5192334698948
+          description: 24h turnover
+        nextFundingTime:
+          type: integer
+          format: int64
+          example: 1766685600000
+          description: Next funding timestamp
+        markPrice:
+          type: number
+          example: 87422.65075531
+          description: Mark price
+        last24hMaxPrice:
+          type: number
+          example: 87997.5
+          description: Highest price in the last 24 hours
+        volume24hInUsd:
+          type: number
+          example: 3891564.20722726
+          description: 24h trading volume (in USD)
+        openValue:
+          type: number
+          example: 29.7443056608277
+          description: Open Value
+        last24hMinPrice:
+          type: number
+          example: 86313.5
+          description: Lowest price in the last 24 hours
+        openInterest:
+          type: number
+          example: 1376246
+          description: Total open interest
+
+    PricePoint:
+      type: object
+      properties:
+        price:
+          type: number
+          description: Closing price
+        time:
+          type: integer
+          format: int64
+          description: Timestamp
+
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Order ID
+          example: "5aed7b45-5d19-40f2-0005-ca49d01f33e3"
+        symbol:
+          type: string
+          description: Contract Symbol
+          example: "BTCUSD"
+        side:
+          type: string
+          enum: [BUY, SELL]
+          description: Order Side
+          example: "BUY"
+        type:
+          type: string
+          enum: [LIMIT, MARKET, IOC, FOK, POST_ONLY]
+          description: Order Type
+          example: "LIMIT"
+        price:
+          type: number
+          description: Order Price
+          example: 8000
+        size:
+          type: number
+          description: Order Size (Number of contracts)
+          example: 1
+        status:
+          type: string
+          enum: [NEW, PARTIALLY_FILLED, PARTIALLY_CANCELED, CANCELED, REJECTED, FILLED, UNTRIGGERED, PENDING_CANCEL]
+          description: Order Status
+          example: "NEW"
+        filled:
+          type: number
+          description: Filled Quantity
+          example: 0
+        notional:
+          type: number
+          description: Order Notional Value
+          example: 0.102512
+        avgPrice:
+          type: number
+          description: Average Execution Price
+          example: 0
+        filledNotional:
+          type: number
+          description: Filled Notional Value
+          example: 0
+        reduceOnly:
+          type: boolean
+          description: Reduce Only Order
+          example: false
+        isLiquidate:
+          type: boolean
+          description: Is Liquidation Order
+          example: false
+        userId:
+          type: string
+          description: User ID
+          example: "5aec525e-335d-4724-0005-20153b361f89"
+        liquidateUserId:
+          type: string
+          description: Liquidated User ID
+          nullable: true
+          example: null
+        conditional:
+          $ref: '#/components/schemas/ConditionalOrder'
+          nullable: true
+        ts:
+          type: integer
+          format: int64
+          description: Order Timestamp (Unix Microseconds)
+          example: 1562132083136
+        seqNo:
+          type: integer
+          format: int64
+          description: Sequence Number
+          nullable: true
+          example: 123456
+        meta:
+          type: object
+          description: Order Meta Data
+          nullable: true
+          properties:
+            bestPrice:
+              type: number
+              nullable: true
+              description: May be null depending on order state
+              example: 11311
+            markPrice:
+              type: number
+              nullable: true
+              description: May be null depending on order state
+              example: 11536.1075491
+            bestPrices:
+              type: object
+              nullable: true
+              description: May be null depending on order state
+              properties:
+                ask:
+                  type: number
+                bid:
+                  type: number
+
+    ConditionalOrder:
+      type: object
+      description: Conditional Order Settings
+      properties:
+        price:
+          type: number
+          description: "Trigger Price. The order will be triggered when the specified price type hits this price."
+          example: 8000
+        priceType:
+          type: string
+          enum: [MARK_PRICE, INDEX_PRICE, MARKET_PRICE]
+          description: "Trigger Price Type. Defines which price (Mark/Index/Last) is compared against the trigger price."
+          example: MARKET_PRICE
+        type:
+          type: string
+          enum: [STOP_LOSS, TAKE_PROFIT, REACH]
+          description: "Trigger Condition. REACH: Standard trigger. STOP_LOSS/TAKE_PROFIT: Intended for stop/profit orders."
+          example: REACH
+
+    PlaceOrderRequest:
+      type: object
+      required:
+        - symbol
+        - side
+        - type
+        - size
+      properties:
+        symbol:
+          type: string
+          description: Contract Instrument Symbol (e.g. BTCUSD)
+          example: "BTCUSD"
+        side:
+          type: string
+          enum: [BUY, SELL]
+          description: Order Side
+          example: "BUY"
+        type:
+          type: string
+          enum: [LIMIT, MARKET, IOC, FOK, POST_ONLY]
+          description: Order Type
+          example: "LIMIT"
+        price:
+          type: number
+          description: Order Price (Required for LIMIT orders)
+          example: 8000
+        size:
+          type: number
+          description: Number of contracts
+          example: 100
+        reduceOnly:
+          type: boolean
+          default: false
+          description: "Reduce Only Order. If true, the order will only reduce your position, not increase it. If the order would increase your position, it is automatically amended down or canceled."
+          example: false
+
+
+    Position:
+      type: object
+      description: An open contract position with its details including size, PnL, and margin information.
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: The unique position identifier.
+          example: "5aec8f3f-9846-41af-0005-1b306eeb533a"
+        symbol:
+          type: string
+          description: The contract instrument symbol (e.g., BTCUSD, BTCUSDT).
+          example: "BTCUSD"
+        userId:
+          type: string
+          description: The user ID who owns this position.
+          example: "5aec525e-335d-4724-0005-20153b361f89"
+        currency:
+          type: string
+          description: The margin currency for this position (e.g., USDT, BTC).
+          example: "BTC"
+        isCross:
+          type: boolean
+          description: Whether the position uses Cross Margin mode. true = cross margin, false = isolated margin.
+          example: true
+        marginRate:
+          type: number
+          description: The current margin rate.
+          example: 0.01
+        feeRateTaker:
+          type: number
+          description: The taker fee rate for this position.
+          example: 0.0007
+        feeRateMaker:
+          type: number
+          description: The maker fee rate for this position (negative values indicate rebates).
+          example: -0.0002
+        size:
+          type: number
+          description: The position size in contracts. Positive = long position, Negative = short position.
+          example: 0
+        notional:
+          type: number
+          description: The position notional value in the settlement currency.
+          example: 0
+        initMargin:
+          type: number
+          description: The initial margin required to open this position.
+          example: 0
+        margin:
+          type: number
+          description: The current margin allocated to this position.
+          example: 0
+        orderMargin:
+          type: number
+          description: The margin frozen for open orders related to this position.
+          example: 0.0013327626
+        realisedPnl:
+          type: number
+          description: The realized profit and loss from closed trades.
+          example: 0
+        totalPnl:
+          type: number
+          description: The total profit and loss (realized + unrealized).
+          example: 0
+        markPrice:
+          type: number
+          description: The current mark price used for margin calculations.
+          example: 11303.14
+        riskLimit:
+          type: number
+          description: The current risk limit tier for this position.
+          example: 100
+        liquidatePrice:
+          type: number
+          description: The estimated liquidation price. When mark price reaches this level, liquidation will be triggered.
+          example: 0
+        entryPrice:
+          type: number
+          description: The average entry price of the position.
+          example: 0
+        unrealizedPnl:
+          type: number
+          description: The unrealized profit and loss based on mark price.
+          example: 0
+        leverage:
+          type: number
+          description: The effective leverage (notional value / margin).
+          example: 100
+        equity:
+          type: number
+          description: The position equity (margin + unrealized PnL).
+          example: 0
+        value:
+          type: number
+          description: The position value in the settlement currency.
+          example: 0
+        risk:
+          type: number
+          description: The risk value for this position.
+          example: 0
+        rom:
+          type: number
+          description: Return on Margin (percentage).
+          example: 0
+        buyingNotional:
+          type: number
+          description: The total notional value of buy orders in this position.
+          example: 0
+        sellingNotional:
+          type: number
+          description: The total notional value of sell orders in this position.
+          example: -0.116909
+        buyingSize:
+          type: number
+          description: The total size of buy orders in this position.
+          example: 0
+        sellingSize:
+          type: number
+          description: The total size of sell orders in this position.
+          example: -1400
+        seqNo:
+          type: integer
+          format: int64
+          description: The sequence number for order book updates.
+          nullable: true
+          example: null
+
+    Cash:
+      type: object
+      description: The wallet balance and margin information for a specific currency.
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: The unique wallet identifier.
+          example: "5aed7b45-5d19-40f2-0005-ca49d01f33e3"
+        readableId:
+          type: integer
+          format: int64
+          description: A human-readable wallet ID.
+          example: 1000000
+        userId:
+          type: string
+          format: uuid
+          description: The user ID who owns this wallet.
+          example: "5aec525e-335d-4724-0005-20153b361f89"
+        currency:
+          type: string
+          description: The asset currency (e.g., BTC, USDT).
+          example: "BTC"
+        balances:
+          type: number
+          description: The total wallet balance (deposited amount).
+          example: 0.1
+        available:
+          type: number
+          description: The available balance for trading or withdrawal.
+          example: 0.08
+        margin:
+          type: number
+          description: The total margin currently in use (position margin).
+          example: 0.02
+        positionMargin:
+          type: number
+          description: The margin allocated to open positions plus unrealized PnL.
+          example: 0.015
+        orderMargin:
+          type: number
+          description: The margin frozen for open orders.
+          example: 0.005
+        positionValue:
+          type: number
+          description: The total value of all open positions in this currency.
+          example: 0.2
+        unrealizedPnl:
+          type: number
+          description: The total unrealized profit and loss from open positions.
+          example: 0.005
+        marginBalances:
+          type: number
+          description: The margin balance (equity) = balances + unrealizedPnl.
+          example: 0.105
+        marginRate:
+          type: number
+          description: The margin rate for the account.
+          example: 0.15
+        leverage:
+          type: number
+          description: The account-level effective leverage.
+          example: 2.1
+
+    Account:
+      type: object
+      properties:
+        cash:
+          $ref: '#/components/schemas/Cash'
+        positions:
+          type: array
+          description: List of Active Positions
+          items:
+            $ref: '#/components/schemas/Position'
+
+    Trade:
+      type: object
+      description: A contract trade execution record with details about the trade, fees, and PnL.
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: The unique trade identifier.
+          example: "5aef4041-f300-0000-0001-00000000001b"
+        orderId:
+          type: string
+          format: uuid
+          description: The order ID that was filled by this trade.
+          example: "5aef4041-ee43-4a60-0005-705a0f1edcb4"
+        ts:
+          type: integer
+          format: int64
+          description: The trade timestamp (Unix microseconds).
+          example: 1562244089804
+        side:
+          type: string
+          enum: [BUY, SELL]
+          description: The trade side. BUY = long position filled, SELL = short position filled.
+          example: "SELL"
+        symbol:
+          type: string
+          description: The contract symbol.
+          example: "BTCUSD"
+        currency:
+          type: string
+          description: The currency used for settlement of fees and PnL.
+          example: "BTC"
+        size:
+          type: number
+          description: The number of contracts filled in this trade.
+          example: 1000
+        notional:
+          type: number
+          description: The trade notional value in the quote currency.
+          example: 0.08857395925
+        price:
+          type: number
+          description: The execution price of the trade.
+          example: 11290
+        feeRate:
+          type: number
+          description: The fee rate applied to this trade.
+          example: 0.0007
+        pnl:
+          type: number
+          description: The realized PnL from this trade (0 for taker trades).
+          example: 0
+        fee:
+          type: number
+          description: The trading fee charged for this trade.
+          example: 0.00006200177148
+        order:
+          type: object
+          description: The associated order that was filled.
+          properties:
+            id:
+              type: string
+              description: The order ID.
+              example: "5aef4041-ee43-4a60-0005-705a0f1edcb4"
+            type:
+              type: string
+              enum: [LIMIT, MARKET, IOC, FOK, POST_ONLY, ADL]
+              description: The order type.
+              example: "LIMIT"
+            size:
+              type: number
+              description: The order size.
+              example: 1000
+            price:
+              type: number
+              description: The order price.
+              example: 11290
+
+paths:
+  /instruments:
+    get:
+      tags: [Market Data]
+      summary: Get List of Contracts Detail
+      description: Returns detailed information about all available contract instruments including prices, funding rates, and trading volume.
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Instrument'
+
+
+  /depth@{symbol}/snapshot:
+    get:
+      tags: [Market Data]
+      summary: Get OrderBook Snapshot
+      description: Returns the current order book snapshot for a contract, showing aggregate quantities at each price level.
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The contract symbol (e.g., BTCUSD, BTCUSDT).
+          example: BTCUSD
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bids:
+                    type: object
+                    description: Map of Price -> Quantity for buy orders (bids).
+                    properties:
+                      "{price}":
+                        type: number
+                        description: The aggregate quantity available at this price level.
+                  asks:
+                    type: object
+                    description: Map of Price -> Quantity for sell orders (asks).
+                    properties:
+                      "{price}":
+                        type: number
+                        description: The aggregate quantity available at this price level.
+                  to:
+                    type: integer
+                    format: int64
+                    description: The ending sequence ID of this snapshot.
+                  from:
+                    type: integer
+                    format: int64
+                    description: The starting sequence ID of this snapshot.
+                  lastPrice:
+                    type: number
+                    description: The price of the most recent trade.
+                  bestPrices:
+                    type: object
+                    description: The current best bid and ask prices.
+                    properties:
+                      ask:
+                        type: number
+                        description: The lowest ask price.
+                      bid:
+                        type: number
+                        description: The highest bid price.
+                example:
+                  bids:
+                    "86000": 10
+                    "86559": 90688
+                  asks:
+                    "86928": 86506
+                    "86925.5": 92840
+                  to: 3425679898
+                  lastPrice: 86902
+                  bestPrices:
+                    ask: 86925.5
+                    bid: 86900.5
+                  from: 0
+
+  /accounts:
+    get:
+      tags: [Account]
+      summary: Get Cash and Position Detail
+      description: Returns the account balance (cash) and all open positions for the authenticated user.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Account'
+                example:
+                  - cash:
+                      readableId: 1000000
+                      positionValue: 0.004628
+                      unrealizedPnl: 0.000013864628645684
+                      positionMargin: 0.000939921597676495
+                      balances: 1002.2989371904613
+                      userId: "5c219261-1d2f-484c-0004-bc929117ec73"
+                      margin: 0.000926056969030811
+                      available: 1002.2980111334923
+                      orderMargin: 0
+                      marginRate: 9.37765720185e-7
+                      marginBalances: 1002.2989510550899
+                      leverage: 0.000005
+                      id: "5c26b683-7182-46cb-0004-0dfb00c0cac3"
+                      currency: "BTC"
+                    positions:
+                      - feeRateMaker: 0.0002
+                        notional: -0.004614135371354316
+                        markPrice: 6482.33287802
+                        liquidatePrice: 8087.5
+                        realisedPnl: 0.039842718483038435
+                        unrealizedPnl: 0.000013864628645684
+                        riskLimit: 198
+                        buyingNotional: 0
+                        sellingNotional: 0
+                        value: -0.004628
+                        symbol: "BTCUSD"
+                        seqNo: null
+                        risk: 0.024619
+                        totalPnl: 0.039151131904984315
+                        userId: "5c219261-1d2f-484c-0004-bc929117ec73"
+                        margin: 0.000926056969030811
+                        orderMargin: 0
+                        equity: 0.000939921597676495
+                        feeRateTaker: 0.0006
+                        marginRate: 0.2
+                        sellingSize: 0
+                        size: -30
+                        rom: 0.015
+                        buyingSize: 0
+                        leverage: 5
+                        isCross: false
+                        id: "5c26b69f-95c8-4b51-0004-71ce886084be"
+                        entryPrice: 6501.76
+                        currency: "BTC"
+
+  /positions/{symbol}/margin:
+    put:
+      tags: [Position]
+      summary: Adjust Leverage / Margin
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                margin:
+                  type: number
+                  description: "Position Margin. Set 0 unless adding extra margin (isolated)."
+                  example: 0
+                leverage:
+                  type: number
+                  description: "Leverage (valid when isCross is true)"
+                  example: 100
+                isCross:
+                  type: boolean
+                  description: "Margin Type. true: Cross Margin, false: Isolated Margin"
+                  example: true
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Position'
+
+  /positions/{symbol}/risk-limit:
+    put:
+      tags: [Position]
+      summary: Set Risk Limit
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+          description: "Contract types, includes BTCUSD, BTCUSDT, ETHUSDT, EOSUSDT"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - notional
+              properties:
+                notional:
+                  type: number
+                  description: Position notional value limit
+                  example: 200
+            example:
+              notional: 200
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notional:
+                    type: number
+                    description: Position notional value limit
+                    example: 200
+                  IMR:
+                    type: number
+                    description: Initial Margin Rate
+                    example: 0.015
+              example:
+                notional: 200
+                IMR: 0.015
+
+  /orders:
+    post:
+      tags: [Order]
+      summary: Place Order
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaceOrderRequest'
+            example:
+              size: 1
+              symbol: "BTCUSD"
+              type: "LIMIT"
+              side: "BUY"
+              price: 8000
+              reduceOnly: false
+
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+              example:
+                meta: null
+                reduceOnly: false
+                symbol: "BTCUSD"
+                type: "LIMIT"
+                userId: "5aec525e-335d-4724-0005-20153b361f89"
+                liquidateUserId: null
+                size: 1
+                notional: 0
+                status: "UNTRIGGERED"
+                id: "5aed7b45-5d19-40f2-0005-ca49d01f33e3"
+                side: "BUY"
+                filledNotional: 0
+                seqNo: null
+                filled: 0
+                price: 8000
+                conditional:
+                  type: "REACH"
+                  priceType: "MARKET_PRICE"
+                  price: 8000
+
+    get:
+      tags: [Order]
+      summary: Get Order List
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: symbol
+          in: query
+          schema:
+            type: string
+            example: "BTCUSD"
+          description: Contract Symbol (e.g. BTCUSD)
+        - name: start-time
+          in: query
+          schema:
+            type: integer
+            format: int64
+            example: 1562125342068
+          description: "Start Time (Timestamp)"
+        - name: end-time
+          in: query
+          schema:
+            type: integer
+            format: int64
+            example: 1583510400000
+          description: "End Time (Timestamp). Will be overwritten by id"
+        - name: id
+          in: query
+          schema:
+            type: string
+          description: "Pagination offset ID. Returns orders older than this ID."
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [LIMIT, MARKET, IOC, FOK, POST_ONLY]
+          description: Order Type
+        - name: side
+          in: query
+          schema:
+            type: string
+            enum: [BUY, SELL]
+          description: Order Side
+        - name: status
+          in: query
+          schema:
+            type: string
+            example: "NEW,PARTIALLY_FILLED"
+          description: "Order Status. Multiple status separated by comma. Enums: NEW, PARTIALLY_FILLED, PARTIALLY_CANCELED, CANCELED, REJECTED, FILLED, UNTRIGGERED, PENDING_CANCEL"
+        - name: opt
+          in: query
+          schema:
+            type: string
+            enum: [TRIGGERED, LIQUIDATE, PROFIT]
+          description: Order Class
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+          description: Page size limit
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+              example:
+                - liquidateUserId: null
+                  id: "5aed94fc-703e-42a2-0005-578d4c468767"
+                  ts: 1562132083136
+                  side: "BUY"
+                  userId: "5aec525e-335d-4724-0005-20153b361f89"
+                  filledNotional: 0
+                  notional: 0.102512
+                  status: "NEW"
+                  isLiquidate: false
+                  reduceOnly: false
+                  type: "LIMIT"
+                  symbol: "BTCUSD"
+                  seqNo: null
+                  filled: 0
+                  conditional: null
+                  size: 1000
+                  avgPrice: 0
+                  price: 9755
+                  meta:
+                    bestPrice: 11311
+                    markPrice: 11536.1075491
+                    bestPrices:
+                      ask: 11311
+                      bid: 11305.5
+
+  /orders/opening:
+    get:
+      tags: [Order]
+      summary: Get Active Order List
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: symbol
+          in: query
+          schema:
+            type: string
+            example: "BTCUSD"
+          description: "Contract types, includes BTCUSD, ETHUSD, EOSUSD"
+        - name: id
+          in: query
+          schema:
+            type: string
+          description: "Pagination offset ID. Returns orders older than this ID."
+        - name: start-time
+          in: query
+          schema:
+            type: integer
+            format: int64
+            example: 1562125342068
+          description: "Query starting time"
+        - name: end-time
+          in: query
+          schema:
+            type: integer
+            format: int64
+            example: 1583510400000
+          description: "Query ending time. Will be overwritten by id"
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+            example: 20
+          description: "Response limit per request"
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+              example:
+                - liquidateUserId: null
+                  ts: 1562125342068
+                  size: 1
+                  notional: 0
+                  side: "BUY"
+                  userId: "5aec525e-335d-4724-0005-20153b361f89"
+                  filledNotional: 0
+                  isLiquidate: false
+                  reduceOnly: false
+                  type: "LIMIT"
+                  symbol: "BTCUSD"
+                  seqNo: null
+                  filled: 0
+                  meta: null
+                  status: "UNTRIGGERED"
+                  avgPrice: 0
+                  price: 8000
+                  conditional:
+                    type: "REACH"
+                    price: 8000
+                    priceType: "MARKET_PRICE"
+                  id: "5aed7b45-5d19-40f2-0005-ca49d01f33e3"
+
+  /orders/{id}:
+    get:
+      tags: [Order]
+      summary: Get Order Detail
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "5aed7b45-5d19-40f2-0005-ca49d01f33e3"
+          description: Order ID
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+              example:
+                liquidateUserId: null
+                id: "5aed94fc-703e-42a2-0005-578d4c468767"
+                ts: 1562132083136
+                side: "BUY"
+                userId: "5aec525e-335d-4724-0005-20153b361f89"
+                filledNotional: 0
+                notional: 0.102512
+                status: "NEW"
+                isLiquidate: false
+                reduceOnly: false
+                type: "LIMIT"
+                symbol: "BTCUSD"
+                seqNo: null
+                filled: 0
+                conditional: null
+                size: 1000
+                avgPrice: 0
+                price: 9755
+                meta:
+                  bestPrice: 11311
+                  markPrice: 11536.1075491
+                  bestPrices:
+                    ask: 11311
+                    bid: 11305.5
+
+    delete:
+      tags: [Order]
+      summary: Cancel Order
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "5aed7b45-5d19-40f2-0005-ca49d01f33e3"
+          description: Order ID
+      responses:
+        '200':
+          description: Success
+
+
+
+  /orders/count:
+    get:
+      tags: [Order]
+      summary: Count Orders
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: symbol
+          in: query
+          schema:
+            type: string
+            example: "BTCUSD"
+          description: Contract Symbol
+        - name: id
+          in: query
+          schema:
+            type: string
+          description: "Pagination offset ID. Returns orders older than this ID."
+        - name: start-time
+          in: query
+          schema:
+            type: integer
+            format: int64
+            example: 1562125342068
+          description: "Start Time (Timestamp)"
+        - name: end-time
+          in: query
+          schema:
+            type: integer
+            format: int64
+            example: 1583510400000
+          description: "End Time (Timestamp). Will be overwritten by id"
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [LIMIT, MARKET, IOC, FOK, POST_ONLY, ADL]
+          description: Order Type
+        - name: side
+          in: query
+          schema:
+            type: string
+            enum: [BUY, SELL]
+          description: Order Side
+        - name: status
+          in: query
+          schema:
+            type: string
+            example: "NEW,PARTIALLY_FILLED"
+          description: "Order Status. Multiple status separated by comma. Enums: NEW, PARTIALLY_FILLED, PARTIALLY_CANCELED, CANCELED, REJECTED, FILLED, UNTRIGGERED, PENDING_CANCEL"
+        - name: opt
+          in: query
+          schema:
+            type: string
+            enum: [TRIGGERED, LIQUIDATE, PROFIT]
+          description: Order Class
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+              example:
+                count: 1
+
+  /orders/opening/count:
+    get:
+      tags: [Order]
+      summary: Count Active Orders
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: symbol
+          in: query
+          schema:
+            type: string
+          description: Contract Symbol
+        - name: start-time
+          in: query
+          schema:
+            type: integer
+            format: int64
+            example: 1562125342068
+          description: "Start Time (Timestamp)"
+        - name: end-time
+          in: query
+          schema:
+            type: integer
+            format: int64
+            example: 1583510400000
+          description: "End Time (Timestamp)"
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+              example:
+                count: 2
+
+  /trades:
+    get:
+      tags: [Trade]
+      summary: Get Trade List
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: symbol
+          in: query
+          schema:
+            type: string
+            example: "BTCUSD"
+          description: Contract Symbol (e.g. BTCUSD)
+        - name: id
+          in: query
+          schema:
+            type: string
+            example: "5aef4041-ee43-4a60-0005-705a0f1edcb4"
+          description: "Pagination offset ID. Returns trades older than this ID."
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+            example: 20
+          description: Page size limit
+        - name: side
+          in: query
+          schema:
+            type: string
+            enum: [BUY, SELL, FUNDING, ADL_BUY, ADL_SELL, TRADING]
+            example: "BUY"
+          description: Trade Side
+        - name: order-id
+          in: query
+          schema:
+            type: string
+            example: "5aef4041-ee43-4a60-0005-705a0f1edcb4"
+          description: "Order ID. Filter by order."
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Trade'
+              example:
+                - fee: 0.00006200177148
+                  symbol: "BTCUSD"
+                  feeRate: 0.0007
+                  size: 1000
+                  ts: 1562244089804
+                  notional: 0.08857395925
+                  orderId: "5aef4041-ee43-4a60-0005-705a0f1edcb4"
+                  id: "5aef4041-f300-0000-0001-00000000001b"
+                  side: "SELL"
+                  order:
+                    id: "5aef4041-ee43-4a60-0005-705a0f1edcb4"
+                    type: "LIMIT"
+                    size: 1000
+                    price: 11290
+                  price: 11290
+
+  /trades/count:
+    get:
+      tags: [Trade]
+      summary: Get Count of Trades
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: symbol
+          in: query
+          schema:
+            type: string
+            example: "BTCUSD"
+          description: Contract Symbol (e.g. BTCUSD)
+        - name: id
+          in: query
+          schema:
+            type: string
+            example: "5aef4041-ee43-4a60-0005-705a0f1edcb4"
+          description: "Pagination offset ID. Returns trades older than this ID."
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+            example: 20
+          description: Response size limit
+        - name: side
+          in: query
+          schema:
+            type: string
+            enum: [BUY, SELL, FUNDING, ADL_BUY, ADL_SELL, TRADING]
+            example: "BUY"
+          description: Trade Side
+        - name: order-id
+          in: query
+          schema:
+            type: string
+            example: "5aef4041-ee43-4a60-0005-705a0f1edcb4"
+          description: "Order ID. Filter by order."
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: Count of trades
+                example:
+                  count: 3
