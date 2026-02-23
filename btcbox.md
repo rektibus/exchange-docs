@@ -1,12 +1,10 @@
-# BTCBox API Documentation
+# Btcbox API Documentation
 
-## General
-**Base REST URL**: `https://www.btcbox.co.jp/api/v1`
+Auto-fetched from 1 page(s)
 
-## Market Data (REST)
-- **Ticker**: `GET /ticker` (Params: `coin`. Returns high, low, buy, sell, last, vol)
-- **Order Book**: `GET /depth` (Params: `coin`. Returns asks, bids)
-- **Trades**: `GET /orders` (Params: `coin`. Returns latest 100 execution records)
 
-## Websocket
-**Note**: Not available. BTCBox only provides HTTP-based API endpoints.
+---
+
+# Source: https://blog.btcbox.jp/en/api-doc/api-public
+
+ERROR: Failed to fetch: 404 Client Error: Not Found for url: https://blog.btcbox.jp/en/api-doc/api-public

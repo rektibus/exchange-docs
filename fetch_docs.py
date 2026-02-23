@@ -18,7 +18,7 @@ HEADERS = {
 
 def fetch_page(url: str) -> str:
     """Fetch a URL and convert to markdown."""
-    resp = requests.get(url, headers=HEADERS, timeout=30)
+    resp = requests.get(url, headers=HEADERS, timeout=30, verify=False)
     resp.raise_for_status()
     
     h = html2text.HTML2Text()

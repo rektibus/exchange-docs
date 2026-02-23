@@ -10,3 +10,9 @@
 [submodule "alpaca-api"]
 	path = alpaca-api
 	url = https://github.com/alpacahq/Alpaca-API.git
+[submodule "biconomy-api"]
+	path = biconomy-api
+	url = https://github.com/BiconomyOfficial/APIDocs.git
+[submodule "bitunix-api"]
+	path = bitunix-api
+	url = https://github.com/BitunixOfficial/open-api.git
