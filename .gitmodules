@@ -7,3 +7,6 @@
 [submodule "bitget-api-sdk"]
 	path = bitget-api-sdk
 	url = https://github.com/BitgetLimited/v3-bitget-api-sdk.git
+[submodule "alpaca-api"]
+	path = alpaca-api
+	url = https://github.com/alpacahq/Alpaca-API.git

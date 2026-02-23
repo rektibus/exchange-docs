@@ -1,187 +1,366 @@
-# Kraken Futures API Reference
+# Kraken Futures API Documentation
 
-## WebSocket API
+Auto-fetched from 5 page(s)
 
-**Endpoint**: `wss://futures.kraken.com/ws/v1`
-
----
-
-### Book Feed
-
-**Feed**: `book`
-
-```json
-{"event": "subscribe", "feed": "book", "product_ids": ["PI_XBTUSD"]}
-```
-
-**Snapshot** (`feed: "book_snapshot"`):
-
-| Field | Type | Description |
-|-------|------|-------------|
-| product_id | string | Symbol |
-| seq | integer | Sequence number |
-| timestamp | integer | ms |
-| bids | list | `[{qty, price}, ...]` |
-| asks | list | `[{qty, price}, ...]` |
-
-**Delta** (`feed: "book"`):
-
-| Field | Type | Description |
-|-------|------|-------------|
-| product_id | string | Symbol |
-| seq | integer | Sequence number |
-| timestamp | integer | ms |
-| side | string | Side of entry |
-| price | float | Price |
-| qty | float | Quantity |
 
 ---
 
-### Trade Feed
+# Source: https://docs.futures.kraken.com/
 
-**Feed**: `trade`
+[Skip to main content](#__docusaurus_skipToContent_fallback)
 
-```json
-{"event": "subscribe", "feed": "trade", "product_ids": ["PI_XBTUSD"]}
-```
+[****](/api/)[Guides](/api/docs/guides/global-intro)
 
-**Snapshot** (`feed: "trade_snapshot"`): `{trades: [delta fields...]}`
+[Exchange](#)
 
-**Delta** (`feed: "trade"`):
+  * [Spot REST](/api/docs/rest-api/add-order)
+  * [Spot WebSocket](/api/docs/websocket-v2/add_order)
+  * [Futures REST](/api/docs/futures-api/trading/send-order)
+  * [Futures WebSocket](/api/docs/futures-api/websocket/book)
+  * [Unified FIX](/api/docs/fix-api/nos-fix)
 
-| Field | Type | Description |
-|-------|------|-------------|
-| product_id | string | Symbol |
-| uid | string | Unique trade ID |
-| side | string | `buy` or `sell` |
-| type | string | `fill`, `liquidation`, `termination`, `block` |
-| seq | integer | Sequence number |
-| time | integer | **ms** |
-| qty | float | Quantity |
-| price | float | Price |
 
-> **Note**: `type: "liquidation"` — liquidations come from the trade feed, no separate liquidation channel needed.
 
----
+[Institutional](#)
 
-### Heartbeat Feed
+  * [Custody REST](/api/docs/custody-api/list-custody-vaults)
+  * [OTC REST](/api/docs/otc-api/create-otc-quote-request)
+  * [Prime FIX](/api/docs/prime-api/fix/nos-fix)
+  * [Prime WebSocket](/api/docs/prime-api/websocket/subscribe)
 
-**Feed**: `heartbeat`
 
-```json
-{"event": "subscribe", "feed": "heartbeat"}
-```
 
-Response: `{feed: "heartbeat", time: <ms>}`
+[Embed](#)
 
----
+  * [Embed REST](/api/docs/embed-api/list-embed-assets)
+  * [Ramp REST](/api/docs/ramp-api/intro)
+  * [OAuth REST](/api/docs/oauth/kraken-connect)
 
-### Event Types
 
-| Event | Description |
-|-------|-------------|
-| `subscribed` | Subscription success |
-| `subscribed_failed` | Subscription failure |
-| `unsubscribed` | Unsubscription success |
-| `info` | Server info on connect |
-| `pong` | Ping response |
-| `error` | Error: `Invalid product id`, `Invalid feed`, `Json Error` |
-| `alert` | Undocumented — seen with `"message": "Bad websocket message"` |
 
----
+[Change Log](/api/docs/change-log)
 
-## REST API
+[Sign In](https://pro.kraken.com/app/trade/btc-usd#dialog/sign-in)
 
-**Base URL**: `https://futures.kraken.com/derivatives/api/v3`
+# Kraken API Center
 
----
+### Explore our APIs and guides to build powerful trading workflows
 
-### Get Trade History
+#### [REST APISeamless request-response messaging over HTTP.](/api/docs/rest-api/add-order)
 
-`GET /history?symbol=PI_XBTUSD&lastTime=<ISO8601>`
+#### [Websocket APITwo-way, event-driven connectivity for trading.](/api/docs/websocket-v2/add_order)
 
-Returns most recent 100 trades prior to `lastTime` (up to 7 days or last engine restart).
+#### [FIX APIInstitutional trading via the FIX protocol.](/api/docs/fix-api/nos-fix)
 
-**Response** (`history[]`):
+#### [Kraken API GuidesIn-depth guides to help you integrate your application.](/api/docs/guides/global-intro)
 
-| Field | Type | Description |
-|-------|------|-------------|
-| price | number | Fill price |
-| side | string | `buy` or `sell` |
-| size | string | Fill size (**NOTE: string, not number. And `size` not `qty`**) |
-| time | string | ISO8601 timestamp |
-| trade_id | integer | Continuous index per contract maturity |
-| type | string | `fill`, `liquidation`, `assignment`, `termination`, `block` |
-| uid | string | Unique ID |
+#### [SupportFind your answers instantly in our Support Center.](https://support.kraken.com/)
 
-> **WS uses `qty` (float), REST uses `size` (string)** — different field names for quantity.
+#### Easy Onboarding
 
----
+Quickly build and automate crypto trading strategies.
 
-### Get Orderbook
+#### Deep Liquidity and Volume
 
-`GET /orderbook?symbol=PI_XBTUSD`
+Direct access to our order books with tight spreads and low fees.
 
-**Response** (`orderBook`):
+#### More than 99% uptime
 
-| Field | Type | Description |
-|-------|------|-------------|
-| asks | array | `[[price, size], ...]` sorted ascending |
-| bids | array | `[[price, size], ...]` sorted descending |
+Reliable, low-latency endpoints for 24/7/365 crypto trading and data.
+
+Trade
+
+  * [Kraken](https://www.kraken.com/)
+  * [Kraken Pro](https://pro.kraken.com/)
+
+
+
+API
+
+  * [Support](https://support.kraken.com)
+  * [Status](https://status.kraken.com/)
+
+
+
+Community
+
+  * [X](https://x.com/krakenfx)
+  * [GitHub](https://github.com/krakenfx/)
+
+
+
+Â©  Payward Inc.     [Privacy Notice](https://www.kraken.com/legal/privacy)    [Terms of Service](https://www.kraken.com/legal)    [Disclosures](https://www.kraken.com/legal/disclosures)
+
 
 ---
 
-### Get Tickers
+# Source: https://docs.futures.kraken.com/trade
 
-`GET /tickers`
+[Skip to main content](#__docusaurus_skipToContent_fallback)
 
-Returns all instruments. Key fields for perps:
+[****](/api/)[Guides](/api/docs/guides/global-intro)
 
-| Field | Type | Description |
-|-------|------|-------------|
-| symbol | string | e.g. `PF_BTCUSD` |
-| last | number | Last fill price |
-| bid / ask | number | Best bid/ask |
-| bidSize / askSize | number | Best bid/ask size |
-| vol24h | number | 24h volume (contracts) |
-| volumeQuote | number | 24h volume (quote) |
-| openInterest | number | Open interest |
-| fundingRate | number | Current absolute funding rate |
-| fundingRatePrediction | number | Estimated next funding rate |
-| markPrice | number | Mark price |
-| pair | string | e.g. `BTC:USD` |
-| suspended | boolean | Market suspended |
+[Exchange](#)
+
+  * [Spot REST](/api/docs/rest-api/add-order)
+  * [Spot WebSocket](/api/docs/websocket-v2/add_order)
+  * [Futures REST](/api/docs/futures-api/trading/send-order)
+  * [Futures WebSocket](/api/docs/futures-api/websocket/book)
+  * [Unified FIX](/api/docs/fix-api/nos-fix)
+
+
+
+[Institutional](#)
+
+  * [Custody REST](/api/docs/custody-api/list-custody-vaults)
+  * [OTC REST](/api/docs/otc-api/create-otc-quote-request)
+  * [Prime FIX](/api/docs/prime-api/fix/nos-fix)
+  * [Prime WebSocket](/api/docs/prime-api/websocket/subscribe)
+
+
+
+[Embed](#)
+
+  * [Embed REST](/api/docs/embed-api/list-embed-assets)
+  * [Ramp REST](/api/docs/ramp-api/intro)
+  * [OAuth REST](/api/docs/oauth/kraken-connect)
+
+
+
+[Change Log](/api/docs/change-log)
+
+[Sign In](https://pro.kraken.com/app/trade/btc-usd#dialog/sign-in)
+
+# Kraken API Center
+
+### Explore our APIs and guides to build powerful trading workflows
+
+#### [REST APISeamless request-response messaging over HTTP.](/api/docs/rest-api/add-order)
+
+#### [Websocket APITwo-way, event-driven connectivity for trading.](/api/docs/websocket-v2/add_order)
+
+#### [FIX APIInstitutional trading via the FIX protocol.](/api/docs/fix-api/nos-fix)
+
+#### [Kraken API GuidesIn-depth guides to help you integrate your application.](/api/docs/guides/global-intro)
+
+#### [SupportFind your answers instantly in our Support Center.](https://support.kraken.com/)
+
+#### Easy Onboarding
+
+Quickly build and automate crypto trading strategies.
+
+#### Deep Liquidity and Volume
+
+Direct access to our order books with tight spreads and low fees.
+
+#### More than 99% uptime
+
+Reliable, low-latency endpoints for 24/7/365 crypto trading and data.
+
+Trade
+
+  * [Kraken](https://www.kraken.com/)
+  * [Kraken Pro](https://pro.kraken.com/)
+
+
+
+API
+
+  * [Support](https://support.kraken.com)
+  * [Status](https://status.kraken.com/)
+
+
+
+Community
+
+  * [X](https://x.com/krakenfx)
+  * [GitHub](https://github.com/krakenfx/)
+
+
+
+Â©  Payward Inc.     [Privacy Notice](https://www.kraken.com/legal/privacy)    [Terms of Service](https://www.kraken.com/legal)    [Disclosures](https://www.kraken.com/legal/disclosures)
+
 
 ---
 
-### Get Historical Funding Rates
+# Source: https://docs.futures.kraken.com/market-data
 
-`GET /historical-funding-rates?symbol=PF_XBTUSD`
+[Skip to main content](#__docusaurus_skipToContent_fallback)
 
-Returns historical funding rates sorted ascending by timestamp.
+[****](/api/)[Guides](/api/docs/guides/global-intro)
 
-**Response** (`rates[]`):
+[Exchange](#)
 
-| Field | Type | Description |
-|-------|------|-------------|
-| fundingRate | double | Absolute funding rate |
-| relativeFundingRate | double | Relative funding rate |
-| timestamp | datetime | Start of period (ISO8601) |
+  * [Spot REST](/api/docs/rest-api/add-order)
+  * [Spot WebSocket](/api/docs/websocket-v2/add_order)
+  * [Futures REST](/api/docs/futures-api/trading/send-order)
+  * [Futures WebSocket](/api/docs/futures-api/websocket/book)
+  * [Unified FIX](/api/docs/fix-api/nos-fix)
+
+
+
+[Institutional](#)
+
+  * [Custody REST](/api/docs/custody-api/list-custody-vaults)
+  * [OTC REST](/api/docs/otc-api/create-otc-quote-request)
+  * [Prime FIX](/api/docs/prime-api/fix/nos-fix)
+  * [Prime WebSocket](/api/docs/prime-api/websocket/subscribe)
+
+
+
+[Embed](#)
+
+  * [Embed REST](/api/docs/embed-api/list-embed-assets)
+  * [Ramp REST](/api/docs/ramp-api/intro)
+  * [OAuth REST](/api/docs/oauth/kraken-connect)
+
+
+
+[Change Log](/api/docs/change-log)
+
+[Sign In](https://pro.kraken.com/app/trade/btc-usd#dialog/sign-in)
+
+# Kraken API Center
+
+### Explore our APIs and guides to build powerful trading workflows
+
+#### [REST APISeamless request-response messaging over HTTP.](/api/docs/rest-api/add-order)
+
+#### [Websocket APITwo-way, event-driven connectivity for trading.](/api/docs/websocket-v2/add_order)
+
+#### [FIX APIInstitutional trading via the FIX protocol.](/api/docs/fix-api/nos-fix)
+
+#### [Kraken API GuidesIn-depth guides to help you integrate your application.](/api/docs/guides/global-intro)
+
+#### [SupportFind your answers instantly in our Support Center.](https://support.kraken.com/)
+
+#### Easy Onboarding
+
+Quickly build and automate crypto trading strategies.
+
+#### Deep Liquidity and Volume
+
+Direct access to our order books with tight spreads and low fees.
+
+#### More than 99% uptime
+
+Reliable, low-latency endpoints for 24/7/365 crypto trading and data.
+
+Trade
+
+  * [Kraken](https://www.kraken.com/)
+  * [Kraken Pro](https://pro.kraken.com/)
+
+
+
+API
+
+  * [Support](https://support.kraken.com)
+  * [Status](https://status.kraken.com/)
+
+
+
+Community
+
+  * [X](https://x.com/krakenfx)
+  * [GitHub](https://github.com/krakenfx/)
+
+
+
+Â©  Payward Inc.     [Privacy Notice](https://www.kraken.com/legal/privacy)    [Terms of Service](https://www.kraken.com/legal)    [Disclosures](https://www.kraken.com/legal/disclosures)
+
 
 ---
 
-### Get Instruments
+# Source: https://docs.futures.kraken.com/websocket
 
-`GET /instruments`
+[Skip to main content](#__docusaurus_skipToContent_fallback)
 
-Key fields:
+[****](/api/)[Guides](/api/docs/guides/global-intro)
 
-| Field | Type | Description |
-|-------|------|-------------|
-| symbol | string | e.g. `PF_BTCUSD` |
-| pair | string | e.g. `BTC:USD` |
-| tradeable | boolean | Can be traded |
-| type | string | `flexible_futures`, `futures_inverse`, `futures_vanilla` |
-| tickSize | number | Tick size |
-| contractSize | number | Contract size |
-| maxPositionSize | number | Max position |
+[Exchange](#)
+
+  * [Spot REST](/api/docs/rest-api/add-order)
+  * [Spot WebSocket](/api/docs/websocket-v2/add_order)
+  * [Futures REST](/api/docs/futures-api/trading/send-order)
+  * [Futures WebSocket](/api/docs/futures-api/websocket/book)
+  * [Unified FIX](/api/docs/fix-api/nos-fix)
+
+
+
+[Institutional](#)
+
+  * [Custody REST](/api/docs/custody-api/list-custody-vaults)
+  * [OTC REST](/api/docs/otc-api/create-otc-quote-request)
+  * [Prime FIX](/api/docs/prime-api/fix/nos-fix)
+  * [Prime WebSocket](/api/docs/prime-api/websocket/subscribe)
+
+
+
+[Embed](#)
+
+  * [Embed REST](/api/docs/embed-api/list-embed-assets)
+  * [Ramp REST](/api/docs/ramp-api/intro)
+  * [OAuth REST](/api/docs/oauth/kraken-connect)
+
+
+
+[Change Log](/api/docs/change-log)
+
+[Sign In](https://pro.kraken.com/app/trade/btc-usd#dialog/sign-in)
+
+# Kraken API Center
+
+### Explore our APIs and guides to build powerful trading workflows
+
+#### [REST APISeamless request-response messaging over HTTP.](/api/docs/rest-api/add-order)
+
+#### [Websocket APITwo-way, event-driven connectivity for trading.](/api/docs/websocket-v2/add_order)
+
+#### [FIX APIInstitutional trading via the FIX protocol.](/api/docs/fix-api/nos-fix)
+
+#### [Kraken API GuidesIn-depth guides to help you integrate your application.](/api/docs/guides/global-intro)
+
+#### [SupportFind your answers instantly in our Support Center.](https://support.kraken.com/)
+
+#### Easy Onboarding
+
+Quickly build and automate crypto trading strategies.
+
+#### Deep Liquidity and Volume
+
+Direct access to our order books with tight spreads and low fees.
+
+#### More than 99% uptime
+
+Reliable, low-latency endpoints for 24/7/365 crypto trading and data.
+
+Trade
+
+  * [Kraken](https://www.kraken.com/)
+  * [Kraken Pro](https://pro.kraken.com/)
+
+
+
+API
+
+  * [Support](https://support.kraken.com)
+  * [Status](https://status.kraken.com/)
+
+
+
+Community
+
+  * [X](https://x.com/krakenfx)
+  * [GitHub](https://github.com/krakenfx/)
+
+
+
+Â©  Payward Inc.     [Privacy Notice](https://www.kraken.com/legal/privacy)    [Terms of Service](https://www.kraken.com/legal)    [Disclosures](https://www.kraken.com/legal/disclosures)
+
+
+---
+
+# Source: https://support.kraken.com/hc/en-us/articles/360022635912-Rate-limits
+
+ERROR: Failed to fetch: 403 Client Error: Forbidden for url: https://support.kraken.com/hc/en-us/articles/360022635912-Rate-limits
