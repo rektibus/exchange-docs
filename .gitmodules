@@ -16,3 +16,6 @@
 [submodule "bitunix-api"]
 	path = bitunix-api
 	url = https://github.com/BitunixOfficial/open-api.git
+[submodule "btctrader-api-docs"]
+	path = btctrader-api-docs
+	url = https://github.com/BTCTrader/broker-api-docs.git

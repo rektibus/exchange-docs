@@ -1,269 +1,646 @@
 # Aevo API Documentation
 
-## Endpoints
+Auto-fetched from 4 page(s)
 
-REST API Endpoints:
-- Mainnet: https://api.aevo.xyz
-- Testnet: https://api-testnet.aevo.xyz
 
-Websocket API Endpoints:
-- Mainnet: wss://ws.aevo.xyz
-- Testnet: wss://ws-testnet.aevo.xyz
+---
 
-Requests are all JSON objects.
-Responses are either a JSON object or array.
+# Source: https://api-docs.aevo.xyz/reference/overview
 
-SDKs:
-- Python: https://github.com/aevoxyz/aevo-sdk
+[Jump to Content](#content)
 
-## Signing Orders
+[](/reference)
 
-EIP-712 signature using account's Signing Key (generated during Enable Trading).
-Order signature ≠ authentication signature.
+[ __Technical Docs](/docs)[ __API Reference](/reference)[ __Changelog](/changelog) v1.0.2v1.0.3-beta
 
-```python
-from eip712_structs import EIP712Struct, Address, Uint, Boolean, make_domain
-from web3 import Web3
-from eth_account import Account
+* * *
 
-class Order(EIP712Struct):
-    maker = Address()
-    isBuy = Boolean()
-    limitPrice = Uint(256)
-    amount = Uint(256)
-    salt = Uint(256)
-    instrument = Uint(256)
-    timestamp = Uint(256)  # mandatory since 21 Aug 2023
+[Log In](/login?redirect_uri=/reference/overview)[](/reference)
 
-# Prices/amounts in 6 decimal places
-order_struct = Order(maker="address", isBuy=True,
-    limitPrice=int(100 * 10**6), amount=int(2 * 10**6),
-    salt=randint(0, 10**6), instrument=1, timestamp=1690434000)
+ __API Reference
 
-domain = make_domain(name="Aevo Mainnet", version="1", chainId=1)
-# Testnet: make_domain(name='Aevo Testnet', version='1', chainId=11155111)
-signable_bytes = Web3.keccak(order_struct.signable_bytes(domain=domain))
-signature = Account._sign_hash(signable_bytes, "signing_key").signature.hex()
-```
+[Log In](/login?redirect_uri=/reference/overview)
 
-## Rate Limits
+v1.0.3-beta
 
-**REST**: 429 status + `X-RETRY-AFTER` header (nanoseconds). Per-account (authenticated) or per-IP.
-```json
-{"error": "RATE_LIMIT_EXCEEDED", "retry_after": "4406000000"}
-```
+[ __Technical Docs](/docs)[ __API Reference](/reference)[ __Changelog](/changelog)
 
-**WebSocket**: No limit on subscription count. Operations (subscribe/unsubscribe) are rate-limited. Ping exempt.
-```json
-{"status": "error", "timestamp": "1664338190185908000",
- "error": "RATE_LIMIT_EXCEEDED", "data": {"retry_after": "4406000000"}}
-```
+Introduction
 
-## Orderbook Checksum
+All
 
-Every orderbook message contains a CRC32 checksum (32-bit integer, base-10 string). Mismatch → re-subscribe to get fresh snapshot.
+Pages
 
-- Best 100 price levels only
-- Format: `<best_bid_price>:<best_bid_size>:<best_ask_price>:<best_ask_size>:...`
-- Example: bids `[["9","2"]]`, asks `[["10","1"]]` → preimage `9:2:10:1` → checksum `1226559413`
+###### Start typing to search…
 
-```python
-import zlib
+JUMP TO
 
-def checksum(bids, asks):
-    preimage = ""
-    iterations = max(len(bids), len(asks))
-    for index in range(min(iterations, 100)):
-        if len(bids) > index:
-            price, size = bids[index]
-            preimage += price + ":" + size + ":"
-        if len(asks) > index:
-            price, size = asks[index]
-            preimage += price + ":" + size + ":"
-    preimage = preimage[:-1]  # strip last colon
-    return zlib.crc32(preimage.encode("utf8")) & 0xFFFFFFFF
-```
+## Aevo API
 
-## REST API Endpoints
+  * [Introduction](/reference/overview)
+  * [API Key Setup __](/reference/api-key-setup-via-ui)
+    * [Via UI](/reference/api-key-setup-via-ui)
+    * [ Via API](/reference/api-key-setup-api)
+  * [Signing Orders](/reference/signing-orders)
+  * [Signing Orders Without Timestamp](/reference/signing-orders-copy)
+  * [Rate Limits](/reference/rate-limits-1)
+  * [Orderbook Checksum](/reference/orderbook-checksum)
+  * [Errors](/reference/errors)
 
-### GET /assets
-Returns list of active underlying assets. Response: `["ETH", ...]`
 
-### GET /expiries
-Params: `asset` (required). Returns expiry timestamps (nanoseconds). Response: `["1680249600000000000"]`
 
-### GET /index
-Params: `asset` (required). Returns `{price, timestamp}` (nanoseconds).
-```json
-{"price": "12.34", "timestamp": "1680249600000000000"}
-```
+## Aevo REST API
 
-### GET /index-history
-Params: `asset` (required), `resolution` (interval in seconds, multiple of 30, default 30), `start_time` / `end_time` (nanoseconds), `limit` (default 10, max 50).
-```json
-{"history": [["1680249600000000000", "1323.45"]]}
-```
+  * [Endpoints](/reference/urls)
+  * [Public API __](/reference/getassets)
+    * [GET /assets get](/reference/getassets)
+    * [GET /expiriesget](/reference/getexpiries)
+    * [GET /indexget](/reference/getindex)
+    * [GET /index-historyget](/reference/getindexhistory)
+    * [GET /mark-historyget](/reference/getmarkhistory)
+    * [GET /settlement-historyget](/reference/getsettlementhistory)
+    * [GET /marketsget](/reference/getmarkets)
+    * [GET /statisticsget](/reference/getstatistics)
+    * [GET /coingecko-statisticsget](/reference/getcoingeckostatistics)
+    * [GET /orderbookget](/reference/getorderbook)
+    * [GET /fundingget](/reference/getfunding)
+    * [GET /funding-historyget](/reference/getfundinghistory)
+    * [GET /instrument/{instrument_name}get](/reference/getinstrumentinstrumentname)
+    * [GET /instrument/{instrument_name}/trade-historyget](/reference/getinstrumentinstrumentnametradehistory)
+    * [GET /check-referralget](/reference/getcheckreferral)
+    * [GET /emissionsget](/reference/getemissions)
+    * [POST /account/unsubscribepost](/reference/postaccountunsubscribe)
+    * [GET /timeget](/reference/gettime)
+    * [GET /strategiesget](/reference/getstrategies)
+    * [GET /yield-vaultget](/reference/getyieldvault)
+    * [POST /swap/previewpost](/reference/postswappreview)
+    * [GET /airdrop-incentivized-assetsget](/reference/getairdropincentivizedassets)
+    * [GET /weethget](/reference/getweeth)
+    * [GET /options-historyget](/reference/getoptionshistory)
+    * [POST /account/email-verifiedpost](/reference/postaccountemailverified)
+    * [GET /strategy/{strategy_address}/positionsget](/reference/getstrategystrategyaddresspositions)
+    * [GET /strategy/{strategy_address}/trade-historyget](/reference/getstrategystrategyaddresstradehistory)
+    * [GET /strategy/{strategy_address}/portfolioget](/reference/getstrategystrategyaddressportfolio)
+    * [GET /strategy/{strategy_address}/balance-historyget](/reference/getstrategystrategyaddressbalancehistory)
+    * [GET /strategy/{strategy_address}/transaction-historyget](/reference/getstrategystrategyaddresstransactionhistory)
+    * [GET /strategy/{strategy_address}/pnl-historyget](/reference/getstrategystrategyaddresspnlhistory)
+  * [Private API __](/reference/rest-authentication)
+    * [Authentication](/reference/rest-authentication)
+    * [ POST /registerpost](/reference/postregister)
+    * [DELETE /api-keydel](/reference/deleteapikey)
+    * [GET /api-keyget](/reference/getapikey)
+    * [POST /api-keypost](/reference/postapikey)
+    * [DELETE /signing-keydel](/reference/deletesigningkey)
+    * [GET /authget](/reference/getauth)
+    * [GET /accountget](/reference/getaccount)
+    * [GET /positionsget](/reference/getpositions)
+    * [GET /account/cancel-on-disconnectget](/reference/getaccountcancelondisconnect)
+    * [POST /account/cancel-on-disconnectpost](/reference/postaccountcancelondisconnect)
+    * [POST /account/portfolio-marginpost](/reference/postaccountportfoliomargin)
+    * [GET /account/email-addressget](/reference/getaccountemailaddress)
+    * [POST /account/email-addresspost](/reference/postaccountemailaddress)
+    * [POST /account/email-preferencepost](/reference/postaccountemailpreference)
+    * [GET /account/email-preferencesget](/reference/getaccountemailpreferences)
+    * [GET /account/email-verifiedget](/reference/getaccountemailverified)
+    * [GET /account/accumulated-fundingsget](/reference/getaccountaccumulatedfundings)
+    * [POST /account/update-marginpost](/reference/postaccountupdatemargin)
+    * [POST /account/margin-typepost](/reference/postaccountmargintype)
+    * [POST /account/leveragepost](/reference/postaccountleverage)
+    * [GET /account/trades/csvget](/reference/getaccounttradescsv)
+    * [GET /account/transactions/csvget](/reference/getaccounttransactionscsv)
+    * [GET /account/statsget](/reference/getaccountstats)
+    * [POST /account/network-addresspost](/reference/postaccountnetworkaddress)
+    * [GET /portfolioget](/reference/getportfolio)
+    * [POST /withdrawpost](/reference/postwithdraw)
+    * [GET /strategies/accountget](/reference/getstrategiesaccount)
+    * [GET /strategies/account-historyget](/reference/getstrategiesaccounthistory)
+    * [POST /strategy/{strategy_address}/initiate-withdrawpost](/reference/poststrategystrategyaddressinitiatewithdraw)
+    * [POST /transferpost](/reference/posttransfer)
+    * [GET /ordersget](/reference/getorders)
+    * [POST /orderspost](/reference/postorders)
+    * [DELETE /orders/{order_id}del](/reference/deleteordersorderid)
+    * [GET /orders/{order_id}get](/reference/getordersorderid)
+    * [POST /orders/{order_id}post](/reference/postordersorderid)
+    * [DELETE /orders-alldel](/reference/deleteordersall)
+    * [GET /order-historyget](/reference/getorderhistory)
+    * [GET /order-history/stopsget](/reference/getorderhistorystops)
+    * [GET /trade-historyget](/reference/gettradehistory)
+    * [GET /transaction-historyget](/reference/gettransactionhistory)
+    * [GET /referral-rewards-historyget](/reference/getreferralrewardshistory)
+    * [GET /referral-historyget](/reference/getreferralhistory)
+    * [GET /referral-statisticsget](/reference/getreferralstatistics)
+    * [POST /claim-referral-rewardspost](/reference/postclaimreferralrewards)
+    * [POST /claim-trade-feespost](/reference/postclaimtradefees)
+    * [GET /trade-fees-campaign-statsget](/reference/gettradefeescampaignstats)
+    * [GET /mmpget](/reference/getmmp)
+    * [POST /mmppost](/reference/postmmp)
+    * [POST /reset-mmppost](/reference/postresetmmp)
+    * [DELETE /rfqsdel](/reference/deleterfqs)
+    * [GET /rfqsget](/reference/getrfqs)
+    * [POST /rfqspost](/reference/postrfqs)
+    * [DELETE /rfqs/{block_id}del](/reference/deleterfqsblockid)
+    * [GET /rfqs/{block_id}/quotesget](/reference/getrfqsblockidquotes)
+    * [DELETE /quotesdel](/reference/deletequotes)
+    * [GET /quotesget](/reference/getquotes)
+    * [POST /quotespost](/reference/postquotes)
+    * [POST /quotes/previewpost](/reference/postquotespreview)
+    * [DELETE /quotes/{quote_id}del](/reference/deletequotesquoteid)
+    * [PUT /quotes/{quote_id}put](/reference/putquotesquoteid)
+    * [POST /swappost](/reference/postswap)
+    * [GET /farm-boostget](/reference/getfarmboost)
+    * [POST /farm-boostpost](/reference/postfarmboost)
+    * [GET /proof-dataget](/reference/getproofdata)
+    * [GET /proofs-dataget](/reference/getproofsdata)
+    * [GET /leaderboard/campaignget](/reference/getleaderboardcampaign)
+    * [POST /campaign-sign-uppost](/reference/postcampaignsignup)
+    * [GET /otc/accountget](/reference/getotcaccount)
+    * [POST /otc/create-requestpost](/reference/postotccreaterequest)
+    * [POST /otc/unwindpost](/reference/postotcunwind)
+    * [POST /account/usernamepost](/reference/postaccountusername)
+    * [GET /twap-ordersget](/reference/gettwaporders)
+    * [POST /twap-orderspost](/reference/posttwaporders)
+    * [DELETE /twap-orders/{order_id}del](/reference/deletetwapordersorderid)
+    * [GET /twap-orders/{order_id}get](/reference/gettwapordersorderid)
+    * [GET /twap-order-historyget](/reference/gettwaporderhistory)
+    * [GET /account/weekly-volumeget](/reference/getaccountweeklyvolume)
+    * [GET /stakeget](/reference/getstake)
+    * [POST /batch-orderspost](/reference/postbatchorders)
 
-### GET /mark-history
-Params: `instrument_name` (required), `resolution` (multiple of 30), `limit` (max 50), `start_time` / `end_time` (nanoseconds).
 
-### GET /settlement-history
-Params: `asset`, `start_time` / `end_time` (nanoseconds), `limit` (max 50).
 
-### GET /markets ⭐ (products endpoint)
-Params: `asset`, `instrument_type` (OPTION | PERPETUAL | SPOT). Returns array of instruments.
+## Websocket API
 
-Key fields: `instrument_id`, `instrument_name` (e.g. "ETH-30JUN23-1600-C"), `instrument_type`, `underlying_asset`, `quote_asset`, `price_step`, `amount_step`, `min_order_value`, `max_order_value`, `max_notional_value`, `mark_price`, `index_price`, `is_active`, `max_leverage`.
-```json
-{"instrument_id": "12", "instrument_name": "ETH-30JUN23-1600-C", "instrument_type": "OPTION",
- "underlying_asset": "ETH", "quote_asset": "USDC", "is_active": true, "max_leverage": "12"}
-```
+  * [Endpoints](/reference/endpoints)
+  * [Operations](/reference/operations)
+  * [Message Format](/reference/messaging-format-1)
+  * [Managing Connection](/reference/overview-1)
+  * [Cancel on Disconnect](/reference/cancel-on-disconnect)
+  * [Public Operations __](/reference/publish-channel)
+    * [PUBLISH Channels](/reference/publish-channel)
+    * [ PUBLISH Ping](/reference/publish-ping)
+    * [SUBSCRIBE Orderbook Throttled (NEW)](/reference/subscribe-orderbook-throttled)
+    * [SUBSCRIBE Book Ticker (NEW)](/reference/subcribe-book-ticker)
+    * [SUBSCRIBE Ticker Throttled (NEW)](/reference/subscribe-ticker-throttled)
+    * [SUBSCRIBE Index](/reference/subcribe-index)
+    * [SUBSCRIBE Trades](/reference/subcribe-trades)
+  * [Private Operations __](/reference/websocket-authentication)
+    * [Authentication](/reference/websocket-authentication)
+    * [ PUBLISH Status](/reference/get-status)
+    * [PUBLISH Create Order](/reference/publish-create-order)
+    * [PUBLISH Edit Order](/reference/publish-edit-order)
+    * [PUBLISH Cancel Order](/reference/publish-cancel-order)
+    * [PUBLISH Cancel All Orders](/reference/publish-cancel-all-orders)
+    * [SUBCRIBE Orders](/reference/subcribe-orders)
+    * [SUBCRIBE Fills](/reference/subcribe-fills)
+    * [SUBCRIBE Positions](/reference/subcribe-positions)
 
-### GET /statistics ⭐ (OI + funding source)
-Params: `asset`, `instrument_type` (OPTION | PERPETUAL | SPOT), `end_time` (nanoseconds).
 
-Key fields: `open_interest.total`, `daily_volume`, `daily_buy_volume`, `daily_sell_volume`, `index_price`, `mark_price`, `funding_daily_avg`.
-```json
-{"asset": "ETH", "open_interest": {"calls": "1234.56", "puts": "1234.56", "total": "1234.56"},
- "daily_volume": "1234.56", "mark_price": "12.23", "funding_daily_avg": "12.52"}
-```
 
-### GET /coingecko-statistics
-Returns all perp stats. Key fields: `ticker_id` (e.g. "ETH-PERP"), `open_interest`, `funding_rate`, `index_price`, `next_funding_rate_timestamp`.
+Powered by [](https://readme.com?ref_src=hub&project=aevo)
 
-### GET /orderbook ⭐ (depth source)
-Params: `instrument_name` (required). Returns snapshot with `bids`/`asks` arrays — each level is **3 elements**: `[price, amount, IV]`. Also: `instrument_id`, `instrument_name`, `instrument_type`, `last_updated` (nanoseconds), `checksum`, `type` (always "snapshot" for REST).
-```json
-{"type": "snapshot", "instrument_name": "ETH-30JUN23-1600-C",
- "bids": [["1", "100", "12"]], "asks": [["1", "100", "12"]],
- "last_updated": "1680249600000000000", "checksum": "8479283742"}
-```
+# Introduction
 
-### GET /funding ⭐ (funding rate)
-Params: `instrument_name` (required). Returns `funding_rate` (decimal) + `next_epoch` (nanoseconds).
-```json
-{"funding_rate": "0.00122", "next_epoch": "1680249600000000000"}
-```
+Ask AI
 
-### GET /funding-history
-Params: `instrument_name`, `start_time` / `end_time` (nanoseconds), `limit` (max 50). Returns `funding_history` array of `[instrument_name, timestamp_ns, funding_rate, mark_price]`.
-```json
-{"funding_history": [["ETH-PERP", "1680249600000000000", "0.000123", "1892.82"]]}
-```
 
-### GET /instrument/{instrument_name}
-Returns instrument detail. Key fields: `instrument_id`, `instrument_name`, `mark_price`, `index_price`, `best_bid` / `best_ask` (objects with `price`, `amount`, `iv`), `markets.total_oi`, `markets.daily_volume`, `greeks`.
-```json
-{"instrument_name": "ETH-30JUN23-1600-C", "mark_price": "12.23",
- "best_bid": {"price": "12.34", "amount": "1000000", "iv": "0.23"},
- "markets": {"daily_volume": "1234.56", "total_oi": "1234.56"}}
-```
+---
 
-### GET /instrument/{instrument_name}/trade-history ⭐ (recovery source)
-Returns `count` + `trade_history` array. Fields: `trade_id`, `instrument_id`, `instrument_name`, `instrument_type`, `side` ("buy"/"sell"), `price`, `amount`, `created_timestamp` (nanoseconds).
-```json
-{"count": "5", "trade_history": [
-  {"trade_id": "DwmD...", "instrument_name": "ETH-30JUN23-1600-C",
-   "side": "buy", "price": "12.34", "amount": "1000000",
-   "created_timestamp": "1680249600000000000"}]}
-```
+# Source: https://api-docs.aevo.xyz/reference/getmarkets
 
-### GET /time
-Returns server time. Fields: `name`, `timestamp` (nanoseconds), `time`, `sequence`, `block`.
+[Jump to Content](#content)
 
-### GET /swap (trading)
-Returns swap quote. Fields: `quote_amount`, `fees`, `fee_rate`, `base_balance`, `quote_balance`, `amount`, `price`.
+[](/reference)
 
-## WebSocket API
+[ __Technical Docs](/docs)[ __API Reference](/reference)[ __Changelog](/changelog) v1.0.2v1.0.3-beta
 
-**Endpoints**: `wss://ws.aevo.xyz` (mainnet), `wss://ws-testnet.aevo.xyz` (testnet)
+* * *
 
-**Request format**: `{op, data, id}` — `op` = "subscribe" | "unsubscribe" | "ping", `data` = params, `id` = optional request ID.
+[Log In](/login?redirect_uri=/reference/getmarkets)[](/reference)
 
-**Response format**: `{data, channel, error, id}` — `channel` = the subscription channel name (discriminator!), `data` = payload, `error` = optional.
+ __API Reference
 
-**Connection**: Timeout after 15min inactivity. Ping or any operation refreshes. Two operation types: PUBLISH (one-time) and SUBSCRIBE (streaming).
+[Log In](/login?redirect_uri=/reference/getmarkets)
 
-### PUBLISH Channels (list available)
-Request: `{"op": "channels"}` → Response: `{"data": ["orderbook:ETH-27JAN23-1050-P", ...]}`
+v1.0.3-beta
 
-### PUBLISH Ping
-Request: `{"op": "ping"}` → Response: `{"data": {"success": true, "timestamp": "1673436052887313432"}}`
+[ __Technical Docs](/docs)[ __API Reference](/reference)[ __Changelog](/changelog)
 
-### SUBSCRIBE Orderbook Throttled ⭐ (depth)
-Channel: **`orderbook-100ms:{instrument_name}`** (or `orderbook-500ms:`)
-Subscribe: `{"op": "subscribe", "data": ["orderbook-100ms:ETH-31MAR23-1350-C"]}`
+GET /markets
 
-Response — `channel` contains full channel name, `data` has the orderbook:
-- `data.type`: "snapshot" | "update"
-- `data.instrument_id`, `data.instrument_name`, `data.instrument_type`
-- `data.bids` / `data.asks`: arrays of **3 elements** `[price, amount, IV]` — amount=0 means level removed
-- `data.last_updated`: nanoseconds
-- `data.checksum`: CRC32 checksum
-```json
-{"channel": "orderbook-100ms:ETH-31MAR23-1350-C",
- "data": {"type": "update", "instrument_id": "165",
-   "instrument_name": "ETH-31MAR23-1350-C", "instrument_type": "OPTION",
-   "bids": [["1", "10", "0.75"]], "asks": [["10", "1", "0.85"]],
-   "last_updated": "1673436052887313432", "checksum": "1321749405"}}
-```
+All
 
-### SUBSCRIBE Book Ticker
-Channel: **`book-ticker:{instrument_name}`** or **`book-ticker:{asset}:{instrument_type}`**
-Subscribe: `{"op": "subscribe", "data": ["book-ticker:ETH-31MAR23-1350-C"]}`
+Pages
 
-Response — `data.tickers` array, each with `instrument_id`, `instrument_name`, `instrument_type`, `bid` / `ask` objects (with `price`, `amount`, greeks).
-```json
-{"channel": "book-ticker:ETH-31MAR23-1350-C",
- "data": {"timestamp": "1673436965238291661",
-   "tickers": [{"instrument_id": 165, "instrument_name": "ETH-31MAR23-1350-C",
-     "bid": {"price": "2", "amount": "10", "iv": "0.026..."},
-     "ask": {"price": "10", "amount": "1", "iv": "0.062..."}}]}}
-```
+###### Start typing to search…
 
-### SUBSCRIBE Index
-Channel: **`index:{asset}`** (e.g. `index:ETH`)
-Subscribe: `{"op": "subscribe", "data": ["index:ETH"]}`
-```json
-{"channel": "index:ETH", "data": {"price": "1337.16", "timestamp": "1673438070391698947"}}
-```
+JUMP TO
 
-### SUBSCRIBE Trades ⭐ (trade source)
-Channel: **`trades:{instrument_name}`** or **`trades:{asset}`** (e.g. `trades:ETH-31MAR23-1350-C` or `trades:ETH`)
-Subscribe: `{"op": "subscribe", "data": ["trades:ETH-31MAR23-1350-C"]}`
+## Aevo API
 
-Response — **single trade object** in `data` (NOT an array):
-- `data.trade_id`: hash string
-- `data.instrument_id`, `data.instrument_name`, `data.instrument_type`
-- `data.side`: "buy" | "sell"
-- `data.price`: string USD
-- `data.amount`: string contracts
-- `data.created_timestamp`: nanoseconds (note: Aevo docs have typo `created_ttimestamp`)
-```json
-{"channel": "trades:ETH-20JAN23-1200-P",
- "data": {"trade_id": "0x17897e...", "instrument_id": 830,
-   "instrument_name": "ETH-20JAN23-1200-P", "instrument_type": "OPTION",
-   "side": "sell", "price": "0.58", "amount": "1",
-   "created_timestamp": "1674118637229190091"}}
-```
+  * [Introduction](/reference/overview)
+  * [API Key Setup __](/reference/api-key-setup-via-ui)
+    * [Via UI](/reference/api-key-setup-via-ui)
+    * [ Via API](/reference/api-key-setup-api)
+  * [Signing Orders](/reference/signing-orders)
+  * [Signing Orders Without Timestamp](/reference/signing-orders-copy)
+  * [Rate Limits](/reference/rate-limits-1)
+  * [Orderbook Checksum](/reference/orderbook-checksum)
+  * [Errors](/reference/errors)
 
-### SUBSCRIBE Ticker Throttled ⭐ (funding via WS)
-Channel: **`ticker-500ms:{asset}:{instrument_type}`** or **`ticker-500ms:{instrument_name}`**
-Subscribe: `{"op": "subscribe", "data": ["ticker-500ms:ETH:PERPETUAL"]}`
 
-Response — `data.tickers` array, each with:
-- `instrument_id`, `instrument_name`, `instrument_type`
-- **`funding_rate`**: last epoch funding rate
-- **`next_funding_rate`**: estimated next epoch
-- `mark`: object with `price`, greeks
-- `bid` / `ask`: objects with `price`, `amount`, greeks
-```json
-{"channel": "ticker-500ms:ETH:OPTION",
- "data": {"timestamp": "1673436965238291661",
-   "tickers": [{"instrument_id": 165, "instrument_name": "ETH-31MAR23-1350-C",
-     "funding_rate": "0.000026", "next_funding_rate": "0.00002",
-     "mark": {"price": "140.007862"},
-     "bid": {"price": "2", "amount": "10"},
-     "ask": {"price": "10", "amount": "1"}}]}}
-```
 
+## Aevo REST API
+
+  * [Endpoints](/reference/urls)
+  * [Public API __](/reference/getassets)
+    * [GET /assets get](/reference/getassets)
+    * [GET /expiriesget](/reference/getexpiries)
+    * [GET /indexget](/reference/getindex)
+    * [GET /index-historyget](/reference/getindexhistory)
+    * [GET /mark-historyget](/reference/getmarkhistory)
+    * [GET /settlement-historyget](/reference/getsettlementhistory)
+    * [GET /marketsget](/reference/getmarkets)
+    * [GET /statisticsget](/reference/getstatistics)
+    * [GET /coingecko-statisticsget](/reference/getcoingeckostatistics)
+    * [GET /orderbookget](/reference/getorderbook)
+    * [GET /fundingget](/reference/getfunding)
+    * [GET /funding-historyget](/reference/getfundinghistory)
+    * [GET /instrument/{instrument_name}get](/reference/getinstrumentinstrumentname)
+    * [GET /instrument/{instrument_name}/trade-historyget](/reference/getinstrumentinstrumentnametradehistory)
+    * [GET /check-referralget](/reference/getcheckreferral)
+    * [GET /emissionsget](/reference/getemissions)
+    * [POST /account/unsubscribepost](/reference/postaccountunsubscribe)
+    * [GET /timeget](/reference/gettime)
+    * [GET /strategiesget](/reference/getstrategies)
+    * [GET /yield-vaultget](/reference/getyieldvault)
+    * [POST /swap/previewpost](/reference/postswappreview)
+    * [GET /airdrop-incentivized-assetsget](/reference/getairdropincentivizedassets)
+    * [GET /weethget](/reference/getweeth)
+    * [GET /options-historyget](/reference/getoptionshistory)
+    * [POST /account/email-verifiedpost](/reference/postaccountemailverified)
+    * [GET /strategy/{strategy_address}/positionsget](/reference/getstrategystrategyaddresspositions)
+    * [GET /strategy/{strategy_address}/trade-historyget](/reference/getstrategystrategyaddresstradehistory)
+    * [GET /strategy/{strategy_address}/portfolioget](/reference/getstrategystrategyaddressportfolio)
+    * [GET /strategy/{strategy_address}/balance-historyget](/reference/getstrategystrategyaddressbalancehistory)
+    * [GET /strategy/{strategy_address}/transaction-historyget](/reference/getstrategystrategyaddresstransactionhistory)
+    * [GET /strategy/{strategy_address}/pnl-historyget](/reference/getstrategystrategyaddresspnlhistory)
+  * [Private API __](/reference/rest-authentication)
+    * [Authentication](/reference/rest-authentication)
+    * [ POST /registerpost](/reference/postregister)
+    * [DELETE /api-keydel](/reference/deleteapikey)
+    * [GET /api-keyget](/reference/getapikey)
+    * [POST /api-keypost](/reference/postapikey)
+    * [DELETE /signing-keydel](/reference/deletesigningkey)
+    * [GET /authget](/reference/getauth)
+    * [GET /accountget](/reference/getaccount)
+    * [GET /positionsget](/reference/getpositions)
+    * [GET /account/cancel-on-disconnectget](/reference/getaccountcancelondisconnect)
+    * [POST /account/cancel-on-disconnectpost](/reference/postaccountcancelondisconnect)
+    * [POST /account/portfolio-marginpost](/reference/postaccountportfoliomargin)
+    * [GET /account/email-addressget](/reference/getaccountemailaddress)
+    * [POST /account/email-addresspost](/reference/postaccountemailaddress)
+    * [POST /account/email-preferencepost](/reference/postaccountemailpreference)
+    * [GET /account/email-preferencesget](/reference/getaccountemailpreferences)
+    * [GET /account/email-verifiedget](/reference/getaccountemailverified)
+    * [GET /account/accumulated-fundingsget](/reference/getaccountaccumulatedfundings)
+    * [POST /account/update-marginpost](/reference/postaccountupdatemargin)
+    * [POST /account/margin-typepost](/reference/postaccountmargintype)
+    * [POST /account/leveragepost](/reference/postaccountleverage)
+    * [GET /account/trades/csvget](/reference/getaccounttradescsv)
+    * [GET /account/transactions/csvget](/reference/getaccounttransactionscsv)
+    * [GET /account/statsget](/reference/getaccountstats)
+    * [POST /account/network-addresspost](/reference/postaccountnetworkaddress)
+    * [GET /portfolioget](/reference/getportfolio)
+    * [POST /withdrawpost](/reference/postwithdraw)
+    * [GET /strategies/accountget](/reference/getstrategiesaccount)
+    * [GET /strategies/account-historyget](/reference/getstrategiesaccounthistory)
+    * [POST /strategy/{strategy_address}/initiate-withdrawpost](/reference/poststrategystrategyaddressinitiatewithdraw)
+    * [POST /transferpost](/reference/posttransfer)
+    * [GET /ordersget](/reference/getorders)
+    * [POST /orderspost](/reference/postorders)
+    * [DELETE /orders/{order_id}del](/reference/deleteordersorderid)
+    * [GET /orders/{order_id}get](/reference/getordersorderid)
+    * [POST /orders/{order_id}post](/reference/postordersorderid)
+    * [DELETE /orders-alldel](/reference/deleteordersall)
+    * [GET /order-historyget](/reference/getorderhistory)
+    * [GET /order-history/stopsget](/reference/getorderhistorystops)
+    * [GET /trade-historyget](/reference/gettradehistory)
+    * [GET /transaction-historyget](/reference/gettransactionhistory)
+    * [GET /referral-rewards-historyget](/reference/getreferralrewardshistory)
+    * [GET /referral-historyget](/reference/getreferralhistory)
+    * [GET /referral-statisticsget](/reference/getreferralstatistics)
+    * [POST /claim-referral-rewardspost](/reference/postclaimreferralrewards)
+    * [POST /claim-trade-feespost](/reference/postclaimtradefees)
+    * [GET /trade-fees-campaign-statsget](/reference/gettradefeescampaignstats)
+    * [GET /mmpget](/reference/getmmp)
+    * [POST /mmppost](/reference/postmmp)
+    * [POST /reset-mmppost](/reference/postresetmmp)
+    * [DELETE /rfqsdel](/reference/deleterfqs)
+    * [GET /rfqsget](/reference/getrfqs)
+    * [POST /rfqspost](/reference/postrfqs)
+    * [DELETE /rfqs/{block_id}del](/reference/deleterfqsblockid)
+    * [GET /rfqs/{block_id}/quotesget](/reference/getrfqsblockidquotes)
+    * [DELETE /quotesdel](/reference/deletequotes)
+    * [GET /quotesget](/reference/getquotes)
+    * [POST /quotespost](/reference/postquotes)
+    * [POST /quotes/previewpost](/reference/postquotespreview)
+    * [DELETE /quotes/{quote_id}del](/reference/deletequotesquoteid)
+    * [PUT /quotes/{quote_id}put](/reference/putquotesquoteid)
+    * [POST /swappost](/reference/postswap)
+    * [GET /farm-boostget](/reference/getfarmboost)
+    * [POST /farm-boostpost](/reference/postfarmboost)
+    * [GET /proof-dataget](/reference/getproofdata)
+    * [GET /proofs-dataget](/reference/getproofsdata)
+    * [GET /leaderboard/campaignget](/reference/getleaderboardcampaign)
+    * [POST /campaign-sign-uppost](/reference/postcampaignsignup)
+    * [GET /otc/accountget](/reference/getotcaccount)
+    * [POST /otc/create-requestpost](/reference/postotccreaterequest)
+    * [POST /otc/unwindpost](/reference/postotcunwind)
+    * [POST /account/usernamepost](/reference/postaccountusername)
+    * [GET /twap-ordersget](/reference/gettwaporders)
+    * [POST /twap-orderspost](/reference/posttwaporders)
+    * [DELETE /twap-orders/{order_id}del](/reference/deletetwapordersorderid)
+    * [GET /twap-orders/{order_id}get](/reference/gettwapordersorderid)
+    * [GET /twap-order-historyget](/reference/gettwaporderhistory)
+    * [GET /account/weekly-volumeget](/reference/getaccountweeklyvolume)
+    * [GET /stakeget](/reference/getstake)
+    * [POST /batch-orderspost](/reference/postbatchorders)
+
+
+
+## Websocket API
+
+  * [Endpoints](/reference/endpoints)
+  * [Operations](/reference/operations)
+  * [Message Format](/reference/messaging-format-1)
+  * [Managing Connection](/reference/overview-1)
+  * [Cancel on Disconnect](/reference/cancel-on-disconnect)
+  * [Public Operations __](/reference/publish-channel)
+    * [PUBLISH Channels](/reference/publish-channel)
+    * [ PUBLISH Ping](/reference/publish-ping)
+    * [SUBSCRIBE Orderbook Throttled (NEW)](/reference/subscribe-orderbook-throttled)
+    * [SUBSCRIBE Book Ticker (NEW)](/reference/subcribe-book-ticker)
+    * [SUBSCRIBE Ticker Throttled (NEW)](/reference/subscribe-ticker-throttled)
+    * [SUBSCRIBE Index](/reference/subcribe-index)
+    * [SUBSCRIBE Trades](/reference/subcribe-trades)
+  * [Private Operations __](/reference/websocket-authentication)
+    * [Authentication](/reference/websocket-authentication)
+    * [ PUBLISH Status](/reference/get-status)
+    * [PUBLISH Create Order](/reference/publish-create-order)
+    * [PUBLISH Edit Order](/reference/publish-edit-order)
+    * [PUBLISH Cancel Order](/reference/publish-cancel-order)
+    * [PUBLISH Cancel All Orders](/reference/publish-cancel-all-orders)
+    * [SUBCRIBE Orders](/reference/subcribe-orders)
+    * [SUBCRIBE Fills](/reference/subcribe-fills)
+    * [SUBCRIBE Positions](/reference/subcribe-positions)
+
+
+
+Powered by [](https://readme.com?ref_src=hub&project=aevo)
+
+# GET /markets
+
+Ask AI
+
+get
+
+https://api.aevo.xyz/markets
+
+Returns a list of instruments. If `asset` is not specified, the response will include all listed instruments.
+
+Language
+
+ __Shell __Node __Ruby __PHP __Python
+
+Response
+
+Click `Try It!` to start a request and see the response here!
+
+
+---
+
+# Source: https://api-docs.aevo.xyz/reference/websocket
+
+ERROR: Failed to fetch: 404 Client Error: Not Found for url: https://api-docs.aevo.xyz/reference/websocket
+
+
+---
+
+# Source: https://api-docs.aevo.xyz/reference/postorders
+
+[Jump to Content](#content)
+
+[](/reference)
+
+[ __Technical Docs](/docs)[ __API Reference](/reference)[ __Changelog](/changelog) v1.0.2v1.0.3-beta
+
+* * *
+
+[Log In](/login?redirect_uri=/reference/postorders)[](/reference)
+
+ __API Reference
+
+[Log In](/login?redirect_uri=/reference/postorders)
+
+v1.0.3-beta
+
+[ __Technical Docs](/docs)[ __API Reference](/reference)[ __Changelog](/changelog)
+
+POST /orders
+
+All
+
+Pages
+
+###### Start typing to search…
+
+JUMP TO
+
+## Aevo API
+
+  * [Introduction](/reference/overview)
+  * [API Key Setup __](/reference/api-key-setup-via-ui)
+    * [Via UI](/reference/api-key-setup-via-ui)
+    * [ Via API](/reference/api-key-setup-api)
+  * [Signing Orders](/reference/signing-orders)
+  * [Signing Orders Without Timestamp](/reference/signing-orders-copy)
+  * [Rate Limits](/reference/rate-limits-1)
+  * [Orderbook Checksum](/reference/orderbook-checksum)
+  * [Errors](/reference/errors)
+
+
+
+## Aevo REST API
+
+  * [Endpoints](/reference/urls)
+  * [Public API __](/reference/getassets)
+    * [GET /assets get](/reference/getassets)
+    * [GET /expiriesget](/reference/getexpiries)
+    * [GET /indexget](/reference/getindex)
+    * [GET /index-historyget](/reference/getindexhistory)
+    * [GET /mark-historyget](/reference/getmarkhistory)
+    * [GET /settlement-historyget](/reference/getsettlementhistory)
+    * [GET /marketsget](/reference/getmarkets)
+    * [GET /statisticsget](/reference/getstatistics)
+    * [GET /coingecko-statisticsget](/reference/getcoingeckostatistics)
+    * [GET /orderbookget](/reference/getorderbook)
+    * [GET /fundingget](/reference/getfunding)
+    * [GET /funding-historyget](/reference/getfundinghistory)
+    * [GET /instrument/{instrument_name}get](/reference/getinstrumentinstrumentname)
+    * [GET /instrument/{instrument_name}/trade-historyget](/reference/getinstrumentinstrumentnametradehistory)
+    * [GET /check-referralget](/reference/getcheckreferral)
+    * [GET /emissionsget](/reference/getemissions)
+    * [POST /account/unsubscribepost](/reference/postaccountunsubscribe)
+    * [GET /timeget](/reference/gettime)
+    * [GET /strategiesget](/reference/getstrategies)
+    * [GET /yield-vaultget](/reference/getyieldvault)
+    * [POST /swap/previewpost](/reference/postswappreview)
+    * [GET /airdrop-incentivized-assetsget](/reference/getairdropincentivizedassets)
+    * [GET /weethget](/reference/getweeth)
+    * [GET /options-historyget](/reference/getoptionshistory)
+    * [POST /account/email-verifiedpost](/reference/postaccountemailverified)
+    * [GET /strategy/{strategy_address}/positionsget](/reference/getstrategystrategyaddresspositions)
+    * [GET /strategy/{strategy_address}/trade-historyget](/reference/getstrategystrategyaddresstradehistory)
+    * [GET /strategy/{strategy_address}/portfolioget](/reference/getstrategystrategyaddressportfolio)
+    * [GET /strategy/{strategy_address}/balance-historyget](/reference/getstrategystrategyaddressbalancehistory)
+    * [GET /strategy/{strategy_address}/transaction-historyget](/reference/getstrategystrategyaddresstransactionhistory)
+    * [GET /strategy/{strategy_address}/pnl-historyget](/reference/getstrategystrategyaddresspnlhistory)
+  * [Private API __](/reference/rest-authentication)
+    * [Authentication](/reference/rest-authentication)
+    * [ POST /registerpost](/reference/postregister)
+    * [DELETE /api-keydel](/reference/deleteapikey)
+    * [GET /api-keyget](/reference/getapikey)
+    * [POST /api-keypost](/reference/postapikey)
+    * [DELETE /signing-keydel](/reference/deletesigningkey)
+    * [GET /authget](/reference/getauth)
+    * [GET /accountget](/reference/getaccount)
+    * [GET /positionsget](/reference/getpositions)
+    * [GET /account/cancel-on-disconnectget](/reference/getaccountcancelondisconnect)
+    * [POST /account/cancel-on-disconnectpost](/reference/postaccountcancelondisconnect)
+    * [POST /account/portfolio-marginpost](/reference/postaccountportfoliomargin)
+    * [GET /account/email-addressget](/reference/getaccountemailaddress)
+    * [POST /account/email-addresspost](/reference/postaccountemailaddress)
+    * [POST /account/email-preferencepost](/reference/postaccountemailpreference)
+    * [GET /account/email-preferencesget](/reference/getaccountemailpreferences)
+    * [GET /account/email-verifiedget](/reference/getaccountemailverified)
+    * [GET /account/accumulated-fundingsget](/reference/getaccountaccumulatedfundings)
+    * [POST /account/update-marginpost](/reference/postaccountupdatemargin)
+    * [POST /account/margin-typepost](/reference/postaccountmargintype)
+    * [POST /account/leveragepost](/reference/postaccountleverage)
+    * [GET /account/trades/csvget](/reference/getaccounttradescsv)
+    * [GET /account/transactions/csvget](/reference/getaccounttransactionscsv)
+    * [GET /account/statsget](/reference/getaccountstats)
+    * [POST /account/network-addresspost](/reference/postaccountnetworkaddress)
+    * [GET /portfolioget](/reference/getportfolio)
+    * [POST /withdrawpost](/reference/postwithdraw)
+    * [GET /strategies/accountget](/reference/getstrategiesaccount)
+    * [GET /strategies/account-historyget](/reference/getstrategiesaccounthistory)
+    * [POST /strategy/{strategy_address}/initiate-withdrawpost](/reference/poststrategystrategyaddressinitiatewithdraw)
+    * [POST /transferpost](/reference/posttransfer)
+    * [GET /ordersget](/reference/getorders)
+    * [POST /orderspost](/reference/postorders)
+    * [DELETE /orders/{order_id}del](/reference/deleteordersorderid)
+    * [GET /orders/{order_id}get](/reference/getordersorderid)
+    * [POST /orders/{order_id}post](/reference/postordersorderid)
+    * [DELETE /orders-alldel](/reference/deleteordersall)
+    * [GET /order-historyget](/reference/getorderhistory)
+    * [GET /order-history/stopsget](/reference/getorderhistorystops)
+    * [GET /trade-historyget](/reference/gettradehistory)
+    * [GET /transaction-historyget](/reference/gettransactionhistory)
+    * [GET /referral-rewards-historyget](/reference/getreferralrewardshistory)
+    * [GET /referral-historyget](/reference/getreferralhistory)
+    * [GET /referral-statisticsget](/reference/getreferralstatistics)
+    * [POST /claim-referral-rewardspost](/reference/postclaimreferralrewards)
+    * [POST /claim-trade-feespost](/reference/postclaimtradefees)
+    * [GET /trade-fees-campaign-statsget](/reference/gettradefeescampaignstats)
+    * [GET /mmpget](/reference/getmmp)
+    * [POST /mmppost](/reference/postmmp)
+    * [POST /reset-mmppost](/reference/postresetmmp)
+    * [DELETE /rfqsdel](/reference/deleterfqs)
+    * [GET /rfqsget](/reference/getrfqs)
+    * [POST /rfqspost](/reference/postrfqs)
+    * [DELETE /rfqs/{block_id}del](/reference/deleterfqsblockid)
+    * [GET /rfqs/{block_id}/quotesget](/reference/getrfqsblockidquotes)
+    * [DELETE /quotesdel](/reference/deletequotes)
+    * [GET /quotesget](/reference/getquotes)
+    * [POST /quotespost](/reference/postquotes)
+    * [POST /quotes/previewpost](/reference/postquotespreview)
+    * [DELETE /quotes/{quote_id}del](/reference/deletequotesquoteid)
+    * [PUT /quotes/{quote_id}put](/reference/putquotesquoteid)
+    * [POST /swappost](/reference/postswap)
+    * [GET /farm-boostget](/reference/getfarmboost)
+    * [POST /farm-boostpost](/reference/postfarmboost)
+    * [GET /proof-dataget](/reference/getproofdata)
+    * [GET /proofs-dataget](/reference/getproofsdata)
+    * [GET /leaderboard/campaignget](/reference/getleaderboardcampaign)
+    * [POST /campaign-sign-uppost](/reference/postcampaignsignup)
+    * [GET /otc/accountget](/reference/getotcaccount)
+    * [POST /otc/create-requestpost](/reference/postotccreaterequest)
+    * [POST /otc/unwindpost](/reference/postotcunwind)
+    * [POST /account/usernamepost](/reference/postaccountusername)
+    * [GET /twap-ordersget](/reference/gettwaporders)
+    * [POST /twap-orderspost](/reference/posttwaporders)
+    * [DELETE /twap-orders/{order_id}del](/reference/deletetwapordersorderid)
+    * [GET /twap-orders/{order_id}get](/reference/gettwapordersorderid)
+    * [GET /twap-order-historyget](/reference/gettwaporderhistory)
+    * [GET /account/weekly-volumeget](/reference/getaccountweeklyvolume)
+    * [GET /stakeget](/reference/getstake)
+    * [POST /batch-orderspost](/reference/postbatchorders)
+
+
+
+## Websocket API
+
+  * [Endpoints](/reference/endpoints)
+  * [Operations](/reference/operations)
+  * [Message Format](/reference/messaging-format-1)
+  * [Managing Connection](/reference/overview-1)
+  * [Cancel on Disconnect](/reference/cancel-on-disconnect)
+  * [Public Operations __](/reference/publish-channel)
+    * [PUBLISH Channels](/reference/publish-channel)
+    * [ PUBLISH Ping](/reference/publish-ping)
+    * [SUBSCRIBE Orderbook Throttled (NEW)](/reference/subscribe-orderbook-throttled)
+    * [SUBSCRIBE Book Ticker (NEW)](/reference/subcribe-book-ticker)
+    * [SUBSCRIBE Ticker Throttled (NEW)](/reference/subscribe-ticker-throttled)
+    * [SUBSCRIBE Index](/reference/subcribe-index)
+    * [SUBSCRIBE Trades](/reference/subcribe-trades)
+  * [Private Operations __](/reference/websocket-authentication)
+    * [Authentication](/reference/websocket-authentication)
+    * [ PUBLISH Status](/reference/get-status)
+    * [PUBLISH Create Order](/reference/publish-create-order)
+    * [PUBLISH Edit Order](/reference/publish-edit-order)
+    * [PUBLISH Cancel Order](/reference/publish-cancel-order)
+    * [PUBLISH Cancel All Orders](/reference/publish-cancel-all-orders)
+    * [SUBCRIBE Orders](/reference/subcribe-orders)
+    * [SUBCRIBE Fills](/reference/subcribe-fills)
+    * [SUBCRIBE Positions](/reference/subcribe-positions)
+
+
+
+Powered by [](https://readme.com?ref_src=hub&project=aevo)
+
+# POST /orders
+
+Ask AI
+
+post
+
+https://api.aevo.xyz/orders
+
+Creates a new order.
+
+Language
+
+ __Shell __Node __Ruby __PHP __Python
+
+Credentials
+
+Header +1
+
+ __
+
+__
+
+Response
+
+Click `Try It!` to start a request and see the response here!
