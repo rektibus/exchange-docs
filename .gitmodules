@@ -55,3 +55,9 @@
 [submodule "p2b-docs"]
 	path = p2b-docs
 	url = https://github.com/P2B-team/p2b-api-docs.git
+[submodule "alpaca-docs"]
+	path = alpaca-docs
+	url = https://github.com/alpacahq/alpaca-docs.git
+[submodule "alpaca-user-docs"]
+	path = alpaca-user-docs
+	url = https://github.com/alpacahq/user-docs.git
