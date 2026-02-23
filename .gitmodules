@@ -1,0 +1,9 @@
+[submodule "ascendex-api"]
+	path = ascendex-api
+	url = https://github.com/AscendEX/ascendex-pro-api-demo.git
+[submodule "ascendex-futures-api"]
+	path = ascendex-futures-api
+	url = https://github.com/AscendEX/ascendex-futures-pro-api-v2.git
+[submodule "bitget-api-sdk"]
+	path = bitget-api-sdk
+	url = https://github.com/BitgetLimited/v3-bitget-api-sdk.git
