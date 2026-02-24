@@ -1,0 +1,14 @@
+{
+  "name": "paradex-docs",
+  "version": "1.0.0",
+  "repository": "https://github.com/tradeparadex/paradex-docs.git",
+  "private": true,
+  "scripts": {
+    "dev": "fern docs dev"
+  },
+  "devDependencies": {
+    "fern-api": "^3.31.1",
+    "swagger2openapi": "^7.0.8"
+  },
+  "packageManager": "yarn@4.5.3"
+}

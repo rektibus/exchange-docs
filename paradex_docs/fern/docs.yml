@@ -1,0 +1,145 @@
+instances:
+  - url: https://paradex.docs.buildwithfern.com
+    custom-domain: https://docs.paradex.trade
+    edit-this-page:
+      github:
+        owner: tradeparadex
+        repo: paradex-docs
+        branch: main
+  - url: https://paradex-dev.docs.buildwithfern.com
+title: Paradex | Documentation
+
+products:
+  - display-name: Documentation
+    path: ./products/documentation.yml
+    icon: fa-solid fa-book
+    slug: docs
+    subtitle: Complete guide to Paradex
+  - display-name: REST API Reference
+    path: ./products/rest-api.yml
+    icon: fa-solid fa-code
+    slug: api
+    subtitle: API endpoints for developers
+  - display-name: WebSocket API Reference
+    path: ./products/websocket-api.yml
+    icon: fa-solid fa-plug
+    slug: ws
+    subtitle: Realtime API endpoints
+
+analytics:
+  posthog:
+    api-key: phc_PHIavFH8sn5Wzxmqcro0n6zQ3rguK7VPTYCzxMJ8eG8
+    endpoint: https://eu.i.posthog.com
+  gtm:
+    container-id: GTM-W68Q2TWZ
+
+navbar-links:
+  - type: minimal
+    text: $DIME Nation
+    url: https://discord.gg/paradex
+  - type: filled
+    text: Launch Exchange
+    rounded: true
+    url: https://app.paradex.trade
+
+redirects:
+  # Redirect root to docs product landing
+  - source: "/"
+    destination: "/docs/getting-started/what-is-paradex"
+
+  # Redirects from old root-level Documentation URLs to new /docs/ prefix
+  # These handle all existing live site URLs that are at root level
+  - source: "/getting-started/:slug*"
+    destination: "/docs/getting-started/:slug*"
+  - source: "/xp-referrals/:slug*"
+    destination: "/docs/xp-referrals/:slug*"
+  - source: "/trading/:slug*"
+    destination: "/docs/trading/:slug*"
+  - source: "/risk/:slug*"
+    destination: "/docs/risk/:slug*"
+  - source: "/security/:slug*"
+    destination: "/docs/security/:slug*"
+  - source: "/paradex-chain/:slug*"
+    destination: "/docs/paradex-chain/:slug*"
+  - source: "/ecosystem/:slug*"
+    destination: "/docs/ecosystem/:slug*"
+  - source: "/release-notes/:slug*"
+    destination: "/docs/release-notes/:slug*"
+  - source: "/accounts/:slug*"
+    destination: "/docs/trading/accounts/:slug*"
+
+  # Legacy /documentation/ prefix redirects
+  - source: "/documentation/getting-started/architecture-overview/wallet-integration"
+    destination: "/docs/trading/accounts/wallet-integration"
+  - source: "/documentation/perpetual-options/:slug*"
+    destination: "/docs/trading/perpetual-options/:slug*"
+  - source: "/documentation/vaults/:slug*"
+    destination: "/docs/trading/vaults/:slug*"
+  - source: "/documentation/instruments-guide/:slug*"
+    destination: "/docs/trading/instruments-guide/:slug*"
+  - source: "/documentation/risk-system/:slug*"
+    destination: "/docs/risk/:slug*"
+  - source: "/documentation/advanced-trading-features/self-trade-prevention"
+    destination: "/docs/trading/self-trade-prevention"
+  - source: "/documentation/advanced-trading-features/receive-window"
+    destination: "/docs/trading/receive-window"
+  - source: "/documentation/points-referrals/:slug*"
+    destination: "/docs/xp-referrals/:slug*"
+  - source: "/documentation/trading/perpetual-options/trading-fees"
+    destination: "/docs/trading/trader-profiles"
+  - source: "/documentation/:slug*"
+    destination: "/docs/:slug*"
+
+  # Legacy /api-reference/ and /websocket-reference/ redirects
+  - source: "/api-reference/:slug*"
+    destination: "/api/:slug*"
+  - source: "/websocket-reference/:slug*"
+    destination: "/ws/:slug*"
+
+  # Specific page redirects for renamed/moved pages
+  - source: "/docs/risk/paradex-risk-system"
+    destination: "/docs/risk/margin-system"
+  - source: "/risk/paradex-risk-system"
+    destination: "/docs/risk/margin-system"
+  - source: "/trading/trading-fee"
+    destination: "/docs/trading/trader-profiles"
+  - source: "/docs/trading/trading-fee"
+    destination: "/docs/trading/trader-profiles"
+
+layout:
+  header-height: 72px
+  searchbar-placement: header
+  tabs-placement: header
+typography:
+  bodyFont:
+    name: HarmonyOS
+    paths:
+      - path: ./assets/HarmonyOS_Sans_Regular.woff2
+        weight: 400
+      - path: ./assets/HarmonyOS_Sans_Medium.woff2
+        weight: 500
+  headingsFont:
+    name: HarmonyOS
+    path: ./assets/HarmonyOS_Sans_Bold.woff2
+    weight: 700
+logo:
+  light: ./assets/logo-light.svg
+  dark: ./assets/logo-dark.svg
+  height: 15
+  href: https://app.paradex.trade
+favicon: ./assets/logo.png
+colors:
+  accent-primary:
+    dark: "#1BC1CF"
+  background:
+    dark: "#090A0A"
+  card-background:
+    dark: "#16191C"
+css: ./assets/styles.css
+js:
+  - path: ./dist/add-pixel.js
+    strategy: lazyOnload
+  - path: ./assets/tvl-limit.js
+
+experimental:
+  openapi-parser-v3: true

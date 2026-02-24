@@ -1,0 +1,49 @@
+---
+title: Changing Max Slippage for an Order 
+---
+
+## Max Slippage  
+
+**Max slippage** defines the largest acceptable price deviation from the best bid/ask price. 
+
+If max slippage is not set by the user, default max slippage on market level will apply. 
+Default max slippage values are as below:
+             | Instrument | Leverage | Max Slippage |
+             |------------|----------|--------------|
+             | PERP | 50x | 0.001 |
+             | PERP | 50x > Leverage > 5x | 0.002 |
+             | PERP | 5x | 0.005 |
+             | PERP_OPTION | - | 0.5 |
+
+Both market and account defined slippage configurations are ignored for take profit or stop loss orders.
+
+During execution, an order will be canceled if the price exceeds the slippage limit or falls outside the market [Price Bands](/docs/risk/price-bands).
+
+--- 
+
+## How to Update Max Slippage  
+1. Navigate to the **Trade** section of the UI
+
+2. Locate the **Order** section, and click on the Max Slippage value
+
+<Frame>
+  <img src="../../assets/Slippage-1.png" alt="" />
+</Frame>
+
+3. Some markets have max cap of slippage percentage (In this case BTC-USD-PERP has max slippage of 2%)
+
+<Frame>
+  <img src="../../assets/Slippage-2.png" alt="" />
+</Frame>
+
+4. Adjust the slippage tolerance to your preferred percentage. You can use decimals as well as long as it is within max slippage of each market, example : 0.5% works since it is below 2% for BTC-USD-PERP.
+
+<Frame>
+  <img src="../../assets/Slippage-3.png" alt="" />
+</Frame>
+
+5. Click confirm to save the slippage setting
+
+<Frame>
+  <img src="../../assets/Slippage-4.png" alt="" />
+</Frame>

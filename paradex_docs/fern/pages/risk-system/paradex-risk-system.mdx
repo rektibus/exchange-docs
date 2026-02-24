@@ -1,0 +1,57 @@
+---
+title: Margin System
+subtitle: Understanding Paradex's margin modes and risk management
+---
+
+## Margin Modes
+
+Paradex offers two distinct margin modes to accommodate different trading strategies:
+
+<CardGroup>
+  <Card title="Cross Margin" icon="c" href="/risk/cross-margin-requirement">
+    Margin shared across all positions.
+  </Card>
+  <Card title="Isolated Margin" icon="i">
+    Margin based on individual positions.
+  </Card>
+</CardGroup>
+
+## Instrument Types
+
+All instruments are quoted and valued in USD.
+
+Paradex currently supports only USDC as a collateral asset. You have to deposit USDC on your wallet to trade and all PnL accrued or charged to your wallet will be in USDC.
+
+## Margin Checks
+
+Paradex performs two critical margin checks to ensure platform stability and protect against market manipulation:
+
+<Steps>
+  <Step title="Initial Margin Check">
+    Validates that an account can take additional risk. Examples of when this check is performed:
+    - Submitting new orders
+    - Requesting withdrawals that would increase account leverage
+  </Step>
+  <Step title="Maintenance Margin Check">
+    Determines if an account is approaching bankruptcy. 
+    
+    <Error title="If an account fails this check">
+      Account positions and balances will be liquidated
+    </Error>
+  </Step>
+</Steps>
+
+### How Margin Checks Work
+
+All margin checks follow a simple comparison formula:
+
+```
+Account Value ≥ Margin Requirement
+```
+
+| Component | Cross Margin | Isolated Margin |
+|-----------|--------------|-----------------|
+| **Account Value** | Sum of<br/>• USD Collateral (USDC balance)<br/>• Unrealized PnL from all positions<br/>• Benefits from PnL offsetting across positions | Position Value only |
+| **Margin Requirement** | Based on<br/>• All open positions<br/>• Exchange-level parameters<br/>• [Cross Margin Requirement](cross-margin-requirement) methodology | Based on<br/>• Individual position only<br/>• Exchange-level parameters |
+
+For detailed calculations of Account Value and related risk metrics, see the [Margin Term Reference](margin-term-reference).
