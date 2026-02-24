@@ -1,0 +1,3187 @@
+{
+	"info": {
+		"_postman_id": "1a935528-48d9-435b-87e9-e0a15d244cba",
+		"name": "Bitget_Mix",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "26533805"
+	},
+	"item": [
+		{
+			"name": "Market",
+			"item": [
+				{
+					"name": "Get All Symbols",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "locale",
+								"value": "zh-CN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "/api/mix/v1/market/contracts?productType=umcbl",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"market",
+								"contracts"
+							],
+							"query": [
+								{
+									"key": "productType",
+									"value": "umcbl"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Depth",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "locale",
+								"value": "zh-CN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "/api/mix/v1/market/depth?symbol=BTCUSDT_UMCBL&limit=100",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"market",
+								"depth"
+							],
+							"query": [
+								{
+									"key": "symbol",
+									"value": "BTCUSDT_UMCBL"
+								},
+								{
+									"key": "limit",
+									"value": "100"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Single Symbol Ticker",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "locale",
+								"value": "en-US",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "/api/mix/v1/market/ticker?symbol=BTCUSDT_UMCBL",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"market",
+								"ticker"
+							],
+							"query": [
+								{
+									"key": "symbol",
+									"value": "BTCUSDT_UMCBL"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Symbol Ticker",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "/api/mix/v1/market/tickers?productType=umcbl",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"market",
+								"tickers"
+							],
+							"query": [
+								{
+									"key": "productType",
+									"value": "umcbl"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Vip Level",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "/api/mix/v1/market/contract-vip-level",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"market",
+								"contract-vip-level"
+							],
+							"query": [
+								{
+									"key": "symbol",
+									"value": "BTCUSDT_UMCBL",
+									"disabled": true
+								},
+								{
+									"key": "level",
+									"value": "1",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Fills",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "/api/mix/v1/market/fills?symbol=BTCUSDT_UMCBL&limit=100",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"market",
+								"fills"
+							],
+							"query": [
+								{
+									"key": "symbol",
+									"value": "BTCUSDT_UMCBL"
+								},
+								{
+									"key": "limit",
+									"value": "100"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Fills History",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "upex_header_trace_id",
+								"value": "jkfuienchuIdD003Dfd",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "/api/mix/v1/market/fills-history?symbol=BTCUSDT_UMCBL&limit=100",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"market",
+								"fills-history"
+							],
+							"query": [
+								{
+									"key": "symbol",
+									"value": "BTCUSDT_UMCBL"
+								},
+								{
+									"key": "limit",
+									"value": "100"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Candle Data",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "locale",
+								"value": "zh-CN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "/api/mix/v1/market/candles?symbol=BTCUSDT_UMCBL&granularity=60&startTime=1680301634000&endTime=1685572057451",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"market",
+								"candles"
+							],
+							"query": [
+								{
+									"key": "symbol",
+									"value": "BTCUSDT_UMCBL"
+								},
+								{
+									"key": "granularity",
+									"value": "60"
+								},
+								{
+									"key": "startTime",
+									"value": "1680301634000"
+								},
+								{
+									"key": "endTime",
+									"value": "1685572057451"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Symbol Index Price",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "/api/mix/v1/market/index?symbol=BTCUSDT_UMCBL",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"market",
+								"index"
+							],
+							"query": [
+								{
+									"key": "symbol",
+									"value": "BTCUSDT_UMCBL"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Symbol Next Funding Time",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "/api/mix/v1/market/funding-time?symbol=BTCUSDT_UMCBL",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"market",
+								"funding-time"
+							],
+							"query": [
+								{
+									"key": "symbol",
+									"value": "BTCUSDT_UMCBL"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get History Funding Rate",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "/api/mix/v1/market/history-fundRate?symbol=BTCUSDT_UMCBL&pageSize=20&pageNo=1",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"market",
+								"history-fundRate"
+							],
+							"query": [
+								{
+									"key": "symbol",
+									"value": "BTCUSDT_UMCBL"
+								},
+								{
+									"key": "pageSize",
+									"value": "20"
+								},
+								{
+									"key": "pageNo",
+									"value": "1"
+								},
+								{
+									"key": "nextPage",
+									"value": null,
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Current Funding Rate",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "/api/mix/v1/market/current-fundRate?symbol=BTCUSDT_UMCBL",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"market",
+								"current-fundRate"
+							],
+							"query": [
+								{
+									"key": "symbol",
+									"value": "BTCUSDT_UMCBL"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Open Interest",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "/api/mix/v1/market/open-interest?symbol=BTCUSDT_UMCBL",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"market",
+								"open-interest"
+							],
+							"query": [
+								{
+									"key": "symbol",
+									"value": "BTCUSDT_UMCBL"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Symbol Mark Price",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "/api/mix/v1/market/mark-price?symbol=BTCUSDT_UMCBL",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"market",
+								"mark-price"
+							],
+							"query": [
+								{
+									"key": "symbol",
+									"value": "BTCUSDT_UMCBL"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Symbol Leverage",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "/api/mix/v1/market/symbol-leverage?symbol=BTCUSDT_UMCBL",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"market",
+								"symbol-leverage"
+							],
+							"query": [
+								{
+									"key": "symbol",
+									"value": "BTCUSDT_UMCBL"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Query Position Lever",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "/api/mix/v1/market/queryPositionLever?symbol=BTCUSDT_UMCBL&productType=UMCBL",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"market",
+								"queryPositionLever"
+							],
+							"query": [
+								{
+									"key": "symbol",
+									"value": "BTCUSDT_UMCBL"
+								},
+								{
+									"key": "productType",
+									"value": "UMCBL"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Account",
+			"item": [
+				{
+					"name": "Get Single Account",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": []
+						},
+						"url": {
+							"raw": "/api/mix/v1/account/account?symbol=BTCUSDT_UMCBL&marginCoin=USDT",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"account",
+								"account"
+							],
+							"query": [
+								{
+									"key": "symbol",
+									"value": "BTCUSDT_UMCBL"
+								},
+								{
+									"key": "marginCoin",
+									"value": "USDT"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Account List",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "locale",
+								"value": "zh-CN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "/api/mix/v1/account/accounts?productType=umcbl",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"account",
+								"accounts"
+							],
+							"query": [
+								{
+									"key": "productType",
+									"value": "umcbl"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Sub Account Assets",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"productType\":\"umcbl\"\n}"
+						},
+						"url": {
+							"raw": "/api/mix/v1/account/sub-account-contract-assets",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"account",
+								"sub-account-contract-assets"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Change Leverage",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"symbol\": \"SBTCSUSDT_SUMCBL\",\n    \"marginCoin\": \"SUSDT\",\n    \"holdSide\":\"long\",\n    \"leverage\":\"22\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "/api/mix/v1/account/setLeverage",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"account",
+								"setLeverage"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Change Margin",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "locale",
+								"value": "zh-CN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"symbol\": \"SBTCSUSDT_SUMCBL\",\n    \"marginCoin\": \"SUSDT\",\n    \"holdSide\":\"long\",\n    \"amount\":\"10\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "/api/mix/v1/account/setMargin",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"account",
+								"setMargin"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Change Margin Mode",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"symbol\": \"SBTCSUSDT_SUMCBL\",\n    \"marginCoin\": \"SUSDT\",\n    \"marginMode\":\"crossed\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "/api/mix/v1/account/setMarginMode",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"account",
+								"setMarginMode"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Symbol Position",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apikey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "/api/mix/v1/position/singlePosition?symbol=SBTCSUSDT_SUMCBL&marginCoin=SUSDT",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"position",
+								"singlePosition"
+							],
+							"query": [
+								{
+									"key": "symbol",
+									"value": "SBTCSUSDT_SUMCBL"
+								},
+								{
+									"key": "marginCoin",
+									"value": "SUSDT"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Position",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "locale",
+								"value": "zh-CN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "/api/mix/v1/position/allPosition?productType=sumcbl&marginCoin=SUSDT",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"position",
+								"allPosition"
+							],
+							"query": [
+								{
+									"key": "productType",
+									"value": "sumcbl"
+								},
+								{
+									"key": "marginCoin",
+									"value": "SUSDT"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Account Bill",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "locale",
+								"value": "zh-CN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "/api/mix/v1/account/accountBill?symbol=SBTCSUSDT_SUMCBL&marginCoin=SUSDT&startTime=1680301634000&endTime=1685572057451&lastEndId=890096761278476288&next=true",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"account",
+								"accountBill"
+							],
+							"query": [
+								{
+									"key": "symbol",
+									"value": "SBTCSUSDT_SUMCBL"
+								},
+								{
+									"key": "marginCoin",
+									"value": "SUSDT"
+								},
+								{
+									"key": "startTime",
+									"value": "1680301634000"
+								},
+								{
+									"key": "endTime",
+									"value": "1685572057451"
+								},
+								{
+									"key": "lastEndId",
+									"value": "890096761278476288"
+								},
+								{
+									"key": "next",
+									"value": "true"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Bussiness Account Bill",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "locale",
+								"value": "zh-CN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "/api/mix/v1/account/accountBusinessBill?productType=sumcbl&startTime=1680301634000&endTime=1685572057451",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"account",
+								"accountBusinessBill"
+							],
+							"query": [
+								{
+									"key": "productType",
+									"value": "sumcbl"
+								},
+								{
+									"key": "startTime",
+									"value": "1680301634000"
+								},
+								{
+									"key": "endTime",
+									"value": "1685572057451"
+								},
+								{
+									"key": "lastEndId",
+									"value": "890096761278476288",
+									"disabled": true
+								},
+								{
+									"key": "next",
+									"value": "true",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Symbol Position V2",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "/api/mix/v1/position/singlePosition-v2?symbol=SBTCSUSDT_SUMCBL&marginCoin=SUSDT",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"position",
+								"singlePosition-v2"
+							],
+							"query": [
+								{
+									"key": "symbol",
+									"value": "SBTCSUSDT_SUMCBL"
+								},
+								{
+									"key": "marginCoin",
+									"value": "SUSDT"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Position. v2",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "locale",
+								"value": "zh-CN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "/api/mix/v1/position/allPosition-v2?productType=cmcbl",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"position",
+								"allPosition-v2"
+							],
+							"query": [
+								{
+									"key": "productType",
+									"value": "cmcbl"
+								},
+								{
+									"key": "marginCoin",
+									"value": "SUSDT",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Open Size",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"leverage\": 20,\n    \"marginCoin\": \"USDT\",\n    \"openAmount\": 6600.858,\n    \"openPrice\": 16457.2,\n    \"symbol\": \"BTCUSDT_UMCBL\"\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "/api/mix/v1/account/open-count?symbol=SBTCSUSDT_SUMCBL&marginCoin=SUSDT&openPrice=27121.5&openAmount=27121.5",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"account",
+								"open-count"
+							],
+							"query": [
+								{
+									"key": "symbol",
+									"value": "SBTCSUSDT_SUMCBL"
+								},
+								{
+									"key": "marginCoin",
+									"value": "SUSDT"
+								},
+								{
+									"key": "openPrice",
+									"value": "27121.5"
+								},
+								{
+									"key": "openAmount",
+									"value": "27121.5"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Set PositionMode",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"var CryptoJS = require('crypto-js')",
+									"",
+									"var apiSecret = pm.variables.get(\"secretKey\");",
+									"var apiKey = pm.variables.get(\"apiKey\");",
+									"var passphrase = pm.variables.get(\"passphrase\");",
+									"var url = pm.variables.get(\"url\");",
+									"var uri = pm.request.url.getPath();",
+									"var method = pm.request.method;",
+									"var expires = Date.now()",
+									"var getBody = pm.request.url.getQueryString({ignoreDisabled:true});",
+									"var jsonBody = pm.request.body.raw;",
+									"",
+									"//set params",
+									"pm.variables.set(\"timestamp\", expires);",
+									"",
+									"",
+									"var body = \"\";",
+									"var requestUrl = url+uri;",
+									"if(method == 'GET'){",
+									"    if(getBody != ''){",
+									"        body = \"?\"+getBody;",
+									"    }",
+									"    requestUrl = requestUrl+body;",
+									"}else{",
+									"    if(jsonBody != undefined){",
+									"        body = jsonBody;",
+									"    }",
+									"    console.log(\"jsonBody\"+jsonBody)",
+									"}",
+									"var message = expires+method+uri+body;",
+									"",
+									"console.info(\"sign-value:\"+message)",
+									"console.info(\"request-url:\"+requestUrl)",
+									"pm.request.url = requestUrl;",
+									"var hmac = CryptoJS.HmacSHA256(message,apiSecret);",
+									"var base64 = CryptoJS.enc.Base64.stringify(hmac);",
+									"pm.variables.set(\"sign\", base64);",
+									"console.info(\"sign:\"+base64)"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"productType\": \"sumcbl\",\n    \"holdMode\": \"single_hold\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "/api/mix/v1/account/setPositionMode",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"account",
+								"setPositionMode"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Trade",
+			"item": [
+				{
+					"name": "Place Order",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "locale",
+								"value": "zh-CN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"symbol\": \"SBTCSUSDT_SUMCBL\",\n    \"marginCoin\": \"SUSDT\",\n    \"size\": \"0.1\",\n    \"price\": \"26865.5\",\n    \"side\": \"open_long\",\n    \"orderType\": \"market\",\n    \"timeInForceValue\": \"normal\",\n    \"reduceOnly\":\"false\"}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "/api/mix/v1/order/placeOrder",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"order",
+								"placeOrder"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Reversal",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "local",
+								"value": "zh-CN",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"symbol\": \"SBTCSUSDT_SUMCBL\",\n    \"marginCoin\": \"SUSDT\",\n    \"size\": \"0.05\",\n    \"price\": \"27176.50\",\n    \"side\": \"close_short\",\n    \"orderType\": \"market\",\n    \"timeInForceValue\": \"normal\",\n    \"reverse\": \"true\"\n}\n\n/*\n    Request parameter, \"reverse\", is mandotary in Reversal request. Otherwise, it will be a Close Order Request.\n*/",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "/api/mix/v1/order/placeOrder",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"order",
+								"placeOrder"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Batch Order",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "locale",
+								"value": "zh-CN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"symbol\": \"SBTCSUSDT_SUMCBL\",\n    \"marginCoin\": \"SUSDT\",\n    \"orderDataList\": [\n        {\n            \"size\": \"0.11\",\n            \"price\": \"21500.5\",\n            \"side\": \"open_long\",\n            \"orderType\": \"limit\",\n            \"timeInForceValue\": \"normal\"\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "/api/mix/v1/order/batch-orders",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"order",
+								"batch-orders"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Cancel Order",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"orderId\": \"1047950640048390145\",\n    \"symbol\": \"SBTCSUSDT_SUMCBL\",\n    \"marginCoin\": \"SUSDT\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "/api/mix/v1/order/cancel-order",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"order",
+								"cancel-order"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Batch Cancel Order",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "locale",
+								"value": "zh-CN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"symbol\": \"TRXUSDT_UMCBL\",\n    \"marginCoin\": \"USDT\",\n    \"orderIds\": [\n        \"931300875081236480\",\n        \"931300851911901184\",\n        \"931300810379902976\"\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "/api/mix/v1/order/cancel-batch-orders",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"order",
+								"cancel-batch-orders"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Modify Order",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "locale",
+								"value": "zh-CN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"symbol\": \"SBTCSUSDT_SUMCBL\",\n    \"size\": \"0.3\",\n    \"price\": \"25969.50\",\n    \"orderId\":\"1047951844631527426\",\n    \"newClientOid\":\"111\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "/api/mix/v1/order/modifyOrder",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"order",
+								"modifyOrder"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Symbol Cancel Order",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "locale",
+								"value": "zh-CN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"symbol\": \"SBTCSUSDT_SUMCBL\",\n    \"marginCoin\": \"SUSDT\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "/api/mix/v1/order/cancel-symbol-orders",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"order",
+								"cancel-symbol-orders"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "ProductType Cancel Order",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "locale",
+								"value": "zh-CN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"productType\": \"dmcbl\",\n    \"marginCoin\": \"BTC\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "/api/mix/v1/order/cancel-all-orders",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"order",
+								"cancel-all-orders"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Cancel All Position",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "locale",
+								"value": "zh-CN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"productType\": \"sumcbl\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "/api/mix/v1/order/close-all-positions",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"order",
+								"close-all-positions"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Open Order",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "/api/mix/v1/order/current?symbol=SBTCSUSDT_SUMCBL",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"order",
+								"current"
+							],
+							"query": [
+								{
+									"key": "symbol",
+									"value": "SBTCSUSDT_SUMCBL"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Open Order",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "locale",
+								"value": "zh-CN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "/api/mix/v1/order/marginCoinCurrent?productType=sumcbl",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"order",
+								"marginCoinCurrent"
+							],
+							"query": [
+								{
+									"key": "productType",
+									"value": "sumcbl"
+								},
+								{
+									"key": "marginCoin",
+									"value": "usdt",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get History Orders",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "locale",
+								"value": "zh-CN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "/api/mix/v1/order/history?symbol=SBTCSUSDT_SUMCBL&startTime=1642591303000&endTime=1685650373503&pageSize=100",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"order",
+								"history"
+							],
+							"query": [
+								{
+									"key": "symbol",
+									"value": "SBTCSUSDT_SUMCBL"
+								},
+								{
+									"key": "startTime",
+									"value": "1642591303000"
+								},
+								{
+									"key": "endTime",
+									"value": "1685650373503"
+								},
+								{
+									"key": "pageSize",
+									"value": "100"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get ProductType History Orders",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "locale",
+								"value": "zh-CN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "/api/mix/v1/order/historyProductType?productType=sumcbl&startTime=1669867200000&endTime=1685650373503&pageSize=5&lastEndId=&isPre=false",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"order",
+								"historyProductType"
+							],
+							"query": [
+								{
+									"key": "productType",
+									"value": "sumcbl"
+								},
+								{
+									"key": "startTime",
+									"value": "1669867200000"
+								},
+								{
+									"key": "endTime",
+									"value": "1685650373503"
+								},
+								{
+									"key": "pageSize",
+									"value": "5"
+								},
+								{
+									"key": "lastEndId",
+									"value": ""
+								},
+								{
+									"key": "isPre",
+									"value": "false"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Order Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "locale",
+								"value": "zh-CN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "/api/mix/v1/order/detail?symbol=SBTCSUSDT_SUMCBL&orderId=1048259461308366849",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"order",
+								"detail"
+							],
+							"query": [
+								{
+									"key": "symbol",
+									"value": "SBTCSUSDT_SUMCBL"
+								},
+								{
+									"key": "orderId",
+									"value": "1048259461308366849"
+								},
+								{
+									"key": "clientOid",
+									"value": "jideingtest5_20220607",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Order fill detail",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "locale",
+								"value": "zh-CN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "/api/mix/v1/order/fills?symbol=SBTCSUSDT_SUMCBL&startTime=1642591303000&endTime=1685650373503",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"order",
+								"fills"
+							],
+							"query": [
+								{
+									"key": "symbol",
+									"value": "SBTCSUSDT_SUMCBL"
+								},
+								{
+									"key": "startTime",
+									"value": "1642591303000"
+								},
+								{
+									"key": "endTime",
+									"value": "1685650373503"
+								},
+								{
+									"key": "orderId",
+									"value": "868251238749876224",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get ProductType Order fill detail",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "locale",
+								"value": "zh-CN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "/api/mix/v1/order/allFills?productType=SUMCBL&startTime=1658453511000&endTime=1685650373503",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"order",
+								"allFills"
+							],
+							"query": [
+								{
+									"key": "productType",
+									"value": "SUMCBL"
+								},
+								{
+									"key": "startTime",
+									"value": "1658453511000"
+								},
+								{
+									"key": "endTime",
+									"value": "1685650373503"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Place Plan order",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "locale",
+								"value": "zh-CN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"orderType\": \"market\",\n    \"symbol\": \"SBTCSUSDT_SUMCBL\",\n    \"side\": \"open_long\",\n    \"triggerPrice\": \"26746.5\",\n    \"size\": \"0.01\",\n    \"marginCoin\": \"SUSDT\",\n    \"triggerType\": \"market_price\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "/api/mix/v1/plan/placePlan",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"plan",
+								"placePlan"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Modify Plan Order",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "locale",
+								"value": "zh-CN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"orderId\": \"1048262662138961921\",\n    \"symbol\": \"SBTCSUSDT_SUMCBL\",\n    \"marginCoin\": \"SUSDT\",\n    \"orderType\": \"market\",\n    \"triggerPrice\": \"26846.5\",\n    \"triggerType\": \"market_price\"\n}"
+						},
+						"url": {
+							"raw": "/api/mix/v1/plan/modifyPlan",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"plan",
+								"modifyPlan"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Modify Plan Order TPSL",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "locale",
+								"value": "zh-CN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"orderId\":\"1048262662138961921\",\n    \"symbol\": \"SBTCSUSDT_SUMCBL\",\n    \"marginCoin\": \"SUSDT\",\n    \"presetTakeProfitPrice\": \"29846.5\",\n    \"presetStopLossPrice\": \"25846.5\"\n}"
+						},
+						"url": {
+							"raw": "/api/mix/v1/plan/modifyPlanPreset",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"plan",
+								"modifyPlanPreset"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Place Stop Order",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "locale",
+								"value": "zh-CN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"symbol\": \"SBTCSUSDT_SUMCBL\",\n    \"marginCoin\": \"SUSDT\",\n    \"triggerPrice\": \"29846.5\",\n    \"planType\": \"profit_plan\",\n    \"holdSide\": \"long\",\n    \"size\": \"0.01\"\n}\n\n"
+						},
+						"url": {
+							"raw": "/api/mix/v1/plan/placeTPSL",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"plan",
+								"placeTPSL"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Place Stop Posistion",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "locale",
+								"value": "zh-CN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"symbol\": \"SBTCSUSDT_SUMCBL\",\n    \"marginCoin\": \"SUSDT\",\n    \"triggerPrice\": \"26841.00\",\n    \"planType\": \"profit_plan\",\n    \"triggerType\":\"fill_price\",\n    \"side\": \"close_long\",\n    \"size\": \"0.02\",\n    \"rangeRate\":1\n}\n\n"
+						},
+						"url": {
+							"raw": "/api/mix/v1/plan/placeTrailStop",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"plan",
+								"placeTrailStop"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Position TPSL",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "locale",
+								"value": "zh-CN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"symbol\": \"SBTCSUSDT_SUMCBL\",\n    \"marginCoin\": \"SUSDT\",\n    \"triggerPrice\": \"26841.00\",\n    \"planType\": \"profit_plan\",\n    \"holdSide\": \"long\",\n    \"triggerType\": \"fill_price\",\n    \"size\": \"0.01\"\n}\n\n"
+						},
+						"url": {
+							"raw": "/api/mix/v1/plan/placePositionsTPSL",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"plan",
+								"placePositionsTPSL"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Modify Stop Order",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "locale",
+								"value": "zh-CN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"orderId\": \"1048264452465041409\",\n    \"symbol\": \"SBTCSUSDT_SUMCBL\",\n    \"marginCoin\": \"SUSDT\",\n    \"planType\": \"profit_plan\",\n    \"triggerPrice\": \"28846.5\"\n}"
+						},
+						"url": {
+							"raw": "/api/mix/v1/plan/modifyTPSLPlan",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"plan",
+								"modifyTPSLPlan"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Cancel Plan Order (TPSL)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "locale",
+								"value": "zh-CN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"orderId\": \"1048267306235928577\",\n    \"symbol\": \"SBTCSUSDT_SUMCBL\",\n    \"marginCoin\": \"SUSDT\",\n    \"planType\": \"profit_plan\"\n}"
+						},
+						"url": {
+							"raw": "/api/mix/v1/plan/cancelPlan",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"plan",
+								"cancelPlan"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Cancel Symbol Plan",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "locale",
+								"value": "zh-CN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"symbol\": \"SBTCSUSDT_SUMCBL\",\n    \"planType\": \"profit_plan\"\n}"
+						},
+						"url": {
+							"raw": "/api/mix/v1/plan/cancelSymbolPlan",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"plan",
+								"cancelSymbolPlan"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Cancel All Plan Order (TPSL)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "locale",
+								"value": "zh-CN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"productType\": \"sumcbl\",\n    \"planType\": \"profit_plan\"\n}"
+						},
+						"url": {
+							"raw": "/api/mix/v1/plan/cancelAllPlan",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"plan",
+								"cancelAllPlan"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Plan Order (TPSL) List",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "locale",
+								"value": "zh-CN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "/api/mix/v1/plan/currentPlan?symbol=SBTCSUSDT_SUMCBL&isPlan=profit_plan",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"plan",
+								"currentPlan"
+							],
+							"query": [
+								{
+									"key": "symbol",
+									"value": "SBTCSUSDT_SUMCBL"
+								},
+								{
+									"key": "isPlan",
+									"value": "profit_plan"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get History Plan Orders (TPSL)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "ACCESS-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-SIGN",
+								"value": "{{sign}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-TIMESTAMP",
+								"value": "{{timestamp}}",
+								"type": "text"
+							},
+							{
+								"key": "ACCESS-PASSPHRASE",
+								"value": "{{passphrase}}",
+								"type": "text"
+							},
+							{
+								"key": "locale",
+								"value": "zh-CN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "/api/mix/v1/plan/historyPlan?symbol=SBTCSUSDT_SUMCBL&startTime=1642591303000&endTime=1685650373503&pageSize=100&isPre&isPlan",
+							"path": [
+								"api",
+								"mix",
+								"v1",
+								"plan",
+								"historyPlan"
+							],
+							"query": [
+								{
+									"key": "symbol",
+									"value": "SBTCSUSDT_SUMCBL"
+								},
+								{
+									"key": "startTime",
+									"value": "1642591303000"
+								},
+								{
+									"key": "endTime",
+									"value": "1685650373503"
+								},
+								{
+									"key": "pageSize",
+									"value": "100"
+								},
+								{
+									"key": "isPre",
+									"value": null
+								},
+								{
+									"key": "isPlan",
+									"value": null
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"var CryptoJS = require('crypto-js')",
+					"",
+					"var apiSecret = pm.variables.get(\"secretKey\");",
+					"var apiKey = pm.variables.get(\"apiKey\");",
+					"var passphrase = pm.variables.get(\"passphrase\");",
+					"var url = pm.variables.get(\"host\");",
+					"var uri = pm.request.url.getPath();",
+					"var method = pm.request.method;",
+					"var expires = Date.now()",
+					"var getBody = pm.request.url.getQueryString({ignoreDisabled:true});",
+					"var jsonBody = pm.request.body.raw;",
+					"",
+					"//set params",
+					"pm.variables.set(\"timestamp\", expires);",
+					"",
+					"",
+					"var body = \"\";",
+					"var requestUrl = url+uri;",
+					"if(method == 'GET'){",
+					"    if(getBody != ''){",
+					"        body = \"?\"+getBody;",
+					"    }",
+					"    requestUrl = requestUrl+body;",
+					"}else{",
+					"    if(jsonBody != undefined){",
+					"        body = jsonBody;",
+					"    }",
+					"    console.log(\"jsonBody\"+jsonBody)",
+					"}",
+					"var message = expires+method+uri+body;",
+					"",
+					"console.info(\"sign-value:\"+message)",
+					"console.info(\"request-url:\"+requestUrl)",
+					"pm.request.url = requestUrl;",
+					"var hmac = CryptoJS.HmacSHA256(message,apiSecret);",
+					"var base64 = CryptoJS.enc.Base64.stringify(hmac);",
+					"pm.variables.set(\"sign\", base64);",
+					"console.info(\"sign:\"+base64)"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "apiKey",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "secretKey",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "passphrase",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "host",
+			"value": "https://api.bitget.com",
+			"type": "string"
+		},
+		{
+			"key": "url",
+			"value": "https://api.bitget.com",
+			"type": "string"
+		}
+	]
+}
