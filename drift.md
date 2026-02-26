@@ -1,102 +1,59 @@
-<div align="center">
-  <img height="120x" src="https://uploads-ssl.webflow.com/611580035ad59b20437eb024/616f97a42f5637c4517d0193_Logo%20(1)%20(1).png" />
+# Drift Protocol Data API Documentation
 
-  <h1 style="margin-top:20px;">Drift Protocol v2</h1>
+Source: https://drift-labs.github.io/v2-teacher/
 
-  <p>
-    <a href="https://drift-labs.github.io/v2-teacher/"><img alt="Docs" src="https://img.shields.io/badge/docs-tutorials-blueviolet" /></a>
-    <a href="https://discord.com/channels/849494028176588802/878700556904980500"><img alt="Discord Chat" src="https://img.shields.io/discord/889577356681945098?color=blueviolet" /></a>
-    <a href="https://opensource.org/licenses/Apache-2.0"><img alt="License" src="https://img.shields.io/github/license/project-serum/anchor?color=blueviolet" /></a>
-  </p>
-</div>
+## Data API Overview
+The Drift Data API provides public access to various APIs that Drift uses, offering information about markets, contracts, and tokenomics.
+- mainnet-beta: `https://data.api.drift.trade`
+- devnet: `https://data-master.api.drift.trade/playground`
 
-# Drift Protocol v2
+### Rate Limiting & Caching
+REST API is rate limited. Responses may be cached for a short period (typically seconds to minutes).
 
-This repository provides open source access to Drift V2's Typescript SDK, Solana Programs, and more.
+## REST API Endpoints
 
-Integrating Drift? [Go here](./sdk/README.md)
+### GET /contracts
+Returns the contract information for each market. Contract information contains funding rate and open interest (oi).
+Example: `https://data.api.drift.trade/contracts`
 
-# SDK Guide
+### GET /fundingRates
+Returns historical funding rates. Can be filtered by `marketIndex`.
+Example: `https://data.api.drift.trade/fundingRates?marketIndex=0`
 
-SDK docs can be found [here](./sdk/README.md)
+### GET /rateHistory
+Returns the borrow/deposit rate history.
 
-# Example Bot Implementations
+### GET /candles
+Returns OHLCV candle data for a market.
+Parameters: `marketName` (e.g. 'SOL-PERP'), `resolution` (in minutes, e.g. 1, 5, 15, 60), `startTs`, `endTs`
 
-Example bots (makers, liquidators, fillers, etc) can be found [here](https://github.com/drift-labs/keeper-bots-v2)
+## DLOB Server (Orderbook)
+Drift runs a dlob-server to reduce RPC load.
+- mainnet-beta: `https://dlob.drift.trade/`
+- devnet: `https://master.dlob.drift.trade/`
 
-# Building Locally
+### GET /l2
+Returns the current L2 orderbook for a given market.
+Parameters:
+- `marketIndex` (number)
+- `marketType` ('perp' or 'spot')
+Example: `https://dlob.drift.trade/l2?marketIndex=0&marketType=perp`
 
-Note: If you are running the build on an Apple computer with an M1 chip, please set the default rust toolchain to `stable-x86_64-apple-darwin`
+### GET /l3
+Returns the L3 orderbook with individual orders.
 
-```bash
-rustup default stable-x86_64-apple-darwin
+### WebSocket Subscriptions
+DLOB provides WebSockets for real-time orderbook and trades.
+Endpoint: `wss://dlob.drift.trade/ws`
+
+Subscribe to trades:
+```json
+{"type": "subscribe", "channel": "trades", "marketType": "perp", "marketIndex": 0}
 ```
 
-## Compiling Programs
+## Historical Data (S3 - Deprecated)
+Historical trade records were stored in S3 CSV files but stopped updating in January 2025.
+Use Data API `candles` or DLOB WebSocket `trades` channel for recent trade activity.
 
-```bash
-# build v2
-anchor build
-# install packages
-yarn
-# build sdk
-cd sdk/ && yarn && yarn build && cd ..
-```
-
-## Running Rust Test
-
-```bash
-cargo test
-```
-
-## Running Javascript Tests
-
-```bash
-bash test-scripts/run-anchor-tests.sh
-```
-
-# Development (with devcontainer)
-
-We've provided a devcontainer `Dockerfile` to help you spin up a dev environment with the correct versions of Rust, Solana, and Anchor for program development.
-
-Build the container and tag it `drift-dev`:
-```
-cd .devcontainer && docker build -t drift-dev .
-```
-
-Open a shell to the container:
-```
-# Find the container ID first
-docker ps
-
-# Then exec into it
-docker exec -it <CONTAINER_ID> /bin/bash
-```
-
-Alternatively use an extension provided by your IDE to make use of the dev container. For example on vscode/cursor:
-
-```
-1. Press Ctrl+Shift+P (or Cmd+Shift+P on Mac)
-2. Type "Dev Containers: Reopen in Container"
-3. Select it and wait for the container to build
-4. The IDE terminal should be targeting the dev container now
-```
-
-Use the dev container as you would a local build environment:
-```
-# build program
-anchor build
-
-# update idl
-anchor build -- --features anchor-test && cp target/idl/drift.json sdk/src/idl/drift.json
-
-# run cargo tests
-cargo test
-
-# run typescript tests
-bash test-scripts/run-anchor-tests.sh
-```
-
-# Bug Bounty
-
-Information about the Bug Bounty can be found [here](./bug-bounty/README.md)
+URL Prefix: `https://drift-historical-data-v2.s3.eu-west-1.amazonaws.com/program/dRiftyHA39MWEi3m9aunc5MzRF1JYuBsbn6VPcn33UH`
+Path: `/market/${marketSymbol}/tradeRecords/${year}/${year}${month}${day}`
