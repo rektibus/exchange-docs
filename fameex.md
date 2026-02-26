@@ -2033,3 +2033,5 @@ You can get the latest transaction price by fetching the Ticker information. The
 
 Can the 24-hour trading volume in the Ticker API show negative growth?
 Yes, it can. The 24-hour trading volume is a rolling data (with a 24-hour sliding window), and it is possible for the cumulative trading volume and trading value in the later window to be smaller than in the previous window.
+## REST Trades Recovery
+Tested on 2026-02-26. The endpoint /api/v2/trades and /v2/public/trades/market_pair require API keys (returns code -1002). There is NO PUBLIC REST TRADES endpoint for FameEX Futures.

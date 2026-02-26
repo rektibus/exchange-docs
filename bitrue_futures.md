@@ -1884,3 +1884,5 @@ Error code	Description
 -2100	Parameter issue
 -2101	User IP is non-compliant and the country is forcibly banned
 -2102	User IP is soft-banned in the country
+## REST Trades Recovery
+Tested on 2026-02-26. The URL /fapi/v1/trades is 404, and /fapi/v2/myTrades or /fapi/v1/aggTrades return 401 Unauthorized requiring an API key. There is NO PUBLIC REST TRADES endpoint for Bitrue Futures.

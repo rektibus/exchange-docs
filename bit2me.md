@@ -225,3 +225,5 @@ Discriminator value: `depth`
 6. **No funding rate** — spot exchange
 7. **Not in CCXT** — no CCXT integration available
 8. **EUR-centric** — primary quote currency is EUR (also supports USDC and stablecoins)
+## REST Trades Recovery
+Tested on 2026-02-26. The URL /v1/trading/trade requires authentication. There is NO PUBLIC REST TRADES endpoint for Bit2Me. The system must use WS only.

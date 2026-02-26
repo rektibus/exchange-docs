@@ -1,411 +1,448 @@
-## Table of Contents * [Phemex Public API](#publicapi) * [General Public API Information](#general)
+Overview
+Welcome to the Phemex API documentation. We offer REST and Websocket APIs to interact with our systems.
 
-* [REST API Standards](#restapi)
-    * [HTTP Restful Response](#restresponse)
-        * [HTTP Return Codes](#httpreturncodes)
-        * [HTTP Restful Response Format](#responseformat)
-        * [Restful Response Error Codes](#errorcode)
-    * [HTTP REST Request Header](#httprestheader)
-    * [API Rate Limits](#apiratelimits)
-    * [Endpoint security type](#securitytype)
-        * [Signature Example 1: HTTP GET Request](#signatureexample1)
-        * [Singature Example 2: HTTP GET Request with multiple query string](#signatureexample2)
-        * [Signature Example 3: HTTP POST Request](#signatureexample3)
-    * [Common data explained](#fieldexplained)
-        * [Margin Mode and Leverage](#marginModeAndLeverage)
-        * [Price/Ratio/Value Scales](#scalingfactors)
-        * [Common constants](#commconsts)
-    * [REST API List](#restapilist)
-        * [Market API List](#marketapilist)
-            * [Query Product Information](#queryproductinfo)
-        * [Trade API List](#orderapilist)
-            * [Place Order With Put Method, *Prefered*](#placeorderwithput)
-            * [Order examples](#orderexample)
-            * [Place Order](#placeorder)
-            * [Amend Order by OrderID](#amendorder)
-            * [Cancel Single Order by OrderID or ClOrdID](#cancelsingleorder)
-            * [Bulk Cancel Orders](#cancelorder)
-            * [Cancel All Orders](#cancelall)
-            * [Query Trading Account and Positions](#querytradeaccount)
-            * [Query Trading Account and Positions with unrealized PNL](#queryPosWithPnl)
-            * [Change Position Leverage](#changeleverage)
-            * [Change Position Risklimt](#changerisklimit)
-            * [Assign Position Balance in Isolated Margin Mode](#assignposbalance)
-            * [Query Open Orders by Symbol](#queryopenorder)
-            * [Query Closed Orders by Symbol](#queryorder)
-            * [Query Order by orderID](#queryorderbyid)
-            * [Query User Trades by Symbol](#querytrade)
-        * [Market Data API List ](#mdapilist)
-            * [Query Order Book](#queryorderbook)
-            * [Query kline](#querykline)
-            * [Query Recent Trades](#querytrades)
-            * [Query 24 Hours Ticker](#query24hrsticker)
-            * [Query History Trades](#queryhisttrades)
-        * [Asset API List](#assetapilist)
-            * [Query client and wallets](#clientwalletquery)
-            * [Transfer self balance to parent or subclients](#walletransferout)
-            * [Transfer from sub-client wallet](#walletransferin)
-        * [Future Data Api List](#futureDataAPIList)
-            * [Query Funding Fees History](#futureDataFundingFeesHist)
-            * [Query Orders History](#futureDataOrdersHist)
-            * [Query Orders By Ids](#futureDataOrdersByIds)
-            * [Query Trades History](#futureDataTradesHist)
-            * [Query Trading Fees History](#futureDataTradingFeesHist)
-            * [Query Trading Account Detail](#futureDataTradingAccountDetail)
-        * [Withdraw](#withdraw)
-            * [Request withdraw](#requestwithdraw)
-            * [Confirm withdraw](#confirmwithdraw)
-            * [Cancel withdraw](#cancelwithdraw)
-            * [List withdraw requests](#listwithdraw)
-            * [Withdraw address management](#withdrawaddrmgmt)
-* [Websocket API Standards](#wsapi)
-    * [Session Management](#sessionmanagement)
-    * [API Rate Limits](#wsapiratelimits)
-    * [WebSocket API List](#wsapilist)
-        * [Heartbeat](#heartbeat)
-        * [API User Authentication](#apiuserauth)
-        * [Subscribe OrderBook](#booksub)
-        * [Subscribe Full OrderBook](#booksub2)
-        * [Unsubscribe OrderBook](#bookunsub)
-        * [Subscribe Trade](#tradesub)
-        * [Unsubscribe Trade](#tradeunsub)
-        * [Subscribe Kline](#klinesub)
-        * [Unsubscribe Kline](#klinesub)
-        * [Subscribe Account-Order-Position (AOP)](#aopsub)
-        * [Unsubscribe Account-Order-Position (AOP)](#aopunsub)
-        * [Subscribe 24 Hours Ticker](#tickersub)
-        * [Subscribe symbol price](#symbpricesub)
+General API information
+vip user endpoints (for whitelisted client IPs only):
+Rest API: https://vapi.phemex.com
+Websocket: wss://vapi.phemex.com/ws
+public user endpoints:
+Rest API: https://api.phemex.com
+Websocket (further URI or querystring not allowed): wss://ws.phemex.com
+testnet user endpoints:
+Rest API: https://testnet-api.phemex.com
+Websocket: wss://testnet-api.phemex.com/ws
+Phemex provides HTTP Rest API for client to operate orders, all endpoints return a JSON object.
+REST API Standards
+HTTP return codes
+HTTP 401 return code is used when unauthenticated
+HTTP 403 return code is used when lack of priviledge.
+HTTP 429 return code is used when breaking a request ratelimit.
+HTTP 5XX return codes are used for Phemex internal errors. Note: This doesn't means the operation failed, the execution status is UNKNOWN and could be Succeed.
+REST request header
+Every HTTP Rest Request must have the following Headers:
 
-<a name="publicapi"/>
+x-phemex-access-token : This is API-KEY (id field) from Phemex site.
+x-phemex-request-expiry : This describes the Unix EPoch SECONDS to expire the request, normally it should be (Now() + 1 minute)
+x-phemex-request-signature : This is HMAC SHA256 signature of the http request. Secret is API Secret, its formula is : HMacSha256(URL Path + QueryString + Expiry + body)
+(Optional) x-phemex-request-tracing: a unique string to trace http-request, less than 40 bytes. This header is a must in resolving latency issues.
+Endpoint security type
+Each API call must be signed and pass to server in HTTP header x-phemex-request-signature.
+Endpoints use HMAC SHA256 signatures. The HMAC SHA256 signature is a keyed HMAC SHA256 operation. Use your apiSecret as the key and the string URL Path + QueryString + Expiry + body ) as the value for the HMAC operation.
+The signature is case sensitive.
+Signature example 1: HTTP GET request
+API REST Request URL: https://api.phemex.com/accounts/accountPositions?currency=BTC
+Field	Value
+Request Path	/accounts/accountPositions
+Request Query	currency=BTC
+Request Body	<null>
+Request Expiry	1575735514
+Signature	HMacSha256(/accounts/accountPositions + currency=BTC + 1575735514)
+Singature example 2: HTTP GET request with multiple query string
+API REST Request URL: https://api.phemex.com/orders/activeList?ordStatus=New&ordStatus=PartiallyFilled&ordStatus=Untriggered&symbol=BTCUSD
+Field	Value
+Request Path	/orders/activeList
+Request Query	ordStatus=New&ordStatus=PartiallyFilled&ordStatus=Untriggered&symbol=BTCUSD
+Request Body	<null>
+Request Expire	1575735951
+Signature	HMacSha256(/orders/activeList + ordStatus=New&ordStatus=PartiallyFilled&ordStatus=Untriggered&symbol=BTCUSD + 1575735951)
+Signed string	/orders/activeListordStatus=New&ordStatus=PartiallyFilled&ordStatus=Untriggered&symbol=BTCUSD1575735951
+Signature example 3: HTTP POST request
+API REST Request URL: https://api.phemex.com/orders
+Field	Value
+Request Path	/orders
+Request Query	<null>
+Request Body	{"symbol":"BTCUSD","clOrdID":"uuid-1573058952273","side":"Sell","priceEp":93185000,"orderQty":7,"ordType":"Limit","reduceOnly":false,"timeInForce":"GoodTillCancel","takeProfitEp":0,"stopLossEp":0}
+Request Expiry	1575735514
+Signature	HMacSha256( /orders + 1575735514 + {"symbol":"BTCUSD","clOrdID":"uuid-1573058952273","side":"Sell","priceEp":93185000,"orderQty":7,"ordType":"Limit","reduceOnly":false,"timeInForce":"GoodTillCancel","takeProfitEp":0,"stopLossEp":0})
+Signed string	/orders1575735514{"symbol":"BTCUSD","clOrdID":"uuid-1573058952273","side":"Sell","priceEp":93185000,"orderQty":7,"ordType":"Limit","reduceOnly":false,"timeInForce":"GoodTillCancel","takeProfitEp":0,"stopLossEp":0}
+REST response format
+Response general format
 
-# Phemex Public API
-
-<a name="general"/>
-
-## General Public API Information
-
-* Phemex provides HTTP Rest API for client to operate Orders, all endpoints return a JSON object.
-* The default Rest API base endpoint is: **https://api.phemex.com**. The High rate limit Rest API base endpoint
-  is: **https://vapi.phemex.com**. Or for the testnet is:  **https://testnet-api.phemex.com**
-* Phemex provides WebSocket API for client to receive market data, order and position updates.
-* The WebSocket API url is: **wss://phemex.com/ws**. The High rate limit WebSocket API url is: **wss:
-  //vapi.phemex.com/ws**. Or for the testnet is:  **wss://testnet.phemex.com/ws**
-
-<a name="restapi"/>
-
-# REST API Standards
-
-<a name="restresponse"/>
-
-## Restful API Response
-
-<a name="httpreturncodes"/>
-
-### HTTP Return Codes
-
-* HTTP `401` return code is used when unauthenticated
-* HTTP `403` return code is used when lack of priviledge.
-* HTTP `429` return code is used when breaking a request rate limit.
-* HTTP `5XX` return codes are used for Phemex internal errors. Note: This doesn't means the operation failed, the
-  execution status is **UNKNOWN** and could be Succeed.
-
-<a name="responseformat"/>
-
-### Rest Response format
-
-* All restful API except ***starting*** with `/md` shares same response format.
-
-```
 {
   "code": <code>,
   "msg": <msg>,
   "data": <data>
 }
-```
+All restful API except starting with /md shares same response format.
+Field	Description
+code	0 means success, non-zero means error
+msg	when code is non-zero, it gives short error description
+data	operation dependant
+Rate limits
+In order to protect the exchange, Phemex apply API RateLimit and IP Ratelimit on all requests.
+Rest API has a request capacity in one minute window on user basis.
+IP has request capacity in 5 minutes window.
+Ratelimit of API is independant of that in WEB/APP, so if one get ratelimited in API, one can place/cancel orders via WEB or APP.
+all requests to the domain testnet-api.phemex.com shared across the rate limit 500/5m in total.
+IP ratelimits
+Currently Phemex restricts every IP 5,000 requests in 5 minutes window. If exceeded this IP capacity, the user would be blocked in the following 5 minutes.
+wss://ws.phemex.com 200/5m per IP address, not mandatory to bind IP or get whitelisted.
+REST API ratelimit rules
+Order spamming limitations
+All Phemex APIs are divided into 3 groups, contract, spotOrder and others.
+All APIs in the same group share a request capacity.
+Every API consume request shares at its own weight.
+If exceeded the ratelimit, http status 429 will returned, together with a reset seconds header x-ratelimit-retry-after-<groupName>
+Ratelimit headers Below headers are returned with API response. Postfix -<groupName> is empty if group is others
+Header name	Description
+x-ratelimit-remaining-groupName	Remaining request permits in this minute
+x-ratelimit-capacity-groupName	Request ratelimit capacity
+x-ratelimit-retry-after-groupName	Reset timeout in seconds for current ratelimited user
+Group capacity
+Group Name	Capacity
+Contract	500/minute
+SpotOrder	500/minute
+Others	100/minute
+New Contract API RateLimit Rules (for VAPI/VIP only)
+Contract API currently employs new rate-limit rules based on symbols, according to Phemex internal configuration of uid individually.
+Under the new throttling rules, Contract API consumes both contract group capacity (5000/minute) and symbol group capacity (500/minute) at the same time, but the each capacity of different symbols are independent from one another.
+Contract API that may involve all symbols like 'cancel all' consumes request capacity under a special group named 'CONTACT_ALL_SYM'.
 
-| Field | Description | 
-|-------|------|
-| code | 0 means `success`, non-zero means `error`|
-| msg  | when code is non-zero, it gives short error description |
-| data | operation dependant |
+Ratelimit headers added in the symbol dimension.
 
-<a name="errorcode"/>
+Header name	Description
+x-ratelimit-remaining-groupName_symbol	Remaining request ratelimit in the symbol group in this minute
+x-ratelimit-capacity-groupName_symbol	Total request capacity in the symbol group
+x-ratelimit-retry-after-groupName_symbol	Reset timeout in seconds for current ratelimited user in the symbol group
+Special Contract Group Capacity
+Group Name	Capacity
+Contract	5000/minute
+Contract_SYMBOL	500/minute
+CONTACT_ALL_SYM	500/minute
+API groups
+Contract group Contract group is for contract trading, it contains following API.
+Path	Method	Weight	Description
+/orders	POST	1	Place new order
+/orders/replace	PUT	1	Amend order
+/orders/cancel	DELETE	1	Cancel order
+/orders/all	DELETE	3	Cancel all order by symbol
+/orders	DELETE	1	cancel orders
+/orders/activeList	GET	1	Query open orders by symbol
+/orders/active	GET	1	Query open order by orderID
+/accounts/accountPositions	GET	1	Query account & position by currency
+/accounts/positions	GET	25	Query positions with unrealized PNL
+/g-orders	POST	1	Place new order
+/g-orders/replace	PUT	1	Amend order
+/g-orders/cancel	DELETE	1	Cancel order
+/g-orders/all	DELETE	3	Cancel All Orders
+/g-orders	DELETE	1	Bulk Cancel Orders
+/g-orders/activeList	GET	1	Query open orders by symbol
+/g-orders/active	GET	1	Query open order by orderID
+/g-orders/create	PUT	1	Place order
+/g-accounts/accountPositions	GET	1	Query Account Positions
+/g-accounts/positions	GET	25	Query Account Positions with unrealized PNL
+/g-positions/assign	POST	1	Assign Position Balance
+/g-positions/leverage	PUT	1	Set Leverage
+/g-positions/riskLimit	PUT	1	Set RiskLimit
+/g-positions/switch-pos-mode-sync	PUT	1	/g-positions/switch-pos-mode-sync
+SpotOrder group SpotOrder group is for spot trading, which contains following API.
+Path	Method	Weight	Description
+/spot/orders	POST	1	Place spot order
+/spot/orders	PUT	1	Amend spot order
+/spot/orders	DELETE	2	Cancel spot order
+/spot/orders/all	DELETE	2	Cancel spot orders by symbol
+/spot/orders/active	GET	1	Query open spot order
+/spot/orders	GET	1	Query all open spot orders by symbol
+Others APIs which is not in contract or spotOrder group is categorized into other group. Because the number of interfaces in Other group may grow over time, the list below is not exhausted, the items in the table highlight interfaces that has weight other than 1, or interfaces that Phemex deems important.
+Path	Method	Weight	Description
+/exchange/public/md/kline	GET	10	kline query
+Contact us
+Phemex API Telegram Group
+Phemex Customer Support
+CCXT integration
+CCXT is our authorized SDK provider and you may access the Phemex API through CCXT. For more information, please visit: https://ccxt.trade.
+CCXT GitHub
+Code samples
+Java Sample Client
 
-### Error codes
+Python Sample Client
 
-[Trading Error Codes](TradingErrorCode.md)
+NodeJS Sample Client
 
-<a name="httprestheader"/>
+C++ Market Data Sample Client
 
-## HTTP REST Request Header
+Error codes
+CxlRejReason field
+Code	Reason	Description
+100	CE_NO_ENOUGH_QTY	Qty is not enough
+101	CE_WILLCROSS	Passive order rejected due to price may cross
+116	CE_NO_ENOUGH_BASE_QTY	Base-qty is not enough in spot-trading
+117	CE_NO_ENOUGH_QUOTE_QTY	Quote-qty is not enough in spot-trading
+BizError field
+Code	Message	Description
+19999	REQUEST_IS_DUPLICATED	Duplicated request ID
+10001	OM_DUPLICATE_ORDERID	Duplicated order ID
+10002	OM_ORDER_NOT_FOUND	Cannot find order ID
+10003	OM_ORDER_PENDING_CANCEL	Cannot cancel while order is already in pending cancel status
+10004	OM_ORDER_PENDING_REPLACE	Cannot cancel while order is already in pending cancel status
+10005	OM_ORDER_PENDING	Cannot cancel while order is already in pending cancel status
+11001	TE_NO_ENOUGH_AVAILABLE_BALANCE	Insufficient available balance
+11002	TE_INVALID_RISK_LIMIT	Invalid risk limit value
+11003	TE_NO_ENOUGH_BALANCE_FOR_NEW_RISK_LIMIT	Insufficient available balance
+11004	TE_INVALID_LEVERAGE	Invalid input or new leverage is over maximum allowed leverage
+11005	TE_NO_ENOUGH_BALANCE_FOR_NEW_LEVERAGE	Insufficient available balance
+11006	TE_CANNOT_CHANGE_POSITION_MARGIN_WITHOUT_POSITION	Position size is zero. Cannot change margin
+11007	TE_CANNOT_CHANGE_POSITION_MARGIN_FOR_CROSS_MARGIN	Cannot change margin under CrossMargin
+11008	TE_CANNOT_REMOVE_POSITION_MARGIN_MORE_THAN_ADDED	Exceeds the maximum removable Margin
+11009	TE_CANNOT_REMOVE_POSITION_MARGIN_DUE_TO_UNREALIZED_PNL	Exceeds the maximum removable Margin
+11010	TE_CANNOT_ADD_POSITION_MARGIN_DUE_TO_NO_ENOUGH_AVAILABLE_BALANCE	Insufficient available balance
+11011	TE_REDUCE_ONLY_ABORT	Cannot accept reduce only order
+11012	TE_REPLACE_TO_INVALID_QTY	Order quantity Error
+11013	TE_CONDITIONAL_NO_POSITION	Position size is zero. Cannot determine conditional order's quantity
+11014	TE_CONDITIONAL_CLOSE_POSITION_WRONG_SIDE	Close position conditional order has the same side
+11015	TE_CONDITIONAL_TRIGGERED_OR_CANCELED	
+11016	TE_ADL_NOT_TRADING_REQUESTED_ACCOUNT	Request is routed to the wrong trading engine
+11017	TE_ADL_CANNOT_FIND_POSITION	Cannot find requested position on current account
+11018	TE_NO_NEED_TO_SETTLE_FUNDING	The current account does not need to pay a funding fee
+11019	TE_FUNDING_ALREADY_SETTLED	The current account already pays the funding fee
+11020	TE_CANNOT_TRANSFER_OUT_DUE_TO_BONUS	Withdraw to wallet needs to remove all remaining bonus. However if bonus is used by position or order cost, withdraw fails.
+11021	TE_INVALID_BONOUS_AMOUNT	Invalid bonus amount
+11022	TE_REJECT_DUE_TO_BANNED	Account is banned
+11023	TE_REJECT_DUE_TO_IN_PROCESS_OF_LIQ	Account is in the process of liquidation
+11024	TE_REJECT_DUE_TO_IN_PROCESS_OF_ADL	Account is in the process of auto-deleverage
+11025	TE_ROUTE_ERROR = 11025	Request is routed to the wrong trading engine
+11026	TE_UID_ACCOUNT_MISMATCH	
+11027	TE_SYMBOL_INVALID	Invalid number ID or name
+11028	TE_CURRENCY_INVALID	Invalid currency ID or name
+11029	TE_ACTION_INVALID	Unrecognized request type
+11030	TE_ACTION_BY_INVALID	
+11031	TE_SO_NUM_EXCEEDS	Number of total conditional orders exceeds the max limit
+11032	TE_AO_NUM_EXCEEDS	Number of total active orders exceeds the max limit
+11033	TE_ORDER_ID_DUPLICATE	Details:Duplicated order ID
+11034	TE_SIDE_INVALID	Details:Invalid side
+11035	TE_ORD_TYPE_INVALID	Details:Invalid OrderType
+11036	TE_TIME_IN_FORCE_INVALID	Details:Invalid TimeInForce
+11037	TE_EXEC_INST_INVALID	Details:Invalid ExecType
+11038	TE_TRIGGER_INVALID	Details:Invalid trigger type
+11039	TE_STOP_DIRECTION_INVALID	Details:Invalid stop direction type
+11040	TE_NO_MARK_PRICE	Cannot get valid mark price to create conditional order
+11041	TE_NO_INDEX_PRICE	Cannot get valid index price to create conditional order
+11042	TE_NO_LAST_PRICE	Cannot get valid last market price to create conditional order
+11043	TE_RISING_TRIGGER_DIRECTLY	Conditional order would be triggered immediately
+11044	TE_FALLING_TRIGGER_DIRECTLY	Conditional order would be triggered immediately
+11045	TE_TRIGGER_PRICE_TOO_LARGE	Conditional order trigger price is too high
+11046	TE_TRIGGER_PRICE_TOO_SMALL	Conditional order trigger price is too low
+11047	TE_BUY_TP_SHOULD_GT_BASE	TakeProfit BUY conditional order trigger price needs to be greater than reference price
+11048	TE_BUY_SL_SHOULD_LT_BASE	StopLoss BUY condition order price needs to be less than the reference price
+11049	TE_BUY_SL_SHOULD_GT_LIQ	StopLoss BUY condition order price needs to be greater than liquidation price or it will not trigger
+11050	TE_SELL_TP_SHOULD_LT_BASE	TakeProfit SELL conditional order trigger price needs to be less than reference price
+11051	TE_SELL_SL_SHOULD_LT_LIQ	StopLoss SELL condition order price needs to be less than liquidation price or it will not trigger
+11052	TE_SELL_SL_SHOULD_GT_BASE	StopLoss SELL condition order price needs to be greater than the reference price
+11053	TE_PRICE_TOO_LARGE	Order price is too large
+11054	TE_PRICE_WORSE_THAN_BANKRUPT	Order price cannot be more aggressive than bankrupt price if this order has instruction to close a position
+11055	TE_PRICE_TOO_SMALL	Order price is too low
+11056	TE_QTY_TOO_LARGE	Order quantity is too large
+11057	TE_QTY_NOT_MATCH_REDUCE_ONLY	Does not allow ReduceOnly order without position
+11058	TE_QTY_TOO_SMALL	Order quantity is too small
+11059	TE_TP_SL_QTY_NOT_MATCH_POS	Position size is zero. Cannot accept any TakeProfit or StopLoss order
+11060	TE_SIDE_NOT_CLOSE_POS	TakeProfit or StopLoss order has wrong side. Cannot close position
+11061	TE_ORD_ALREADY_PENDING_CANCEL	Repeated cancel request
+11062	TE_ORD_ALREADY_CANCELED	Order is already canceled
+11063	TE_ORD_STATUS_CANNOT_CANCEL	Order is not able to be canceled under current status
+11064	TE_ORD_ALREADY_PENDING_REPLACE	Replace request is rejected because order is already in pending replace status
+11065	TE_ORD_REPLACE_NOT_MODIFIED	Replace request does not modify any parameters of the order
+11066	TE_ORD_STATUS_CANNOT_REPLACE	Order is not able to be replaced under current status
+11067	TE_CANNOT_REPLACE_PRICE	Market conditional order cannot change price
+11068	TE_CANNOT_REPLACE_QTY	Condtional order for closing position cannot change order quantity, since the order quantity is determined by position size already
+11069	TE_ACCOUNT_NOT_IN_RANGE	The account ID in the request is not valid or is not in the range of the current process
+11070	TE_SYMBOL_NOT_IN_RANGE	The symbol is invalid
+11071	TE_ORD_STATUS_CANNOT_TRIGGER	
+11072	TE_TKFR_NOT_IN_RANGE	The fee value is not valid
+11073	TE_MKFR_NOT_IN_RANGE	The fee value is not valid
+11074	TE_CANNOT_ATTACH_TP_SL	Order request cannot contain TP/SL parameters when the account already has positions
+11075	TE_TP_TOO_LARGE	TakeProfit price is too large
+11076	TE_TP_TOO_SMALL	TakeProfit price is too small
+11077	TE_TP_TRIGGER_INVALID	Invalid trigger type
+11078	TE_SL_TOO_LARGE	StopLoss price is too large
+11079	TE_SL_TOO_SMALL	StopLoss price is too small
+11080	TE_SL_TRIGGER_INVALID	Invalid trigger type
+11081	TE_RISK_LIMIT_EXCEEDS	Total potential position breaches current risk limit
+11082	TE_CANNOT_COVER_ESTIMATE_ORDER_LOSS	The remaining balance cannot cover the potential unrealized PnL for this new order
+11083	TE_TAKE_PROFIT_ORDER_DUPLICATED	TakeProfit order already exists
+11084	TE_STOP_LOSS_ORDER_DUPLICATED	StopLoss order already exists
+11085	TE_CL_ORD_ID_DUPLICATE	ClOrdId is duplicated
+11086	TE_PEG_PRICE_TYPE_INVALID	PegPriceType is invalid
+11087	TE_BUY_TS_SHOULD_LT_BASE	The trailing order's StopPrice should be less than the current last price
+11088	TE_BUY_TS_SHOULD_GT_LIQ	The traling order's StopPrice should be greater than the current liquidation price
+11089	TE_SELL_TS_SHOULD_LT_LIQ	The traling order's StopPrice should be greater than the current last price
+11090	TE_SELL_TS_SHOULD_GT_BASE	The traling order's StopPrice should be less than the current liquidation price
+11091	TE_BUY_REVERT_VALUE_SHOULD_LT_ZERO	The PegOffset should be less than zero
+11092	TE_SELL_REVERT_VALUE_SHOULD_GT_ZERO	The PegOffset should be greater than zero
+11093	TE_BUY_TTP_SHOULD_ACTIVATE_ABOVE_BASE	The activation price should be greater than the current last price
+11094	TE_SELL_TTP_SHOULD_ACTIVATE_BELOW_BASE	The activation price should be less than the current last price
+11095	TE_TRAILING_ORDER_DUPLICATED	A trailing order exists already
+11096	TE_CLOSE_ORDER_CANNOT_ATTACH_TP_SL	An order to close position cannot have trailing instruction
+11097	TE_CANNOT_FIND_WALLET_OF_THIS_CURRENCY	This crypto is not supported
+11098	TE_WALLET_INVALID_ACTION	Invalid action on wallet
+11099	TE_WALLET_VID_UNMATCHED	Wallet operation request has a wrong wallet vid
+11100	TE_WALLET_INSUFFICIENT_BALANCE	Wallet has insufficient balance
+11101	TE_WALLET_INSUFFICIENT_LOCKED_BALANCE	Locked balance in wallet is not enough for unlock/withdraw request
+11102	TE_WALLET_INVALID_DEPOSIT_AMOUNT	Deposit amount must be greater than zero
+11103	TE_WALLET_INVALID_WITHDRAW_AMOUNT	Withdraw amount must be less than zero
+11104	TE_WALLET_REACHED_MAX_AMOUNT	Deposit makes wallet exceed max amount allowed
+11105	TE_PLACE_ORDER_INSUFFICIENT_BASE_BALANCE	Insufficient funds in base wallet
+11106	TE_PLACE_ORDER_INSUFFICIENT_QUOTE_BALANCE	Insufficient funds in quote wallet
+11107	TE_CANNOT_CONNECT_TO_REQUEST_SEQ	TradingEngine failed to connect with CrossEngine
+11108	TE_CANNOT_REPLACE_OR_CANCEL_MARKET_ORDER	Cannot replace/amend market order
+11109	TE_CANNOT_REPLACE_OR_CANCEL_IOC_ORDER	Cannot replace/amend ImmediateOrCancel order
+11110	TE_CANNOT_REPLACE_OR_CANCEL_FOK_ORDER	Cannot replace/amend FillOrKill order
+11111	TE_MISSING_ORDER_ID	OrderId is missing
+11112	TE_QTY_TYPE_INVALID	QtyType is invalid
+11113	TE_USER_ID_INVALID	UserId is invalid
+11114	TE_ORDER_VALUE_TOO_LARGE	Order value is too large
+11115	TE_ORDER_VALUE_TOO_SMALL	Order value is too small
+11116	TE_BO_NUM_EXCEEDS	The total count of brakcet orders should equal or less than 5
+11117	TE_BO_CANNOT_HAVE_BO_WITH_DIFF_SIDE	All bracket orders should have the same Side.
+11118	TE_BO_TP_PRICE_INVALID	Bracker order take profit price is invalid
+11119	TE_BO_SL_PRICE_INVALID	Bracker order stop loss price is invalid
+11120	TE_BO_SL_TRIGGER_PRICE_INVALID	Bracker order stop loss trigger price is invalid
+11121	TE_BO_CANNOT_REPLACE	Cannot replace bracket order.
+11122	TE_BO_BOTP_STATUS_INVALID	Bracket take profit order status is invalid
+11123	TE_BO_CANNOT_PLACE_BOTP_OR_BOSL_ORDER	Cannot place bracket take profit order
+11124	TE_BO_CANNOT_REPLACE_BOTP_OR_BOSL_ORDER	Cannot place bracket stop loss order
+11125	TE_BO_CANNOT_CANCEL_BOTP_OR_BOSL_ORDER	Cannot cancel bracket sl/tp order
+11126	TE_BO_DONOT_SUPPORT_API	Doesn't support bracket order via API
+11128	TE_BO_INVALID_EXECINST	ExecInst value is invalid
+11129	TE_BO_MUST_BE_SAME_SIDE_AS_POS	Bracket order should have the same side as position's side
+11130	TE_BO_WRONG_SL_TRIGGER_TYPE	Bracket stop loss order trigger type is invalid
+11131	TE_BO_WRONG_TP_TRIGGER_TYPE	Bracket take profit order trigger type is invalid
+11132	TE_BO_ABORT_BOSL_DUE_BOTP_CREATE_FAILED	Cancel bracket stop loss order due failed to create take profit order.
+11133	TE_BO_ABORT_BOSL_DUE_BOPO_CANCELED	Cancel bracket stop loss order due main order canceled.
+11134	TE_BO_ABORT_BOTP_DUE_BOPO_CANCELED	Cancel bracket take profit order due main order canceled.
+11143	TE_RPI_NOT_APPROVED_MARKET_MAKER	RPI orders are exclusively available to approved market makers.
+11150	TE_OI_LIMIT_REDUCE_ONLY	Current symbol has reached maximum open interest, only reduce orders are accepted.
+COIN-M Perpetual REST API
 
-Every HTTP Rest Request must have the following Headers:
+Query product information
+Request
 
-* x-phemex-access-token : This is ***API-KEY*** (id field) from Phemex site.
-* x-phemex-request-expiry : This describes the Unix ***EPoch SECONDS*** to expire the request, normally it should be (
-  Now() + 1 minute)
-* x-phemex-request-signature : This is HMAC SHA256 signature of the http request. Secret is ***API Secret***, its
-  formula is : HMacSha256( URL Path + QueryString + Expiry + body )
-
-Optional Headers:
-
-* x-phemex-request-tracing: a unique string to trace http-request, less than 40 bytes. This header is a must in
-  resolving latency issues.
-
-<a name="apiratelimits"/>
-
-## API Rate Limits
-
-* [Order spamming limitations](https://phemex.com/user-guides/order-spamming-limitations)
-* RateLimit group of contract trading api is ***CONTRACT***.
-* RateLimit Explained [phemex ratelimit docs](/Generic-API-Info.en.md)
-* Contract trading api response carries following headers.
-
-```
-X-RateLimit-Remaining-CONTRACT, # Remaining request permits in this minute
-X-RateLimit-Capacity-CONTRACT, # Request ratelimit capacity
-X-RateLimit-Retry-After-CONTRACT, # Reset timeout in seconds for current ratelimited user
-```
-
-<a name="securitytype"/>
-
-## Endpoint security type
-
-* Each API call must be signed and pass to server in HTTP header `x-phemex-request-signature`.
-* Endpoints use `HMAC SHA256` signatures. The `HMAC SHA256 signature` is a keyed `HMAC SHA256` operation. Use
-  your `apiSecret` as the key and the string `URL Path + QueryString + Expiry + body )` as the value for the HMAC
-  operation.
-* `apiSecret` = `Base64::urlDecode(API Secret)`
-* The `signature` is **case sensitive**.
-
-<a name="signatureexample1"/>
-
-### Signature Example 1: HTTP GET Request
-
-* API REST Request URL: https://api.phemex.com/accounts/accountPositions?currency=BTC
-    * Request Path: /accounts/accountPositions
-    * Request Query: currency=BTC
-    * Request Body: <null>
-    * Request Expiry: 1575735514
-    * Signature: HMacSha256( /accounts/accountPositions + currency=BTC + 1575735514 )
-
-<a name="signatureexample2"/>
-
-### Singature Example 2: HTTP GET Request with multiple query string
-
-* API REST Request
-  URL: https://api.phemex.com/orders/activeList?ordStatus=New&ordStatus=PartiallyFilled&ordStatus=Untriggered&symbol=BTCUSD
-    * Request Path: /orders/activeList
-    * Request Query: ordStatus=New&ordStatus=PartiallyFilled&ordStatus=Untriggered&symbol=BTCUSD
-    * Request Body: <null>
-    * Request Expire: 1575735951
-    * Signature: HMacSha256(/orders/activeList +
-      ordStatus=New&ordStatus=PartiallyFilled&ordStatus=Untriggered&symbol=BTCUSD + 1575735951)
-    * signed string
-      is `/orders/activeListordStatus=New&ordStatus=PartiallyFilled&ordStatus=Untriggered&symbol=BTCUSD1575735951`
-
-<a name="signatureexample3"/>
-
-### Signature Example 3: HTTP POST Request
-
-* API REST Request URL: https://api.phemex.com/orders
-    * Request Path: /orders
-    * Request Query: <null>
-    * Request Body: {"symbol":"BTCUSD","clOrdID":"uuid-1573058952273","side":"Sell","priceEp":93185000,"orderQty":7,"
-      ordType":"Limit","reduceOnly":false,"timeInForce":"GoodTillCancel","takeProfitEp":0,"stopLossEp":0}
-    * Request Expiry: 1575735514
-    * Signature: HMacSha256( /orders + 1575735514 + {"symbol":"BTCUSD","clOrdID":"uuid-1573058952273","side":"Sell","
-      priceEp":93185000,"orderQty":7,"ordType":"Limit","reduceOnly":false,"timeInForce":"GoodTillCancel","takeProfitEp":
-      0,"stopLossEp":0})
-    * signed string
-      is `/orders1575735514{"symbol":"BTCUSD","clOrdID":"uuid-1573058952273","side":"Sell","priceEp":93185000,"orderQty":7,"ordType":"Limit","reduceOnly":false,"timeInForce":"GoodTillCancel","takeProfitEp":0,"stopLossEp":0}`
-
-## Request/response field explained
-
-<a name="fieldexplained"/>
-
-### Margin mode and leverage
-
-<a name="marginModeAndLeverage"/>
-
-#### Leverage
-
-* The absolute value of `leverageEr` determines initial-margin-rate, i.e. `initialMarginRate = 1/abs(leverage)`
-* The sign of `leverageEr` indicates margin mode, i.e. `leverage <= 0` means `cross-margin-mode`, `leverage > 0`
-  means `isolated-margin-mode`.
-* The result of setting `leverageEr` to `0` is leverage to maximum leverage supported by user selected risklimit, and
-  margin-mode is `cross-margin-mode`.
-
-#### Cross Margin Mode
-
-* `Position margin` includes two parts, one part is balance assigned to position, another part is account available
-  balance.
-* Position in cross-margin-mode may be affected by other position, because account available balance is shared among all
-  positions in cross mode.
-
-#### Isolated Margin Mode
-
-* `Position margin` only includes balance assgined to position, by default it is initial-margin.
-* Position in isolatd-margin-mode is independent of other positions.
-
-### Price/Ratio/Value Scales
-
-<a name="scalingfactors"/>
-
+GET /public/products
+COIN-M perpetual contracts using COIN as margin
+Contract symbols are defined in .products[] with type=Perpetual.
+Contract risklimit information are defined in .risklimits[].
+Contract which delisted has status with 'Delisted' .
+Request/Response field explanation
+Leverage
+The absolute value of leverageEr determines initial-margin-rate, i.e. initialMarginRate = 1/abs(leverage)
+The sign of leverageEr indicates margin mode, i.e. leverage <= 0 means cross-margin-mode, leverage > 0 means isolated-margin-mode.
+The result of setting leverageEr to 0 is leverage to maximum leverage supported by user selected risklimit, and margin-mode is cross-margin-mode.
+Cross margin mode
+Position margin includes two parts, one part is balance assigned to position, another part is account available balance.
+Position in cross-margin-mode may be affected by other position, because account available balance is shared among all positions in cross mode.
+Isolated margin mode
+Position margin only includes balance assgined to position, by default it is initial-margin.
+Position in isolatd-margin-mode is independent of other positions.
+Price/Ratio/Value scales
 Fields with post-fix "Ep", "Er" or "Ev" have been scaled based on symbol setting.
 
-* Fields with post-fix "Ep" are scaled prices, `priceScale` in [products](#queryproductinfo)
-* Fields with post-fix "Er" are scaled ratios, `ratioScale` in [products](#queryproductinfo)
-* Fields with post-fix "Ev" are scaled values, `valueScale` of `settleCurrency` in [products](#queryproductinfo)
+Fields with post-fix "Ep" are scaled prices, priceScale in products
+Fields with post-fix "Er" are scaled ratios, ratioScale in products
+Fields with post-fix "Ev" are scaled values, valueScale of settleCurrency in products
+Query server time
+Request
 
-| Symbol | Price scale | Ratio scale | Value scale | settlement currency |
-|--------|-------------|-------------|-------------|---------------------|
-| BTCUSD | 10,000      | 100,000,000 | 100,000,000 | BTC                |
-| cETHUSD| 10,000      | 100,000,000 | 100,000,000 | ETH                |
-| uBTCUSD| 10,000      | 100,000,000 |      10,000 | USD                |
-| ETHUSD | 10,000      | 100,000,000 |      10,000 | USD                |
-| XRPUSD | 10,000      | 100,000,000 |      10,000 | USD                |
-| LINKUSD| 10,000      | 100,000,000 |      10,000 | USD                |
-| XTZUSD | 10,000      | 100,000,000 |      10,000 | USD                |
-| LTCUSD | 10,000      | 100,000,000 |      10,000 | USD                |
-| GOLDUSD| 10,000      | 100,000,000 |      10,000 | USD                |
-| ADAUSD | 10,000      | 100,000,000 |      10,000 | USD                |
-| BCHUSD | 10,000      | 100,000,000 |      10,000 | USD                |
-| COMPUSD| 10,000      | 100,000,000 |      10,000 | USD                |
-| ALGOUSD| 10,000      | 100,000,000 |      10,000 | USD                |
-| YFIUSD | 10,000      | 100,000,000 |      10,000 | USD                |
-| DOTUSD | 10,000      | 100,000,000 |      10,000 | USD                |
-| UNIUSD | 10,000      | 100,000,000 |      10,000 | USD                |
-| BATUSD | 10,000      | 100,000,000 |      10,000 | USD                |
-| CHZUSD | 10,000      | 100,000,000 |      10,000 | USD                |
-| MANAUSD| 10,000      | 100,000,000 |      10,000 | USD                |
-| ENJUSD | 10,000      | 100,000,000 |      10,000 | USD                |
-|SUSHIUSD| 10,000      | 100,000,000 |      10,000 | USD                |
-| SNXUSD | 10,000      | 100,000,000 |      10,000 | USD                |
-| GRTUSD | 10,000      | 100,000,000 |      10,000 | USD                |
-| MKRUSD | 10,000      | 100,000,000 |      10,000 | USD                |
-| TRXUSD | 10,000      | 100,000,000 |      10,000 | USD                |
-| EOSUSD | 10,000      | 100,000,000 |      10,000 | USD                |
-| ONTUSD | 10,000      | 100,000,000 |      10,000 | USD                |
-| NEOUSD | 10,000      | 100,000,000 |      10,000 | USD                |
-| ZECUSD | 10,000      | 100,000,000 |      10,000 | USD                |
-| FILUSD | 10,000      | 100,000,000 |      10,000 | USD                |
-| KSMUSD | 10,000      | 100,000,000 |      10,000 | USD                |
-| XMRUSD | 10,000      | 100,000,000 |      10,000 | USD                |
-| QTUMUSD| 10,000      | 100,000,000 |      10,000 | USD                |
-| XLMUSD | 10,000      | 100,000,000 |      10,000 | USD                |
-| ATOMUSD| 10,000      | 100,000,000 |      10,000 | USD                |
-| LUNAUSD| 10,000      | 100,000,000 |      10,000 | USD                |
-| SOLUSD | 10,000      | 100,000,000 |      10,000 | USD                |
+GET /public/time
+return server time
+Response sample
 
-<a name="commconsts"/>
+{
+    "code": 0,
+    "msg": "",
+    "data": {
+        "serverTime": 1676172826345
+    }
+} 
+Common order fields
+Order Type
+Order Type	Description
+Limit	--
+Market	--
+Stop	--
+StopLimit	--
+MarketIfTouched	--
+LimitIfTouched	--
+Order Status
+Order Status	Description
+Created	order acked from order request, a transient state
+Init	Same as Created, order acked from order request, a transient state
+Untriggered	Conditional order waiting to be triggered
+Triggered	Conditional order being triggered
+Deactivated	untriggered conditonal order being removed
+Rejected	Order rejected
+New	Order placed into orderbook
+PartiallyFilled	Order partially filled
+Filled	Order fully filled
+Canceled	Order canceled
+TimeInForce
+TimeInForce	Description
+GoodTillCancel	--
+PostOnly	--
+ImmediateOrCancel	--
+FillOrKill	--
+RPIPostOnly	Mark the order is an RPI(Retail Price Improvement) order, only valid for Approved Market Makers
+Execution instruction
+Execution Instruction	Description
+ReduceOnly	reduce position size, never increase position size
+CloseOnTrigger	close the position
+Trigger Source
+Trigger	Description
+ByMarkPrice	trigger by mark price
+ByLastPrice	trigger by last price
+Trade Type
+tradeType	Description
+Trade	--
+Funding	--
+LiqTrade	--
+AdlTrade	--
+Exec Status
+execStatus	Description
+Aborted	--
+MakerFill	--
+TakerFill	--
+Expired	--
+Canceled	--
+CreateRejected	--
+Pos Mode (for Hedged Mode only)
+Trigger	Description
+OneWay	can only hold one side position
+Hedged	can hold both side position
+Pos Side (for Hedged Mode only)
+Trigger	Description
+Long	Long position when pos mode is 'Hedged'
+Short	Short position when pos mode is 'Hedged'
+Merged	Merged position when pos mode is 'OneWay'
+Funds Biz Type
+Description	Code
+REALIZED_PNL	1
+TRANSFER	2
+COMMISSION	3
+BONUS	4
+SUB_TO_PARENT_TRANSFER	5
+PARENT_TO_SUB_TRANSFER	6
+COPY_TRADE_TRANSFER	90
+COPY_TRADE_SETTLEMENT	91
+COPY_TRADE_REFUNDS	92
+COPY_TRADE_PROFIT_SHARE	93
+MARGIN_TRANSFER	213
+Risk Mode (for Risk Unit only)
+RiskMode	Description
+CrossAsset	one RiskUnit is related to many RiskWallets
+SingleAsset	one RiskUnit is related to one RiskWallet
+Isolated	one RiskUnit is related to one position and not related to RiskWallet
+More order fields explained
+Field	Description
+bizError	0 means processing normally, and non-zero values mean wrong state. code in response is equal to bizError if response contains only one order
+cumQty	cumulative filled order quantity
+cumValueEv	scaled cumulative filled order value
+leavesQty	leaves order quantity
+leavesValueEv	scaled leaves order value
+Place order (HTTP PUT, prefered)
+Request format
 
-### Common constants
-
-* order type
-
-| order type | description |
-|-----------|-------------|
-| Limit | -- |
-| Market | -- |
-| Stop | -- |
-| StopLimit | -- |
-| MarketIfTouched | -- |
-| LimitIfTouched | -- |
-
-* order Status
-
-| order status | description | 
-|------------|-------------|
-| Created | order acked from order request, a transient state |
-| Init | Same as `Created`, order acked from order request, a transient state |
-| Untriggered | Conditional order waiting to be triggered |
-| Triggered | Conditional order being triggered|
-| Deactivated | untriggered conditonal order being removed |
-| Rejected | Order rejected |
-| New | Order placed into orderbook |
-| PartiallyFilled | Order partially filled |
-| Filled | Order fully filled |
-| Canceled | Order canceled |
-
-* TimeInForce
-
-| timeInForce | description |
-|------------|-------------|
-| GoodTillCancel | -- |
-| PostOnly | -- |
-| ImmediateOrCancel | -- |
-| FillOrKill | -- |
-
-* Execution instruction
-
-| Execution instruction | description |
-|------------|-------------|
-| ReduceOnly | reduce position size, never increase position size |
-| CloseOnTrigger | close the position  |
-
-* Trigger source
-
-| trigger | description |
-|------------|-------------|
-| ByMarkPrice | trigger by mark price|
-| ByLastPrice | trigger by last price |
-
-<a name="restapilist"/>
-
-## REST API List
-
-<a name="marketapilist"/>
-
-### Market API List
-
-<a name="queryproductinfo"/>
-
-#### Query Product Information
-
-* Request：
-
-```
-GET /public/products 
-```
-
-<a name="orderapilist"/>
-
-### Trade API List
-
-<a name="placeorderwithput"/>
-
-#### Place order with argument in url query string
-
-* Request
-
-```
 PUT /orders/create?clOrdID=<clOrdID>&symbol=<symbol>&reduceOnly=<reduceOnly>&closeOnTrigger=<closeOnTrigger>&orderQty=<orderQty>&displayQty=<displayQty>&ordType=<ordType>&priceEp=<priceEp>&side=<side>&text=<text>&timeInForce=<timeInForce>&stopPxEp=<stopPxEp>&takeProfitEp=<takeProfitEp>&stopLossEp=<stopLossEp>&pegOffsetValueEp=<pegOffsetValueEp>&pegPriceType=<pegPriceType>&trailingStopEp=<trailingStopEp>&triggerType=<triggerType>&tpTrigger=<tpTrigger>&tpSlTs=<tpSlTs>&slTrigger=<slTrigger>
-```
+Order creation supports self trade prevention (STP).
+Response sample
 
-| Field | Type | Required | Description | Possible values |
-|-------|-------|--------|--------------|-----------------|
-| symbol | String | Yes | Which symbol to place order | [Trading symbols](#symbpricesub) | 
-| clOrdID | String | Yes | client order id, max length is 40| |
-| side |  Enum | Yes | Order direction, Buy or Sell | Buy, Sell | 
-| orderQty | Integer | Yes | Order quantity | |
-| priceEp | Integer | - | Scaled price, required for limit order | | 
-| ordType | Enum | - | default to Limit | Market, Limit, Stop, StopLimit, MarketIfTouched, LimitIfTouched| 
-| stopPxEp | Integer | - | Trigger price for stop orders | |
-| timeInForce | Enum | - | Time in force. default to GoodTillCancel | GoodTillCancel, ImmediateOrCancel, FillOrKill, PostOnly| 
-| reduceOnly | Boolean | - | whether reduce position side only. Enable this flag, i.e. reduceOnly=true, position side won't change | true, false |
-| closeOnTrigger | Boolean | - | implicitly reduceOnly, plus cancel other orders in the same direction(side) when necessary | true, false|
-| triggerType | Enum | - | Trigger source, whether trigger by mark price, index price or last price | ByMarkPrice, ByLastPrice |
-| takeProfitEp | Integer | - | Scaled take profit price | |
-| stopLossEp | Integer | - | Scaled stop loss price | | 
-| slTrigger | Enum | - |Trigger source, by mark-price or last-price | ByMarkPrice, ByLastPrice |
-| tpTrigger | Enum | - | Trigger source, by mark-price or last-price | ByMarkPrice, ByLastPrice |
-| pegOffsetValueEp | Integer | - | Trailing offset from current price. Negative value when position is long, positive when position is short | |
-| pegPriceType | Enum | - | Trailing order price type |TrailingStopPeg, TrailingTakeProfitPeg |
-
-* HTTP Response:
-
-```json
 {
   "code": 0,
   "msg": "",
@@ -439,162 +476,28 @@ PUT /orders/create?clOrdID=<clOrdID>&symbol=<symbol>&reduceOnly=<reduceOnly>&clo
     "ordStatus": "Created"
   }
 }
-```
+Field	Type	Required	Description	Possible values
+symbol	String	Yes	Which symbol to place order	
+clOrdID	String	Yes	client order id, max length is 40	
+side	Enum	Yes	Order direction, Buy or Sell	Buy, Sell
+orderQty	Integer	Yes	Order quantity	
+priceEp	Integer	-	Scaled price, required for limit order	
+ordType	Enum	-	default to Limit	Market, Limit, Stop, StopLimit, MarketIfTouched, LimitIfTouched
+stopPxEp	Integer	-	Trigger price for stop orders	
+timeInForce	Enum	-	Time in force. default to GoodTillCancel	GoodTillCancel, ImmediateOrCancel, FillOrKill, PostOnly, RPIPostOnly
+reduceOnly	Boolean	-	whether reduce position side only. Enable this flag, i.e. reduceOnly=true, position side won't change	true, false
+closeOnTrigger	Boolean	-	implicitly reduceOnly, plus cancel other orders in the same direction(side) when necessary	true, false
+triggerType	Enum	-	Trigger source, whether trigger by mark price, index price or last price	ByMarkPrice, ByLastPrice
+takeProfitEp	Integer	-	Scaled take profit price	
+stopLossEp	Integer	-	Scaled stop loss price	
+slTrigger	Enum	-	Trigger source, by mark-price or last-price	ByMarkPrice, ByLastPrice
+tpTrigger	Enum	-	Trigger source, by mark-price or last-price	ByMarkPrice, ByLastPrice
+pegOffsetValueEp	Integer	-	Trailing offset from current price. Negative value when position is long, positive when position is short	
+pegPriceType	Enum	-	Trailing order price type	TrailingStopPeg, TrailingTakeProfitPeg
+Place order (HTTP POST)
+Request example
 
-* Important fields description
-    * Order average filled price, inverse contract:`avgPrice = (cumQty/cumValueEv)/contractSize`; linear
-      contract: `avgPrice = (cumValueEv/cumQty)/contractSize`. `contractSize` is fixed in [product](#marketapilist) api.
-
-| Field | Description |
-|------|----------|
-| bizError | bizError = 0 means processing normally, non-zero values mean wrong state. Separate section to explain these errors; `code` in response is equal to bizError if response contains only one order |
-| cumQty | cumulative filled order quantity |
-| cumValueEv | cumulative filled order value (scaled) |
-| leavesQty | unfilled order quantity | 
-| leavesValueEv | unfilled order value |
-
-<a name="orderexample"/>
-
-* More order type examples
-
-    * Stop-loss orders (ordType = Stop/StopLimit) and Take-profit order (ordType = MarketIfTouched/LimitIfTouched)
-    * Stop-loss order is triggered when price moves against order-side(buy/sell), while Take-profit order is triggered
-      when price moves in profitable direction to order-side(buy/sell).
-
-      | ordType                         | side | parameter requirements            | trigger condition |
-      |---------------------------------|------|-----------------------------------|-------------------|
-      | Stop/StopLimit                  | Sell |  stopPxEp < last-price/mark-price | last/mark-price <= stopPxEp  |
-      | Stop/StopLimit                  | Buy  |  stopPxEp > last-price/mark-price | last/mark-price >= stopPxEp  |
-      | MarketIfTouched/LimitIfTouched  | Sell |  stopPxEp > last-price/mark-price | last/mark-price >= stopPxEp  |
-      | MarketIfTouched/LimitIfTouched  | Buy  |  stopPxEp < last-price/mark-price | last/mark-price <= stopPxEp  |
-
-    * StopLoss Sell order, triggered order is placed as limit order (Assume current last-price is 30k)
-
-  ```javasript
-  {
-      "clOrdID": "stop-loss-order-then-limit",
-      "symbol": "BTCUSD",
-      "side": "Sell",
-      "ordType": "StopLimit",
-      "triggerType": "ByMarkPrice",
-      "stopPxEp": "299550000",         // "trigger price, when ordType= Stop/StopLimit and side = Sell, stopPxEp must less than last-price"
-      "priceEp": "299650000",          // "when ordType = StopLimit, priceEp is required, when ordType = Stop, priceEp is not required "
-      "orderQty": 10000
-  }
-  ```
-
-    * StopLoss Buy order, triggered order is placed as market order (Assume current last-price is 30k)
-
-  ```javasript
-  {
-      "clOrdID": "stop-loss-order-then-market",
-      "symbol": "BTCUSD",
-      "side": "Buy",
-      "ordType": "Stop",
-      "triggerType": "ByMarkPrice",
-      "stopPxEp": "333550000",         // "trigger price, when ordType = Stop/StopLimit and side = Buy, stopPxEp must be larger than last-price"
-      "priceEp": "0",                  // not required 
-      "orderQty": 10000
-  }
-
-  ```
-
-    * Take-profit Sell order, triggered order is placed as limit order (Assume current last-price is 30k)
-
-  ```javasript
-  {
-      "clOrdID": "take-profit-order-then-limit",
-      "symbol": "BTCUSD",
-      "side": "Sell",
-      "ordType": "LimitIfTouched",
-      "triggerType": "ByMarkPrice",
-      "stopPxEp": "333550000",         // "trigger price, when ordType = LimitIfTouched/MarketIfTouched and side = Sell, stopPxEp is larger than last-price"
-      "priceEp": "334550000",          // "when ordType = LimitIfTouched, priceEp is required, when ordType = MarketIfTouched, priceEp is not required "
-      "orderQty": 10000
-  }
-  ```
-
-    * Take-profit Buy order, triggered order is placed as market order (Assume current last-price is 30k)
-
-  ```javasript
-  {
-      "clOrdID": "take-profit-order-then-market",
-      "symbol": "BTCUSD",
-      "side": "Buy",
-      "ordType": "MarketIfTouched",
-      "triggerType": "ByLastPrice",
-      "stopPxEp": "299550000",         // "when ordType = LimitIfTouched/MarketIfTouched and side = Buy, stopPxEp is less than last-price"
-      "priceEp": "0",                  // "not required"
-      "orderQty": 10000
-  }
-  ```
-
-    * Place a order with stop-loss and take-profit
-
-  ```javasript
-  {
-      "clOrdID": "order-with-take-profit-stop-loss",
-      "symbol": "BTCUSD",
-      "side": "Buy",
-      "priceEp": 300000000,
-      "orderQty": 1000,
-      "ordType": "Limit",
-      "takeProfitEp": 3111100000,
-      "tpTrigger": "ByLastPrice",
-      "stopLossEp": "299990000",
-      "slTrigger": "ByMarkPrice"
-  }
-  ```
-
-    * Trailing stop order(Assume current position is long, current last-price is 32k)
-
-  ```javasript
-  {
-    "symbol": "BTCUSD",
-    "side": "Sell",                    // assume current position is long
-    "ordType": "Stop",
-    "orderQty": 0,
-    "priceEp": 0,
-    "triggerType": "ByLastPrice",
-    "stopPxEp": 315000,                // "if position is long, this value should be less than last-price; if position is short, this value is larger than last-price",
-    "timeInForce": "ImmediateOrCancel",
-    "closeOnTrigger": true, 
-    "pegPriceType": "TrailingStopPeg",
-    "pegOffsetValueEp": -10000000,     // retraces by $1000.0 from the optimal price, sign is opposite to position side, i.e. Long Position => negative sign; Shot Position => positive sign
-    "clOrdID": "cl-order-id"
-  }
-  ```
-
-    * Trailing stop order with activiation price
-
-  ```javasript
-  {
-    "symbol": "BTCUSD",
-    "side": "Sell",
-    "ordType": "Stop",
-    "orderQty": 0,
-    "priceEp": 0,
-    "triggerType": "ByLastPrice",
-    "stopPxEp": 340000000,             // activation price of this trailing order, this value should be larger than last-price
-    "timeInForce": "ImmediateOrCancel",
-    "closeOnTrigger": true,
-    "pegPriceType": "TrailingTakeProfitPeg",
-    "pegOffsetValueEp": -10000000,     // retraces by $1000.0 from the optimal price, sign is opposite to position side, i.e. Long Position => negative sign; Shot Position => positive sign  
-    "clOrdID": "cl-order-id"
-  }
-  ```
-
-<a name="placeorder"/>
-
-#### Place Order
-
-* HTTP Request:
-
-```
 POST /orders
-```
-
-```json
 {
   "actionBy": "FromOrderPlacement",
   "symbol": "BTCUSD",
@@ -612,60 +515,148 @@ POST /orders
   "pegOffsetValueEp": 0,
   "pegPriceType": "UNSPECIFIED"
 }
-```
+More order type examples
+Stop-loss orders are with ordType = Stop/StopLimit. And Take-profit orders are with ordType = MarketIfTouched/LimitIfTouched.
+Stop-loss order is triggered when price moves against order-side(buy/sell), while Take-profit order is triggered when price moves in profitable direction to order-side(buy/sell).
+Order Type	Side	Parameter requirements	Trigger condition
+Stop/StopLimit	Sell	stopPxEp < last-price/mark-price	last/mark-price <= stopPxEp
+Stop/StopLimit	Buy	stopPxEp > last-price/mark-price	last/mark-price >= stopPxEp
+MarketIfTouched/LimitIfTouched	Sell	stopPxEp > last-price/mark-price	last/mark-price >= stopPxEp
+MarketIfTouched/LimitIfTouched	Buy	stopPxEp < last-price/mark-price	last/mark-price <= stopPxEp
+Buy stop limit order: triggered order is placed as limit order (assume current last-price is 30k)
 
-* Fields are the same as [above place-order](#placeorderwithput)
-  <a name="amendorder"/>
+{
+  "clOrdID": "stop-loss-order-then-limit",
+  "symbol": "BTCUSD",
+  "side": "Sell",
+  "ordType": "StopLimit",
+  "triggerType": "ByMarkPrice",
+  "stopPxEp": 299550000,
+  "priceEp": 299650000,
+  "orderQty": 10000
+}
+Buy stop market order: triggered order is placed as market order (assume current last-price is 30k)
 
-#### Amend order by orderID
+{
+  "clOrdID": "stop-loss-order-then-market",
+  "symbol": "BTCUSD",
+  "side": "Buy",
+  "ordType": "Stop",
+  "triggerType": "ByMarkPrice",
+  "stopPxEp": 333550000,
+  "priceEp": 0,
+  "orderQty": 10000
+}
+Fields description for Stop/Take-profit Orders:
+Field	Type	Description	Possible values
+triggerType	String	The trigger price type	ByMarkPrice, ByLastPrice
+stopPxEp	Integer	The order trigger price. It should be less than the last price if ordType= Stop/StopLimit/LimitIfTouched/MarketIfTouched and side = Sell, and greater than the last price if side = Buy.	
+priceEp	Integer	The order price after triggered. Required if ordType = StopLimit/LimitIfTouched.	
+Take-profit sell limit order: triggered order is placed as limit order (Assume current last-price is 30k)
 
-* Request
+{
+  "clOrdID": "take-profit-order-then-limit",
+  "symbol": "BTCUSD",
+  "side": "Sell",
+  "ordType": "LimitIfTouched",
+  "triggerType": "ByMarkPrice",
+  "stopPxEp": 333550000,
+  "priceEp": 334550000,
+  "orderQty": 10000
+}
+Take-profit buy market order: triggered order is placed as market order (assume current last-price is 30k)
 
-```
+{
+  "clOrdID": "take-profit-order-then-market",
+  "symbol": "BTCUSD",
+  "side": "Buy",
+  "ordType": "MarketIfTouched",
+  "triggerType": "ByLastPrice",
+  "stopPxEp": 299550000,
+  "priceEp": 0,
+  "orderQty": 10000
+}
+Place order with stop-loss and take-profit
+
+{
+  "clOrdID": "order-with-take-profit-stop-loss",
+  "symbol": "BTCUSD",
+  "side": "Buy",
+  "priceEp": 300000000,
+  "orderQty": 1000,
+  "ordType": "Limit",
+  "takeProfitEp": 3111100000,
+  "tpTrigger": "ByLastPrice",
+  "stopLossEp": 299990000,
+  "slTrigger": "ByMarkPrice"
+}
+Trailing stop order: (assume current position is long, current last-price is 32k)
+
+{
+  "symbol": "BTCUSD",
+  "side": "Sell",
+  "ordType": "Stop",
+  "orderQty": 0,
+  "priceEp": 0,
+  "triggerType": "ByLastPrice",
+  "stopPxEp": 315000000,
+  "timeInForce": "ImmediateOrCancel",
+  "closeOnTrigger": true,
+  "pegPriceType": "TrailingStopPeg",
+  "pegOffsetValueEp": -10000000,
+  "clOrdID": "cl-order-id"
+}
+Trailing stop order with activiation price
+
+{
+  "symbol": "BTCUSD",
+  "side": "Sell",
+  "ordType": "Stop",
+  "orderQty": 0,
+  "priceEp": 0,
+  "triggerType": "ByLastPrice",
+  "stopPxEp": 340000000,
+  "timeInForce": "ImmediateOrCancel",
+  "closeOnTrigger": true,
+  "pegPriceType": "TrailingTakeProfitPeg",
+  "pegOffsetValueEp": -10000000,
+  "clOrdID": "cl-order-id"
+}
+Fields description for trailing stop order:
+Field	Type	Description	Possible values
+triggerType	String	The trigger price type	ByMarkPrice, ByLastPrice
+stopPxEp	Integer	The order trigger price. It should be less than last-price if hold long position and vice versa.	
+pegOffsetValueEp	Integer	The offset price. It means to set offset price by an offset from the optimal price, and the sign is opposite to position side. e.g. Long Position => negative sign. Short Position => positive sign;	
+Amend order by order ID
+Request format
+
 PUT
-/orders/replace?symbol=<symbol>&orderID=<orderID>&origClOrdID=<origClOrdID>&clOrdID=<clOrdID>&price=<price>&priceEp=<priceEp>&orderQty=<orderQty>&stopPx=<stopPx>&stopPxEp=<stopPxEp>&takeProfit=<takeProfit>&takeProfitEp=<takeProfitEp>&stopLoss=<stopLoss>&stopLossEp=<stopLossEp>&pegOffsetValueEp=<pegOffsetValueEp>&pegPriceType=<pegPriceType>
-```
+/orders/replace?symbol=<symbol>&orderID=<orderID>&origClOrdID=<origClOrdID>&price=<price>&priceEp=<priceEp>&orderQty=<orderQty>&stopPx=<stopPx>&stopPxEp=<stopPxEp>&takeProfit=<takeProfit>&takeProfitEp=<takeProfitEp>&stopLoss=<stopLoss>&stopLossEp=<stopLossEp>&pegOffsetValueEp=<pegOffsetValueEp>&pegPriceType=<pegPriceType>
+Field	Required	Description
+symbol	Yes	Order symbol, cannot be changed
+orderID	No	Order ID, cannot be changed
+origClOrdID	No	Original clOrderID
+price	No	New order price
+priceEp	No	New order price with scale
+orderQty	No	New orderQty
+stopPx	No	New stop price
+stopPxEp	No	New stop price with scale
+takeProfit	No	New stop profit price
+takeProfitEp	No	New stop profit price with scale
+stopLoss	No	New stop loss price
+stopLossEp	No	New stop loss price with scale
+pegOffsetValueEp	No	New trailing offset
+pegPriceType	No	New peg price type
+NOTE:
+1) orderID and origClOrdID cannot both be empty.
 
-| Field  | Required | Description |
-|--------|----------|-------------|
-| symbol | Yes  | order symbol, cannot be changed|
-| orderID| Yes  |order id, cannot be changed |
-| origClOrdID | No | original clOrderID |
-| clOrdID| No | new clOrdID |
-| price  | No | new order price |
-| priceEp| No | new order price with scale |
-| orderQty | No | new orderQty |
-| stopPx | No | new stop price |
-| stopPxEp | No | new stop price with scale |
-| takeProfit | No | new stop profit price |
-| takeProfitEp | No | new stop profit price with scale |
-| stopLoss | No | new stop loss price |
-| stopLossEp | No | new stop loss price with scale |
-| pegOffsetValueEp | No | New trailing offset |
-| pegPriceType | No | New peg price type |
+Cancel order by order ID or client order ID
+Request format
 
-* Response
-    * amended order
-
-<a name="cancelsingleorder"/>
-
-#### Cancel Single Order by orderID or clOrdID
-
-* Request
-
-```
 DELETE /orders/cancel?symbol=<symbol>&orderID=<orderID>
 DELETE /orders/cancel?symbol=<symbol>&clOrdID=<clOrdID>
-```
+Request sample
 
-This api accepts Either `orderID` or `clOrdID` not both. i.e. it is an error if both parameters are provided.
-
-* Response
-    * Full Order
-    * This response means cancel operations succeeded not the order is canceled. One needs to query to order to
-      determine whether this order has been cancelled or not.
-
-```json
 {
   "code": 0,
   "msg": "",
@@ -700,62 +691,27 @@ This api accepts Either `orderID` or `clOrdID` not both. i.e. it is an error if 
   }
 }
 
-```
+Bulk cancel orders
+Request format
 
-<a name="cancelorder"/>
-
-#### Bulk Cancel Orders
-
-* Request
-
-```
 DELETE /orders?symbol=<symbol>&orderID=<orderID1>,<orderID2>,<orderID3>
-```
+Cancel all orders
+Request format
 
-* Response
-    * Canceled orders
-
-<a name="cancelall"/>
-
-#### Cancel All Orders
-
-* In order to cancel all orders, include conditional order and active order, one must invoke this API twice with
-  different arguments.
-* `untriggered=false` to cancel active order including triggerred conditional order.
-* `untriggered=true` to cancel conditional order, the order is not triggerred.
-
-* Request
-
-```
 DELETE /orders/all?symbol=<symbol>&untriggered=<untriggered>&text=<text>
-```
+In order to cancel all orders, include conditional order and active order, one must invoke this API twice with different arguments.
+untriggered=false to cancel active order including triggerred conditional order.
+untriggered=true to cancel conditional order, the order is not triggerred.
+Field	Type	Required	Description	Possible values
+symbol	String	Yes	Which symbol to cancel	
+untriggered	Boolean	No	Default to false, default cancel non-conditional order; if intending to cancel conditional order, set this to true	true,false
+text	Comments	No	Comments of this operation, limited to 40 characters	
+Query trading account and positions
+Request format
 
-| Field       | Type   | Required  | Description                    | Possible values         |
-|-------------|--------|-----------|--------------------------------|-------------------------|
-| symbol      | String | Yes       | which Symbol to cancel         | [Trading symbols](#symbpricesub) |
-| untriggered | Boolean| No        | default to false, default cancel non-conditional order; if intending to cancel conditional order, set this to true| true,false|
-| text        | comments| No       | comments of this operation, limited to 40 characters  |  |
-
-* Response
-    * `data` part of response is subject to change, ***DONT*** rely on it
-
-<a name="querytradeaccount"/>
-
-#### Query trading account and positions
-
-* Request
-
-```
 GET /accounts/accountPositions?currency=<currency>
-```
+Response sample
 
-| Field       | Type   | Description                                | Possible values |
-|-------------|--------|--------------------------------------------|--------------|
-| currency | string | in url query parameter. which trading account | BTC,USD |
-
-* Response
-
-```json
 {
   "code": 0,
   "msg": "",
@@ -825,35 +781,21 @@ GET /accounts/accountPositions?currency=<currency>
     ]
   }
 }
-```
-
-<b>Note</b> `unRealizedPnlEv` needs to be calculated in client side with latest `markPrice`, formula is as below.
-
-```
+Field	Type	Description	Possible values
+currency	String	trading account's settle currency. Use to identify trading account.	BTC, USD, ETH
+ unRealizedPnlEv is not up to date and needs to be calculated in client side with latest markPrice. The formula is as below.
 Inverse long contract: unRealizedPnl = (posSize * contractSize) / avgEntryPrice - (posSize * contractSize) / markPrice
-Inverse short contract: unRealizedPnl =  (posSize *contractSize) / markPrice - (posSize * contractSize) / avgEntryPrice 
+Inverse short contract: unRealizedPnl =  (posSize *contractSize) / markPrice - (posSize * contractSize) / avgEntryPrice
 Linear long contract:  unRealizedPnl = (posSize * contractSize) * markPrice - (posSize * contractSize) * avgEntryPrice
 Linear short contract:  unRealizedPnl = (posSize * contractSize) * avgEntryPrice - (posSize * contractSize) * markPrice
 
 posSize is a signed vaule. contractSize is a fixed value.
-```
+Query trading account and positions with realtime unPnL
+Request format
 
-#### Query trading account and positions with unrealized-pnl
-
-<a name="queryPosWithPnl"/>
-
-Below API presents unrealized pnl at `markprice` of positions with **considerable** cost, thus
-its [ratelimit](/Generic-API-Info.en.md#contractAPIGroup) weight is very high.
-
-* Request
-
-```
 GET /accounts/positions?currency=<currency>
-```
+Response sample
 
-* Response
-
-```json
 {
   "code": 0,
   "msg": "",
@@ -907,91 +849,39 @@ GET /accounts/positions?currency=<currency>
   }
 }
 
-```
+The API return latest position unrealized pnl with considerable cost, thus its ratelimit weight is very high.
 
-<b>Note</b> Highly recommend calculating `unRealizedPnlEv` in client side with latest `markPrice` to avoid ratelimit
-penalty.
+ For better performance and latency, highly recommend calculating unRealizedPnlEv in client side with latest markPrice to avoid ratelimit penalty.
+Set leverage
+Request format
 
-<a name="changeleverage"/>
-
-#### Change leverage
-
-* Request
-
-```
 PUT /positions/leverage?symbol=<symbol>&leverage=<leverage>&leverageEr=<leverageEr>
-```
+Field	Type	Description	Possible values
+symbol	String	Which postion to change	
+leverage	Integer	Unscaled leverage	
+leverageEr	Integer	Ratio scaled leverage, leverage wins when both leverage and leverageEr provided	
+Set position risklimit
+Request format
 
-| Field                | Type   | Description                                | Possible values |
-|----------------------|--------|--------------------------------------------|--------------|
-| symbol               | string | which postion needs to change              | [Trading symbols](#symbpricesub) |
-| leverage             | integer   | unscaled leverage                       |  |
-| leverageEr           | integer   | ratio scaled leverage, leverage wins when both leverage and leverageEr provided|  |
-
-* Response
-
-```json
-{
-  "code": 0,
-  "msg": "OK"
-}
-```
-
-<a name = "changerisklimit"/>
-
-#### Change position risklimit
-
-* Request
-
-```
 PUT /positions/riskLimit?symbol=<symbol>&riskLimit=<riskLimit>&riskLimitEv=<riskLimitEv>
-```
+Field	Type	Description	Possible values
+symbol	String	Which postion to change	
+riskLimit	Integer	Unscaled value, reference BTC/USD value scale	
+riskLimitEv	Integer	Value scaled risklimit, riskLimitEv wins when both riskLimit and riskLimitEv provided	
+Assign position balance in isolated marign mode
+Request format
 
-| Field                | Type   | Description                                | Possible values |
-|----------------------|--------|--------------------------------------------|--------------|
-| symbol               | string | which postion needs to change              | [Trading symbols](#symbpricesub) |
-| riskLimit             | integer   | unscaled value, reference BTC/USD value scale   |  |
-| riskLimitEv           | integer   | value scaled risklimit, riskLimitEv wins when both riskLimit and riskLimitEv provided|  |
-
-<a name="assignposbalance"/>
-
-#### Assign position balance in isolated marign mode
-
-* Request
-
-***This API is POST***
-
-```
 POST /positions/assign?symbol=<symbol>&posBalance=<posBalance>&posBalanceEv=<posBalanceEv>
-```
+Field	Type	Description	Possible values
+symbol	String	Which symbol to change	
+posBalance	Integer	Unscaled raw value	
+posBalanceEv	Integer	The scaled value for position balance, posBalanceEv wins when both posBalance and posBalanceEv provided	
+Query open orders by symbol
+Request format
 
-| Field                | Type   | Description                                | Possible values |
-|----------------------|--------|--------------------------------------------|--------------|
-| symbol               | string | which postion needs to change              | [Trading symbols](#symbpricesub) |
-| posBalance             | integer   | unscaled value                       |  |
-| posBalanceEv           | integer   | value scaled for position balance, posBalanceEv wins when both posBalance and posBalanceEv provided|  |
-
-<a name="queryopenorder"/>
-
-#### Query open orders by symbol
-
-* Order status includes `New`, `PartiallyFilled`, `Filled`, `Canceled`, `Rejected`, `Triggered`, `Untriggered`;
-* Open order status includes `New`, `PartiallyFilled`, `Untriggered`;
-
-* Request
-
-```
 GET /orders/activeList?symbol=<symbol>
-```
+Response sample
 
-| Field                | Type   | Description                                | Possible values |
-|----------------------|--------|--------------------------------------------|--------------|
-| symbol | String | which symbol needs to query | [Trading symbols](#symbpricesub)  |
-
-* Response
-    * Full order
-
-```json
 {
   "code": 0,
   "msg": "",
@@ -1054,67 +944,20 @@ GET /orders/activeList?symbol=<symbol>
         "stopPx": 0,
         "stopDirection": "UNSPECIFIED",
         "ordStatus": "New"
-      },
-      {
-        "bizError": 0,
-        "orderID": "2585817b-85df-4dea-8507-5db1920b9954",
-        "clOrdID": "4b19fd1e-a1a7-2986-d02a-0288ad5137d4",
-        "symbol": "BTCUSD",
-        "side": "Buy",
-        "actionTimeNs": 1580532966629408500,
-        "transactTimeNs": 1580532966633276200,
-        "orderType": null,
-        "priceEp": 80040000,
-        "price": 8004,
-        "orderQty": 1,
-        "displayQty": 1,
-        "timeInForce": null,
-        "reduceOnly": false,
-        "stopPxEp": 0,
-        "closedPnlEv": 0,
-        "closedPnl": 0,
-        "closedSize": 0,
-        "cumQty": 0,
-        "cumValueEv": 0,
-        "cumValue": 0,
-        "leavesQty": 1,
-        "leavesValueEv": 12493,
-        "leavesValue": 0.00012493,
-        "stopPx": 0,
-        "stopDirection": "UNSPECIFIED",
-        "ordStatus": "New"
       }
     ]
   }
 }
+Order status includes New, PartiallyFilled, Filled, Canceled, Rejected, Triggered, Untriggered;
+Open order status includes New, PartiallyFilled, Untriggered;
+Field	Type	Description	Possible values
+symbol	String	which symbol to query	
+Query closed orders by symbol
+Request format
 
-```
-
-<a name="queryorder"/>
-
-#### Query closed orders by symbol
-
-* This API is for ***closed*** orders. For open orders, please use [open order query](#queryopenorder)
-
-* Request
-
-```
 GET /exchange/order/list?symbol=<symbol>&start=<start>&end=<end>&offset=<offset>&limit=<limit>&ordStatus=<ordStatus>&withCount=<withCount>
-```
+Response sample
 
-| Field                | Type   | Description                                | Possible values |
-|----------------------|--------|--------------------------------------------|--------------|
-| symbol | String | which symbol needs to query | [Trading symbols](#symbpricesub) |
-| start  | Integer | start time range, Epoch millis，available only from the last 2 month | |
-| end  | Integer | end time range, Epoch millis | |
-| offset | Integer | offset to resultset | | 
-| limit | Integer | limit of resultset, max 200 | | 
-| ordStatus | String | order status list filter | New, PartiallyFilled, Untriggered, Filled, Canceled | 
-
-* Response
-    * sample response
-
-```json
 {
   "code": 0,
   "msg": "OK",
@@ -1184,24 +1027,22 @@ GET /exchange/order/list?symbol=<symbol>&start=<start>&end=<end>&offset=<offset>
     ]
   }
 }
-```
+Field	Type	Description	Possible values
+symbol	String	which symbol to query	
+start	Integer	start time range, Epoch millis，available only from the last 2 month	
+end	Integer	end time range, Epoch millis	
+offset	Integer	offset to resultset	
+limit	Integer	limit of resultset, max 200	
+ordStatus	String	order status list filter	New, PartiallyFilled, Untriggered, Filled, Canceled
+Query user order by order ID or client order ID
+Request format
 
-<a name="queryorderbyid"/>
+Query user order history from database. Data is limited for the last 2 months.
 
-#### Query user order by orderID or Query user order by client order ID
-
-* Request
-
-```
 GET /exchange/order?symbol=<symbol>&orderID=<orderID1,orderID2>
 GET /exchange/order?symbol=<symbol>&clOrdID=<clOrdID1,clOrdID2>
-```
+Response sample
 
-Description : available only from the last 2 month
-
-* Response
-
-```json
 {
   "code": 0,
   "msg": "OK",
@@ -1268,34 +1109,12 @@ Description : available only from the last 2 month
     }
   ]
 }
-```
+Query user trade
+Request format
 
-<a name="querytrade"/>
-
-#### Query user trade
-
-* Request
-
-```
 GET /exchange/order/trade?symbol=<symbol>&start=<start>&end=<end>&limit=<limit>&offset=<offset>&withCount=<withCount>
-```
+Response sample
 
-| Field     | Type     | Required | Description                                                     | Possible Values                 | 
-|-----------|----------|----------|-----------------------------------------------------------------|---------------------------------|
-| symbol    | String   | Yes      | Trading symbol                                                  | BTCUSD, ETHUSD ...              |
-| tradeType | String   | No       | Trade type of execution order                                   | Trade,Funding,AdlTrade,LiqTrade |
-| start     | Long     | No       | Epoch time in milli-seconds of range start. available only from the last 2 month                    | --                              |
-| end       | Long     | No       | Epoch time in milli-seconds of range end                        | --                              |
-| limit     | Integer  | No       | The expected count of returned data-set. Default to 50. Max to 200| --                              |
-| offset    | Integer  | No       | Offset of total dataset in a range                              | --                              |
-| withCount | Boolean  | No       | A flag to tell if the count of total result set is required     | --                              |
-
-* Response
-    * Response of this API includes normal trade, funding records, liquidation, ADL trades,etc. `tradeType` can
-      distiguish these types.
-    * Sample trade response
-
-```json
 {
   "code": 0,
   "msg": "OK",
@@ -1346,38 +1165,27 @@ GET /exchange/order/trade?symbol=<symbol>&start=<start>&end=<end>&limit=<limit>&
   }
 }
 
-```
+Field	Type	Required	Description	Possible Values
+symbol	String	Yes	Trading symbol	BTCUSD, ETHUSD ...
+tradeType	String	No	Trade type of execution order	Trade,Funding,AdlTrade,LiqTrade
+start	Integer	No	Epoch time in milli-seconds of range start. available only from the last 2 month	--
+end	Integer	No	Epoch time in milli-seconds of range end	--
+limit	Integer	No	The expected count of returned data-set. Default to 50. Max to 200	--
+offset	Integer	No	Offset of total dataset in a range	--
+withCount	Boolean	No	A flag to tell if the count of total result set is required	--
+Response data would include normal trade, funding records, liquidation, ADL trades,etc.
+Field tradeType shall be used to identify message types.
+TradeTypes	Description
+Trade	Normal trades
+Funding	Funding on positions
+AdlTrade	Auto-delevearage trades
+LiqTrade	Liquidation trades
+Query order book
+Request format
 
-* Possible trade types
-
-|TradeTypes| Description |
-|---------|--------------|
-| Trade | Normal trades |
-| Funding | Funding on positions |
-| AdlTrade |  Auto-delevearage trades |
-| LiqTrade | Liquidation trades |
-
-<a name="mdapilist"/>
-
-### Market Data API List
-
-<a name="queryorderbook"/>
-
-#### Query Order Book
-
-* Request：
-
-```
 GET /md/orderbook?symbol=<symbol>
-```
+Response format
 
-| Field       | Type   | Description                                | Possible values |
-|-------------|--------|--------------------------------------------|--------------|
-| symbol      | String | Contract symbol name                       | [Trading symbols](#symbpricesub) |
-
-* Response:
-
-```javascript
 {
   "error": null,
   "id": 0,
@@ -1388,19 +1196,19 @@ GET /md/orderbook?symbol=<symbol>
           <priceEp>,
           <size>
         ],
-        ...
-        ...
-        ...
+        .
+        .
+        .
       ],
       "bids": [
         [
           <priceEp>,
           <size>
         ],
-        ...
-        ...
-        ...
-      ]
+        .
+        .
+        .
+      ],
     ]
     },
     "depth": 30,
@@ -1410,23 +1218,17 @@ GET /md/orderbook?symbol=<symbol>
     "type": "snapshot"
   }
 }
-```
+Field	Type	Description	Possible values
+timestamp	Integer	Timestamp in nanoseconds	
+priceEp	Integer	Scaled book level price	
+size	Integer	Scaled book level size	
+sequence	Integer	current message sequence	
+symbol	String	Contract symbol name	
+Request sample
 
-| Field       | Type   | Description                                | Possible values |
-|-------------|--------|--------------------------------------------|--------------|
-| timestamp   | Integer| Timestamp in nanoseconds                   |              |
-| priceEp     | Integer| Scaled book level price                    |              |
-| size        | Integer| Scaled book level size                     |              |
-| sequence    | Integer| current message sequence                   |              |
-| symbol      | String | Contract symbol name                       | [Trading symbols](#symbpricesub) |
-
-* Sample：
-
-```
 GET /md/orderbook?symbol=BTCUSD
-```
+Response sample
 
-```json
 {
   "error": null,
   "id": 0,
@@ -1460,118 +1262,108 @@ GET /md/orderbook?symbol=BTCUSD
     "type": "snapshot"
   }
 }
-```
+Query full order book
+Request format
 
-<a name="querykline"/>
+GET /md/fullbook?symbol=<symbol>
+Request sample
 
-### Query kline
+GET /md/fullbook?symbol=BTCUSD
+Response sample
 
-NOTE:
+{
+  "error": null,
+  "id": 0,
+  "result": {
+    "book": {
+      "asks": [
+        [
+          87705000,
+          1000000
+        ],
+        [
+          87710000,
+          200000
+        ]
+      ],
+      "bids": [
+        [
+          87700000,
+          2000000
+        ],
+        [
+          87695000,
+          200000
+        ]
+      ]
+    },
+    "depth": 0,
+    "sequence": 455476965,
+    "timestamp": 1583555482434235628,
+    "symbol": "BTCUSD",
+    "type": "snapshot"
+  }
+}
+ The depth value is 0 in full book response.
+Query kline
+Request format
 
-1. please be noted that kline interfaces
-   have [rate limits](https://github.com/phemex/phemex-api-docs/blob/master/Generic-API-Info.en.md#rate-limits) rule,
-   please check the Other group
-   under [api groups](https://github.com/phemex/phemex-api-docs/blob/master/Generic-API-Info.en.md#api-groups)
-
-```
 GET /exchange/public/md/v2/kline?symbol=<symbol>&resolution=<resolution>&limit=<limit>
-```
+Response format
 
-* Response
-
-```javascript
 {
   "code": 0,
   "msg": "OK",
   "data": {
     "total": -1,
-    "rows": [
-      [
-        <timestamp>,
-        <interval>,
-        <last_close>,
-        <open>,
-        <high>,
-        <low>,
-        <close>,
-        <volume>,
-        <turnover>
-      ],
-      [
-        ...
-      ]
-    ]
+    "rows": [[<timestamp>, <interval>, <last_close>, <open>, <high>, <low>, <close>, <volume>, <turnover>], [...]]
   }
 }
-```
+ The API has ratelimits rule, and please check the Other group under API groups. Kline under generation beyond the latest interval is not included in the response.
+Field	Type	Required	Description	Possible Values
+symbol	String	Yes	symbol name	BTCUSD,ETHUSD,uBTCUSD,cETHUSD,XRPUSD...
+resolution	Integer	Yes	kline interval	described as below
+limit	Integer	No	limit of result	described as below
+Value of resolutions
+Resolution	Description
+60	MINUTE_1
+300	MINUTE_5
+900	MINUTE_15
+1800	MINUTE_30
+3600	HOUR_1
+14400	HOUR_4
+86400	DAY_1
+604800	WEEK_1
+2592000	MONTH_1
+7776000	SEASON_1
+31104000	YEAR_1
+Value of limits
+Limit	Description
+5	limit 5
+10	limit 10
+50	limit 50
+100	limit 100
+500	limit 500
+1000	limit 1000
+NOTE: for backward compatibility reason, phemex also provides kline query with from/to, however, this interface is NOT recommended.
 
-* Request
+Request format
 
-| Field      | Type    | Required | Description     | Possible Values                         |
-|------------|---------|----------|-----------------|-----------------------------------------|
-| symbol     | String  | Yes      | symbol name     | BTCUSD,ETHUSD,uBTCUSD,cETHUSD,XRPUSD... | 
-| resolution | Integer | Yes      | kline interval  | described as below                      |
-| limit      | Integer | No       | limit of result | described as below                      | 
-
-* Value of `resolution`s
-
-|resolution|Description |
-|----------|------------|
-|60|MINUTE_1|
-|300|MINUTE_5|
-|900|MINUTE_15|
-|1800|MINUTE_30|
-|3600|HOUR_1|
-|14400|HOUR_4|
-|86400|DAY_1|
-|604800|WEEK_1|
-|2592000|MONTH_1|
-|7776000|SEASON_1|
-|31104000|YEAR_1|
-
-* Value of `limit`s
-
-| limit    | Description |
-|----------|-------------|
-| 5        | limit 5     |
-| 10       | limit 10    |
-| 50      | limit 50    |
-| 100     | limit 100   |
-| 500     | limit 500   |
-| 1000    | limit 1000  |
-
-**NOTE**, for backward compatibility reason, phemex also provides kline query with from/to, however, this interface
-is **NOT** recommended.
-
-```
 GET /exchange/public/md/kline?symbol=<symbol>&to=<to>&from=<from>&resolution=<resolution>
 
-```
+Field	Type	Required	Description	Possible Values
+symbol	String	Yes	symbol name	BTCUSD,ETHUSD,uBTCUSD,cETHUSD,XRPUSD...
+from	Integer	Yes	start time in seconds	value aligned in resolution boundary
+to	Integer	Yes	end time in seconds	value aligned in resolution boundary; Number of k-lines return between [from, to) should be less than 1000
+resolution	Integer	Yes	kline interval	the same as described above
+Query recent trades
+Request format
 
-| Field       | Type    | Required    | Description            | Possible Values                                                                                                |
-|-------------|---------|-------------|------------------------|----------------------------------------------------------------------------------------------------------------|
-|symbol       | String  | Yes         | symbol name            | BTCUSD,ETHUSD,uBTCUSD,cETHUSD,XRPUSD...                                                                        | 
-| from        | Integer | Yes         | start time in seconds  | value aligned in resolution boundary                                                                           |
-| to          | Integer | Yes         | end time in seconds    | value aligned in resolution boundary; Number of k-lines return between [`from`, `to`) should be less than 1000 | 
-| resolution  | Integer | Yes         | kline interval         | the same as described above                                                                                    |
-
-<a name="querytrades"/>
-
-#### Query Recent Trades
-
-* Request：
-
-```
 GET /md/trade?symbol=<symbol>
-```
+Field	Type	Description	Possible values
+symbol	String	Contract symbol name	
+Response format
 
-| Field       | Type   | Description                                | Possible values |
-|-------------|--------|--------------------------------------------|--------------|
-| symbol      | String | Contract symbol name                       | [Trading symbols](#symbpricesub) |
-
-* Response:
-
-```javascript
 {
   "error": null,
   "id": 0,
@@ -1586,31 +1378,17 @@ GET /md/trade?symbol=<symbol>
         <priceEp>,
         <size>
       ],
-      ...
-      ...
-      ...
+      .
+      .
+      .
     ]
   }
 }
+Request sample
 
-```
-
-| Field       | Type   | Description                                | Possible values |
-|-------------|--------|--------------------------------------------|--------------|
-| timestamp   | Integer| Timestamp in nanoseconds                   |              |
-| side        | String | Trade side string                          | Buy, Sell    |
-| priceEp     | Integer| Scaled trade price                         |              |
-| size        | Integer| Scaled trade size                          |              |
-| sequence    | Integer| Current message sequence                   |              |
-| symbol      | String | Contract symbol name                       | [Trading symbols](#symbpricesub) |
-
-* Sample：
-
-```
 GET /md/trade?symbol=BTCUSD
-```
+Response sample
 
-```json
 {
   "error": null,
   "id": 0,
@@ -1634,25 +1412,23 @@ GET /md/trade?symbol=BTCUSD
     "type": "snapshot"
   }
 }
-```
+Field	Type	Description	Possible values
+timestamp	Integer	Timestamp in nanoseconds	
+side	String	Trade side string	Buy, Sell
+priceEp	Integer	Scaled trade price	
+size	Integer	Scaled trade size	
+sequence	Integer	Current message sequence	
+symbol	String	Contract symbol name	
+Query 24 hours ticker
+Request format
 
-<a name="query24hrsticker"/>
+GET /md/v1/ticker/24hr?symbol=<symbol>
+the old url , v1/md/ticker/24hr?symbol= , will be removed later, which have the same response format as above url.
 
-#### Query 24 Hours Ticker
+Field	Type	Description	Possible values
+symbol	String	Contract symbol name	
+Response format
 
-* Request：
-
-```
-GET v1/md/ticker/24hr?symbol=<symbol>
-```
-
-| Field       | Type   | Description                                | Possible values |
-|-------------|--------|--------------------------------------------|--------------|
-| symbol      | String | Contract symbol name                       | [Trading symbols](#symbpricesub) |
-
-* Response:
-
-```javascript
 {
   "error": null,
   "id": 0,
@@ -1674,31 +1450,11 @@ GET v1/md/ticker/24hr?symbol=<symbol>
       "volume": <volume>
   }
 }
-```
+Request sample
 
-| Field         | Type   | Description                                | Possible values |
-|---------------|--------|--------------------------------------------|--------------|
-| open priceEp  | Integer| The scaled open price in last 24 hours     |              |
-| high priceEp  | Integer| The scaled highest price in last 24 hours  |              |
-| low priceEp   | Integer| The scaled lowest price in last 24 hours   |              |
-| close priceEp | Integer| The scaled close price in last 24 hours    |              |
-| index priceEp | Integer| Scaled index price                         |              |
-| mark priceEp  | Integer| Scaled mark price                          |              |
-| open interest | Integer| current open interest                      |              |
-| funding rateEr| Integer| Scaled funding rate                        |              |
-| predicated funding rateEr| Integer| Scaled predicated funding rate  |              |
-| timestamp     | Integer| Timestamp in nanoseconds                   |              |
-| symbol        | String | Contract symbol name                       | [Trading symbols](#symbpricesub) |
-| turnoverEv    | Integer| The scaled turnover value in last 24 hours |              |
-| volume        | Integer| Symbol trade volume in last 24 hours       |              |
+GET /md/v1/ticker/24hr?symbol=BTCUSD
+Response sample
 
-* Sample：
-
-```
-GET v1/md/ticker/24hr?symbol=BTCUSD
-```
-
-```json
 {
   "error": null,
   "id": 0,
@@ -1718,258 +1474,123 @@ GET v1/md/ticker/24hr?symbol=BTCUSD
     "volume": 125287131
   }
 }
-```
+Field	Type	Description	Possible values
+open priceEp	Integer	The scaled open price in last 24 hours	
+high priceEp	Integer	The scaled highest price in last 24 hours	
+low priceEp	Integer	The scaled lowest price in last 24 hours	
+close priceEp	Integer	The scaled close price in last 24 hours	
+index priceEp	Integer	Scaled index price	
+mark priceEp	Integer	Scaled mark price	
+open interest	Integer	current open interest	
+funding rateEr	Integer	Scaled funding rate	
+predicated funding rateEr	Integer	Scaled predicated funding rate	
+timestamp	Integer	Timestamp in nanoseconds	
+symbol	String	Contract symbol name	
+turnoverEv	Integer	The scaled turnover value in last 24 hours	
+volume	Integer	Symbol trade volume in last 24 hours	
+Query 24 hours ticker for all symbols
+you can use path below to get data for all symbols, which has reponse data with array list
 
-<a name="queryhisttrades"/>
+  GET /md/v1/ticker/24hr/all
+Query history trades by symbol
+Request format
 
-#### Query History Trades By symbol
-
-* Query History trades by symbol
-* RateLimit of this api is 5 per second
-
-```
 GET /exchange/public/nomics/trades?market=<symbol>&since=<since>
-```
+Field	Type	Description	Possible values
+market	String	the market of symbol	
+since	String	Last id of response field, 0-0-0 is from the very initial trade	default 0-0-0
+start	Integer	Epoch time in milli-seconds of range start	
+end	Integer	Epoch time in milli-seconds of range end	
+Response format
 
-| Field  | Type     | Description                                                       | Possible values                   |
-|--------|----------|-------------------------------------------------------------------|-----------------------------------|
-| market | String   | the market of symbol                                              |[Trading symbols](#scalingfactors) |
-| since  | String   | Last id of response field, 0-0-0 is from the very initial trade   | default 0-0-0                     |
-| start  | Integer  | Epoch time in milli-seconds of range start                        |                                   |
-| end    | Integer  | Epoch time in milli-seconds of range end                          |                                   |
-
-* Response
-
-```json
 {
   "code": 0,
   "data": [
     {
-      "id": "string",
-      "amount_quote": "string",
-      "price": "string",
-      "side": "string",
-      "timestamp": "string",
-      "type": "string"
+      "id": "<id>",
+      "amount_quote": "<amount>",
+      "price": "<price>",
+      "side": "<side>",
+      "timestamp": "<timestamp>",
+      "type": "<type>"
     }
   ],
-  "msg": "string"
+  "msg": "<msg>"
 }
-```
+Query History trades by symbol
+RateLimit of this API is 5 per second
+Response sample
 
-* Sample
-
-```json
 {
   "code": 0,
   "msg": "OK",
   "data": [
-    {
-      "id": "1183-3-2",
-      "timestamp": "2019-11-24T08:32:17.046Z",
-      "price": "7211.00000000",
-      "amount_quote": "1",
-      "side": "sell",
-      "type": "limit"
-    },
-    {
-      "id": "1184-2-1",
-      "timestamp": "2019-11-24T08:32:17.047Z",
-      "price": "7211.00000000",
-      "amount_quote": "1",
-      "side": "buy",
-      "type": "limit"
-    }
-  ]
+  {
+    "id": "1183-3-2",
+    "timestamp": "2019-11-24T08:32:17.046Z",
+    "price": "7211.00000000",
+    "amount_quote": "1",
+    "side": "sell",
+    "type": "limit"
+  },
+  {
+    "id": "1184-2-1",
+    "timestamp": "2019-11-24T08:32:17.047Z",
+    "price": "7211.00000000",
+    "amount_quote": "1",
+    "side": "buy",
+    "type": "limit"
+  }]
 }
-```
 
-<a name="assetapilist"/>
+Query funding rate history
+Request format
 
-### Asset API list
+GET /api-data/public/data/funding-rate-history?symbol=<symbol>&start=<start>&end=<end>&limit=<limit>
+Response sample
 
-* Asset includes BTC in wallets, BTC in btc-trading account, USD in usd-trading account.
-* In wallet level, Main/parent client can transfer BTC between Sub-client and main/parent client.
-* In wallet level, Sub client can *only* transfer self BTC to main/parent client wallet.
-* client can *only* transfer its own asset between wallet and trading accounts.
-
-<a name="clientwalletquery"/>
-
-#### Query client and wallets
-
-* Request
-
-```
-/phemex-user/users/children?offset=<offset>&limit=<limit>&withCount=<withCount>
-```
-
-* Response
-
-```json
 {
   "code": 0,
   "msg": "OK",
   "data": {
-    "total": 87,
     "rows": [
       {
-        "userId": 612,
-        "email": "x**@**.com",
-        "nickName": "nickName",
-        "passwordState": 1,
-        "clientCnt": 0,
-        "totp": 1,
-        "logon": 0,
-        "parentId": 0,
-        "parentEmail": null,
-        "status": 1,
-        "wallet": {
-          "totalBalance": "989.25471319",
-          "totalBalanceEv": 98925471319,
-          "availBalance": "989.05471319",
-          "availBalanceEv": 98905471319,
-          "freezeBalance": "0.20000000",
-          "freezeBalanceEv": 20000000,
-          "currency": "BTC",
-          "currencyCode": 1
-        },
-        "userMarginVo": [
-          {
-            "currency": "BTC",
-            "accountBalance": "3.90032508",
-            "totalUsedBalance": "0.00015666",
-            "accountBalanceEv": 390032508,
-            "totalUsedBalanceEv": 15666,
-            "bonusBalanceEv": 0,
-            "bonusBalance": "0"
-          },
-          {
-            "currency": "USD",
-            "accountBalance": "38050.35000000",
-            "totalUsedBalance": "0.00000000",
-            "accountBalanceEv": 380503500,
-            "totalUsedBalanceEv": 0,
-            "bonusBalanceEv": 0,
-            "bonusBalance": "0"
-          }
-        ]
+        "symbol": ".BTCFR8H",
+        "fundingRate": "0.00007058",
+        "fundingTime": 1680796800000,
+        "intervalSeconds": 28800
       },
-      ...
+      {
+        "symbol": ".BTCFR8H",
+        "fundingRate": "0.00006672",
+        "fundingTime": 1680825600000,
+        "intervalSeconds": 28800
+      }
     ]
   }
 }
-```
+Field	Type	Required	Description	Possible Values
+symbol	String	True	funding rate symbol	fundingRateSymbol
+start	Long	False	start timestamp in ms of funding time (INCLUSIVE)	1679852520918
+end	Long	False	end timestamp in ms of funding time (INCLUSIVE)	1679852520918
+limit	Integer	False	default 100, max 100	100
+latestOnly	Boolean	False	returns the most recent record for each symbol, default false	true
+If start and end parameters are not specified, the API will return the most recent data within the specified limit.
+If the start parameter is provided while end is not, the API will return from start plus limit size of data.
+If the number of items between start and end exceeds the specified limit, the API will return from start plus limit size of data.
+The API returns data in ascending order based on the fundingTime attribute.
+If latestOnly is true, other parameters are ignored and the most recent record of each symbol is returned. Otherwise, the query is performed based on other parameters.
+Query funding fee history
+Request format
 
-Wallet fields
-
-| Field | Type | Description | 
-|-------|------|-------------|
-| currency | String | currency name |
-| totalBalanceEv | Integer | scaled balance amount value |
-| availBalanceEv | Integer | scaled available balance value |
-| freezeBalanceEv | Integer | scaled used balance value |
-
-Margin fields
-
-| Field | Type | Description |
-|-------|------|-------------|
-| currency | String | currency name |
-| accountBalanceEv | Integer | scaled trading account balance value |
-| totalUsedBalanceEv | Integer | Scaled used trading account balance value |
-| bonusBalanceEv | Integer | Scaled bonus value |
-
-<a name="walletransferout"/>
-
-#### Main/parent-client transfer self wallet balance to sub-client wallet. (Or Subclient transfer self wallet balance to main/parent client wallet )
-
-* Request
-    * Main/parent can transfer its wallet balance to its own subclients.
-    * Sub-client can only transfer its wallet balance to its parent/main client.
-    * When sub-client transfer its wallet balance, `clientCnt = 0`
-
-```
-POST: /exchange/wallets/transferOut
-```
-
-```javascript
-{
-    "amount": 0,                       // unscaled amount
-    "amountEv": 0,                     // scaled amount, when both amount and amountEv are provided, amountEv wins.
-    "clientCnt": 0,                    // client number, this is from API in children list; when sub-client issues this API, client must be 0.
-    "currency": "string"
-}
-
-```
-
-| Field | Type |  Required | Description |
-|-------|-----|---------|---------------|
-| amount | Integer | - | unscaled amount value to transfer |
-| amountEv | Integer | - | scaled amount value to transfer |
-| clientCnt | Integer | Yes | which client to transfer |
-| currency | String | Yes | currency name, currently only support BTC |
-
-* Response
-    * This API is synchrous, `code == 0` means succeeded. If timed-out, history can be queried.
-
-```json
-{
-  "code": 0,
-  "msg": "OK",
-  "data": "OK"
-}
-```
-
-<a name="walletransferin"/>
-
-#### Transfer from sub-client wallet. Only main/parent client has priviledge.
-
-* Request
-
-```
-POST: /exchange/wallets/transferIn
-```
-
-```json
-{
-    "amountEv":10000000,
-    "currency":"BTC",
-    "clientCnt":1
-}
-```
-
-* Response
-
-```json
-{
-  "code": 0,
-  "msg": "OK",
-  "data": "OK"
-}
-```
-
-<a name="futureDataApiList"/>
-
-### Future Data API List
-
-<a name="futureDataFundingFeesHist"/>
-
-#### Query Funding Fees History
-
-* Http Request
-
-```
 GET /api-data/futures/funding-fees?symbol=<symbol>
-```
+Request parameters
+Parameter	Type	Required	Description	Case
+symbol	String	True	the currency to query	uBTCUSD...
+offset	Integer	False	page starts from 0	default 0
+limit	Integer	False	page size	default 20, max 200
+Response sample
 
-| Field    | Type           | Required | Description               | Possible Values                 |
-|----------|----------------|----------|---------------------------|---------------------------------|
-| symbol   | String         | True     | the currency to query     | uBTCUSD ...                     |
-| offset   | Integer        | False    | page start from 0         | start from 0, default 0         |
-| limit    | Integer        | False    | page size                 | default 20, max 200             |
-
-* Response
-
-```json
 [
   {
     "createTime": 0,
@@ -1984,470 +1605,75 @@ GET /api-data/futures/funding-fees?symbol=<symbol>
     "symbol": "string"
   }
 ]
-```
+Query contract fee rate
+Request format
 
-<a name="futureDataOrdersHist"/>
+GET /api-data/futures/fee-rate?settleCurrency=<settleCurrency>
+Request parameters
+Parameter	Type	Required	Description	Case
+settleCurrency	String	True	the settle currency to query	USDT,USD,BTC,ETH, ...
+NOTE: *RateEr (ratio scale) in response field are const 8
 
-#### Query Orders History
+Response sample
 
-* Http Request
+{
+  "symbolFeeRates": [
+    {
+      "takerFeeRateEr": 55000,
+      "makerFeeRateEr": 6000,
+      "symbol": "cETHUSD"
+    }
+  ]
+}
+Query Funds Detail
+Request format
 
-```
-GET /api-data/futures/orders?symbol=<symbol>
-```
-
-| Field    | Type           | Required | Description               | Possible Values                 |
-|----------|----------------|----------|---------------------------|---------------------------------|
-| symbol   | String         | True     | the currency to query     | uBTCUSD ...                     |
-| start    | Long           | False    | start time in millisecond | default 2 days ago from the end |
-| end      | Long           | False    | end time in millisecond   | default now                     |
-| offset   | Integer        | False    | page start from 0         | start from 0, default 0         |
-| limit    | Integer        | False    | page size                 | default 20, max 200             |
-
-* Response
-
-```json
-[
-  {
-    "actionTimeNs": 0,
-    "bizError": 0,
-    "clOrdID": "string",
-    "closedPnlEv": 0,
-    "closedSize": 0,
-    "cumQty": 0,
-    "cumValueEv": 0,
-    "displayQty": 0,
-    "leavesQty": 0,
-    "leavesValueEv": 0,
-    "ordStatus": "string",
-    "orderID": "string",
-    "orderQty": 0,
-    "orderType": "string",
-    "priceEp": 0,
-    "reduceOnly": true,
-    "side": "string",
-    "stopDirection": "string",
-    "stopLossEp": 0,
-    "symbol": "string",
-    "takeProfitEp": 0,
-    "timeInForce": "string",
-    "transactTimeNs": 0
-  }
-]
-```
-
-<a name="futureDataOrdersByIds"/>
-
-#### Query Orders By Ids
-
-* Http Request
-
-```
-GET /api-data/futures/orders/by-order-id?symbol=<symbol>
-```
-
-| Field    | Type     | Required | Description            | Possible Values                                                                                                                     |
-|----------|----------|----------|------------------------|-------------------------------------------------------------------------------------------------------------------------------------|
-| symbol   | String   | True     | the currency to query  | uBTCUSD ...                                                                                                                         |
-| orderID  | String   | False    | order id               | orderID and clOrdID can not be both empty. If both IDs are given, it will return list of orders which match both orderID or clOrdID |
-| clOrdID  | String   | False    | client order id        | refer to orderID                                                                                                                    |
-
-* Response
-
-```json
-[
-  {
-    "actionTimeNs": 0,
-    "bizError": 0,
-    "clOrdID": "string",
-    "closedPnlEv": 0,
-    "closedSize": 0,
-    "cumQty": 0,
-    "cumValueEv": 0,
-    "displayQty": 0,
-    "leavesQty": 0,
-    "leavesValueEv": 0,
-    "ordStatus": "string",
-    "orderID": "string",
-    "orderQty": 0,
-    "orderType": "string",
-    "priceEp": 0,
-    "reduceOnly": true,
-    "side": "string",
-    "stopDirection": "string",
-    "stopLossEp": 0,
-    "symbol": "string",
-    "takeProfitEp": 0,
-    "timeInForce": "string",
-    "transactTimeNs": 0
-  }
-]
-```
-
-<a name="futureDataTradesHist"/>
-
-#### Query Trades History
-
-* Http Request
-
-```
-GET /api-data/futures/trades?symbol=<symbol>
-```
-
-| Field    | Type           | Required | Description               | Possible Values                 |
-|----------|----------------|----------|---------------------------|---------------------------------|
-| symbol   | String         | True     | the currency to query     | uBTCUSD ...                     |
-| start    | Long           | False    | start time in millisecond | default 2 days ago from the end |
-| end      | Long           | False    | end time in millisecond   | default now                     |
-| offset   | Integer        | False    | page start from 0         | start from 0, default 0         |
-| limit    | Integer        | False    | page size                 | default 20, max 200             |
-
-* Response
-
-```json
-[
-  {
-    "action": "string",
-    "clOrdID": "string",
-    "closedPnlEv": 0,
-    "closedSize": 0,
-    "currency": "string",
-    "execFeeEv": 0,
-    "execID": "string",
-    "execPriceEp": 0,
-    "execQty": 0,
-    "execStatus": "string",
-    "execValueEv": 0,
-    "feeRateEr": 0,
-    "ordType": "string",
-    "orderID": "string",
-    "orderQty": 0,
-    "priceEp": 0,
-    "side": "string",
-    "symbol": "string",
-    "tradeType": "string",
-    "transactTimeNs": 0
-  }
-]
-```
-
-<a name="futureDataTradingFeesHist"/>
-
-#### Query Trading Fees History
-
-* Http Request
-
-```
-GET /api-data/futures/trading-fees?symbol=<symbol>
-```
-
-| Field    | Type           | Required | Description               | Possible Values                 |
-|----------|----------------|----------|---------------------------|---------------------------------|
-| symbol   | String         | True     | the currency to query     | uBTCUSD ...                     |
-| offset   | Integer        | False    | page start from 0         | start from 0, default 0         |
-| limit    | Integer        | False    | page size                 | default 20, max 200             |
-
-* Response
-
-```json
-[
-  {
-    "createTime": 0,
-    "currency": "string",
-    "exchangeFeeValueEv": 0,
-    "id": 0,
-    "makerRateEr": 0,
-    "makerValueEv": 0,
-    "symbol": "string",
-    "takerRateEr": 0,
-    "takerValueEv": 0,
-    "userId": 0
-  }
-]
-```
-
-
-<a name="futureDataTradingAccountDetail"/>
-
-#### Query Trading Account Detail
-
-* Http Request
-
-```
 GET /api-data/futures/v2/tradeAccountDetail?currency=<currecny>&type=<type>&limit=<limit>&offset=<offset>&start=<start>&end=<end>&withCount=<withCount>
-```
+Request parameters
+Parameter	Type	Required	Description	Case
+currency	String	False	the currency to query	USDT,USD,BTC,ETH, ...
+type	Integer	False	Funds Biz Type	REALIZED_PNL(1),TRANSFER(2), ...
+start	Integer	False	start time range, Epoch millis	default 0
+end	Integer	False	end time range, Epoch millis	default 0
+offset	Integer	False	offset to resultset, max 1000	default 0
+limit	Integer	False	limit of resultset	default 20
+withCount	Integer	False	result with total count	default false
+Response sample
 
-| Field     | Type      | Required | Description                    | Possible Values    |
-|-----------|-----------|----------|--------------------------------|--------------------|
-| currency  | String    | False    | the currency to query          | USDT、USD、BTC、ETH |
-| type      | Integer   | False    | TradeAccountBizType Enum       |                    |
-| start     | Integer   | False    | start time range, Epoch millis | default 0          |
-| end       | Integer   | False    | end time range, Epoch millis   | default 0          |
-| offset    | Integer   | False    | offset to resultset, max 1000  | default 0          |
-| limit     | Integer   | False    | limit of resultset             | default 20         |
-| withCount | Integer   | False    | result with total count        | default false      |
-
-* Response
-
-```json
 [
   {
-    "createTime": 0,
-    "currency": "string",
-    "exchangeFeeValueEv": 0,
-    "id": 0,
-    "makerRateEr": 0,
-    "makerValueEv": 0,
-    "symbol": "string",
-    "takerRateEr": 0,
-    "takerValueEv": 0,
-    "userId": 0
+    "typeDesc": "REALIZED_PNL",
+    "amountRv": "-0.01010945",
+    "balanceRv": "1464.64081733",
+    "createTime": 1682035200000,
+    "currency": "USDT"
   }
 ]
-```
+COIN-M Perpetual Websocket API
+Heartbeat
+Request
 
-<a name="withdraw"/>
-
-### Withdraw
-
-* Several restrictions are required for withdraw: 1. bind Google 2FA, 2. Password change out of 24hour, 3. meet minimum
-  BTC amount requirement.
-
-<a name="requestwithdraw"/>
-
-#### Request Withdraw
-
-* Request
-
-```
-POST /exchange/wallets/createWithdraw?otpCode=<otpCode>
-```
-
-```javascript
+Each client is required to actively send heartbeat (ping) message to Phemex data gateway ('DataGW' in short) with interval less than 30 seconds, otherwise DataGW will drop the connection. If a client sends a ping message, DataGW will reply with a pong message.
+Clients can use WS built-in ping message or the application level ping message to DataGW as heartbeat. The heartbeat interval is recommended to be set as 5 seconds, and actively reconnect to DataGW if don't receive messages in 3 heartbeat intervals.
 {
-  "address": <address>,                // address must set before withdraw
-  "amountEv": <amountEv>,              // scaled btc value
-  "currency": <currency>               // fixed to BTC 
-}
-```
-
-| Filed | Type | Required |  Description | Possible values |
-|------|------|----------|--------------|-----------------|
-| otpCode | String | Yes | In URL query, From Google 2FA| |
-| address | String | Yes | In body, address must be saved before hand | |
-| amountEv | Integer | Yes | In body, scaled amount value | |
-| currency | String | Yes | In body, currently only support BTC | |
-
-* Sample code to get Google 2FA code via API
-
-```java
-api 'com.warrenstrange:googleauth:1.1.2'
-
-import com.warrenstrange.googleauth.GoogleAuthenticator;
-
-@Test
-public void testAuth() {
-    String secret = "XXXXXXXXXXXXXXXX"; // save from binding Google 2FA
-    GoogleAuthenticator gAuth = new GoogleAuthenticator();
-    int code = gAuth.getTotpPassword(secret);
-    boolean ans = gAuth.authorize(secret, code);
-    Assert.assertTrue(ans);
-}
-
-```
-
-* Response
-
-```javascript
-{
-    "code": 0,
-    "msg" : "OK",
-    "data": <withdrawRequest> 
-}
-```
-
-Response Fileds
-
-| Filed | Type | Description |
-|-------|------|-------------|
-| id    | Integer | withdraw id |
-| currency | String | currency name |
-| status | String | Withdraw request processing state |
-| amountEv | Integer | Scaled withdraw amount |
-| feeEv | Integer | Scaled withdraw fee amount |
-| address | String | Withdraw target address |
-| txhash | String | transaction hash on blockchain |
-| submitedAt | Integer | submitted time in epoch |
-| expiredTime | Integer | expire time in epoch |
-
-<a name="confirmwithdraw"/>
-
-#### Confirm withdraw
-
-* After withdraw request submitted, a confirmation link is sent to registration email. The confirm code should be
-  extracted out from the link and then passed in as url query parameter.
-
-* Request
-
-```
-GET /exchange/wallets/confirm/withdraw?code=<withdrawConfirmCode>
-```
-
-* Response
-
-```javascript
-{
-    "code": 0,
-    "msg" : "OK"
-}
-```
-
-<a name="cancelwithdraw"/>
-
-#### Cancel withdraw
-
-* Withdraw request can be canceled before mannual `review`;
-
-* Request
-
-```
-POST /exchange/wallets/cancelWithdraw
-```
-
-```javascript
-{
-    id: <withdrawRequestId>
-}
-```
-
-<a name="listwithdraw"/>
-
-#### List withdraws
-
-* Request
-
-```
-GET /exchange/wallets/withdrawList?currency=<currency>&limit=<limit>&offset=<offset>&withCount=<withCount>
-```
-
-* Response
-    * List of withdraw requests
-
-<a name="withdrawaddrmgmt"/>
-
-#### Withdraw address management
-
-* Withdraw address management support create, remove and list. Recommend manage it from website.
-
-* Request
-
-```
-POST /exchange/wallets/createWithdrawAddress?otpCode={optCode}
-```
-
-```javascript
-{
-    "address": <address>,
-    "currency": <currency>
-    "remark": <name>
-}
-```
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| address | String | Yes | valid BTC address |
-| currency | String | Yes | Currrently only support `BTC` |
-| remark | String | Yes | Name of this address |
-
-* Response
-
-```javascript
-{
-    "code": 0,
-    "msg": "OK",
-    "data": 1                //subject to change
-}
-
-```
-
-<a name="wsapi"/>
-
-# Websocket API Standards
-
-<a name="sessionmanagement"/>
-
-## Session Management
-
-* Each client is required to actively send heartbeat (ping) message to Phemex data gateway ('DataGW' in short) with
-  interval less than 30 seconds, otherwise DataGW will drop the connection. If a client sends a ping message, DataGW
-  will reply with a pong message.
-* Clients can use WS built-in ping message or the application level ping message to DataGW as heartbeat. The heartbeat
-  interval is recommended to be set as *5 seconds*, and actively reconnect to DataGW if don't receive messages in *3
-  heartbeat intervals*.
-
-<a name="wsapiratelimits"/>
-
-## API Rate Limits
-
-* Each Client has concurrent connection limit to *5* in maximum.
-* Each connection has subscription limit to *20* in maximum.
-* Each connection has throttle limit to *20* request/s.
-
-<a name="wsapilist"/>
-
-## WebSocket API List
-
-<a name="heartbeat"/>
-
-### Heartbeat
-
-* Request：
-
-```javascript
-{
-  "id": <id>,
+  "id": 0,
   "method": "server.ping",
   "params": []
 }
-```
+Response
 
-* Response:
-
-```javascript
 {
   "error": null,
-  "id": <id>,
+  "id": 0,
   "result": "pong"
 }
-```
+API Rate Limits
+Each Client has concurrent connection limit to 5 in maximum.
+Each connection has subscription limit to 20 in maximum.
+Each connection has throttle limit to 20 request/s.
+User authentication
+Request format
 
-* Sample：
-
-```javascript
-> {
-  "id": 1234,
-  "method": "server.ping",
-  "params": []
-}
-
-< {
-  "error": null,
-  "id": 1234,
-  "result": "pong"
-}
-```
-
-<a name="apiuserauth"/>
-
-### API User Authentication
-
-Market trade/orderbook are published publicly without user authentication.
-While for client private account/position/order data, the client should send user.auth message to Data Gateway to
-authenticate the session.
-
-* Request
-
-```javascript
 {
   "method": "user.auth",
   "params": [
@@ -2456,21 +1682,11 @@ authenticate the session.
     "<signature>",
     <expiry>
   ],
-  "id": 1234
+  "id": 0
 }
-```
+Request sample
 
-| Field       | Type   | Description      | Possible values |
-|-------------|--------|------------------|-----------------|
-| type        | String | Token type       | API             |
-| token       | String | API Key     |                 |
-| signature   | String | Signature generated by a funtion as HMacSha256(API Key + expiry) with ***API Secret*** ||
-| expiry      | Integer| A future time after which request will be rejected, in epoch ***second***. Maximum expiry is request time plus 2 minutes ||
-
-* Sample:
-
-```javascript
-> {
+{
   "method": "user.auth",
   "params": [
     "API",
@@ -2478,29 +1694,19 @@ authenticate the session.
     "8c939f7a6e6716ab7c4240384e07c81840dacd371cdcf5051bb6b7084897470e",
     1570091232
   ],
-  "id": 1234
+  "id": 0
 }
 
-< {
-  "error": null,
-  "id": 1234,
-  "result": {
-    "status": "success"
-  }
-}
-```
+Public channels like trade/orderbook/kline are published publicly without user authentication. While for private channels like account/position/order data, the client should send user.auth message to Data Gateway to authenticate the session.
 
-<a name="booksub"/>
+Field	Type	Description	Possible values
+type	String	Token type	API
+token	String	API Key	
+signature	String	Signature generated by a funtion as HMacSha256(API Key + expiry) with API Secret	
+expiry	Integer	A future time after which request will be rejected, in epoch second. Maximum expiry is request time plus 2 minutes	
+Subscribe orderBook
+Request format
 
-### Subscribe 30-Levels OrderBook
-
-On each successful subscription, DataGW will immediately send the current Order Book snapshot to client and all later
-order book updates will be published.
-Incremental messages are published with **depth=30 and 20ms interval**. 
-
-* Request
-
-```javascript
 {
   "id": <id>,
   "method": "orderbook.subscribe",
@@ -2508,51 +1714,38 @@ Incremental messages are published with **depth=30 and 20ms interval**.
     "<symbol>"
   ]
 }
-```
+Subscribe orderbook update messages with depth = 30 and interval = 20ms.
 
-* Response
+On each successful subscription, DataGW will immediately send the current Order Book (with default depth=30) snapshot to client and all later order book updates will be published.
 
-```javascript
+Request sample：
+
 {
-  "error": null,
-  "id": <id>,
-  "result": {
-    "status": "success"
-  }
-}
-```
-
-* Sample：
-
-```javascript
-> {
-  "id": 1234,
+  "id": 0,
   "method": "orderbook.subscribe",
   "params": [
     "BTCUSD"
   ]
 }
+Subscribe orderBook with Depth
+Request format
 
-< {
-  "error": null,
-  "id": 1234,
-  "result": {
-    "status": "success"
-  }
+{
+  "id": <id>,
+  "method": "orderbook.subscribe",
+  "params": [
+    "<symbol>",
+    false,
+    "<depth>"
+  ]
 }
-```
+Subscribe orderbook update messages with depth = and interval = 20ms, depth can only be one of following number: 0, 1, 5, 10, 30. When depth=0, full orderbook will be published to client. The 2nd parameter is either “false” or "true". “false” indicates about 20ms interval of orderbook change, and it is the minimum interval that the market data service publishing orderbook now. The “true” parameter indicates about 120ms interval, aggregation of 20 ms market data service interval + 100 ms WS service interval. On each successful subscription, DataGW will immediately send the current Order Book (with default depth=30) snapshot to client and all later order book updates will be published.
 
-<a name="booksub2"/>
+How to manage local orderbook? 1, After subscribing to the incremental load push (such as books 5 levels) of Order Book Channel, users firstreceive the initial full load of market depth. After the incremental load is subsequently received, update thelocal full load. 2, lf there is the same price, compare the size. lf the size is 0, delete this depth data. lf the size changes replace the original data. (noted that if the price is within depth and the size is unchagned, the level will NOT published by incremental updates) 3, lf it is not same price, sort by price (bid in descending order, ask in ascending order), and insert the depth information into the full load. 4, Sort updated orderbook and keep top 5 levels (noted that the old price levels that falls behind the top 5 levels will not update anymore untill it comes back to top 5 levels).
 
-### Subscribe Full OrderBook
+Subscribe full orderBook
+Request format
 
-On each successful subscription, DataGW will immediately send the current Order Book snapshot to client and all later
-order book updates will be published.
-Incremental messages are published with **full depth and 100ms interval**. 
-
-* Request
-
-```javascript
 {
   "id": <id>,
   "method": "orderbook.subscribe",
@@ -2561,48 +1754,23 @@ Incremental messages are published with **full depth and 100ms interval**.
     true
   ]
 }
-```
+Subscribe orderbook update messages with full depth and interval = 100ms.
 
-* Response
+On each successful subscription, DataGW will immediately send the current full Order Book snapshot to client and all later order book updates will be published.
 
-```javascript
+Request sample：
+
 {
-  "error": null,
-  "id": <id>,
-  "result": {
-    "status": "success"
-  }
-}
-```
-
-* Sample：
-
-```javascript
-> {
-  "id": 1234,
+  "id": 0,
   "method": "orderbook.subscribe",
   "params": [
     "BTCUSD",
     true
   ]
 }
+OrderBook message
+Message format：
 
-< {
-  "error": null,
-  "id": 1234,
-  "result": {
-    "status": "success"
-  }
-}
-```
-
-#### OrderBook Message:
-
-DataGW publishes order book message with types: incremental, snapshot. And snapshot messages are published with 60-second interval for client self-verification.
-
-* Message Format：
-
-```javascript
 {
   "book": {
     "asks": [
@@ -2629,63 +1797,75 @@ DataGW publishes order book message with types: incremental, snapshot. And snaps
   "timestamp": <timestamp>,
   "symbol": "<symbol>",
 
-```
+DataGW publishes order book message with types: incremental, snapshot. Snapshot messages are published with 60-second interval for client self-verification.
 
-| Field       | Type   | Description      | Possible values |
-|-------------|--------|------------------|-----------------|
-| side        | String | Price level side | bid, ask        |
-| priceEp     | Integer| Scaled price     |                 |
-| qty         | Integer| Price level size. Non-zero qty indicates price level insertion or updation, and qty 0 indicates price level deletion. |                 |
-| sequence    | Integer| Latest message sequence |          |
-| depth       | Integer| Market depth     | 30              |
-| type        | String | Message type     | snapshot, incremental |
+Field	Type	Description	Possible values
+side	String	Price level side	bid, ask
+priceEp	Integer	Scaled price	
+qty	Integer	Price level size. Non-zero qty indicates price level insertion or updation, and qty 0 indicates price level deletion.	
+sequence	Integer	Latest message sequence	
+depth	Integer	Market depth	30 by default, 0 denotes fullbook
+type	String	Message type	snapshot, incremental
+Message sample: snapshot
 
-* Sample：
-
-```javascript
-< {"book":{"asks":[[86765000,19609],[86770000,7402],[86775000,3807],[86780000,7395],[86785000,3599],[86790000,7253],[86795000,4019],[86800000,4366],[86805000,3216],[86810000,3107],[86815000,7453],[86820000,1771],[86825000,895],[86830000,3420],[86835000,1818],[86840000,1272],[86845000,1064],[86850000,195],[86855000,1630],[86860000,1017],[86865000,3509],[86870000,1105],[86875000,1262],[86880000,893],[86885000,862],[86890000,1030],[86895000,2315],[86900000,2994],[86905000,2026],[86910000,3387],[86915000,1382],[86920000,1202],[86925000,3150],[86930000,1773],[86935000,1778],[86940000,1384],[86945000,1842],[86950000,1019],[86955000,2660],[86960000,1599],[86965000,920],[86970000,1834],[86975000,752],[86980000,1384],[86985000,2471],[86990000,2133],[86995000,2981],[87000000,1091],[87005000,994],[87010000,1217],[87015000,1098],[87020000,526],[87025000,1779],[87030000,1098],[87035000,892],[87040000,2168],[87045000,822],[87050000,2410],[87055000,630],[87060000,1684],[87065000,2556],[87070000,19],[87080000,1445],[87085000,29],[87105000,2002],[87115000,658],[87120000,660],[87905000,991]],"bids":[[86760000,18995],[86755000,6451],[86750000,5311],[86745000,6867],[86740000,6180],[86735000,3127],[86730000,4852],[86725000,6213],[86720000,3902],[86715000,4510],[86710000,10063],[86705000,1118],[86700000,1891],[86695000,767],[86690000,20920],[86685000,2535],[86680000,1105],[86675000,645],[86670000,1424],[86665000,1773],[86660000,1464],[86655000,1160],[86650000,1462],[86645000,2446],[86640000,538],[86635000,506],[86630000,2291],[86625000,2981],[86620000,1712],[86615000,984],[86610000,1058],[86605000,1261],[86600000,1074],[86595000,1408],[86590000,717],[86585000,1582],[86580000,1950],[86575000,1540],[86570000,2960],[86565000,598],[86560000,759],[86555000,1266],[86550000,1943],[86545000,259],[86540000,2106],[86535000,2365],[86530000,857],[86525000,1200],[86520000,2371],[86515000,2103],[86510000,1468],[86505000,747],[86500000,1369],[86495000,2121],[86490000,3674],[86485000,1345],[86480000,1290],[86475000,1716],[86470000,1851],[86465000,1861],[86460000,1092],[86435000,21],[86430000,986],[86420000,1202],[86415000,22],[86405000,1199],[86390000,470],[86365000,920],[86360000,192],[86355000,474],[86350000,1838],[86335000,1104],[86285000,2205],[86280000,2390],[86275000,95],[86255000,2836],[86250000,589],[86240000,424],[86235000,937],[86225000,374],[86220000,1591],[86215000,517],[86210000,559],[86205000,702],[86190000,54]]},"depth":30,"sequence":1191904,"symbol":"BTCUSD","type":"snapshot"}
-< {"book":{"asks":[[86775000,4621]],"bids":[]},"depth":30,"sequence":1191905,"symbol":"BTCUSD","type":"incremental"}
-< {"book":{"asks":[],"bids":[[86755000,8097]]},"depth":30,"sequence":1191906,"symbol":"BTCUSD","type":"incremental"}
-```
-
-<a name="bookunsub"/>
-
-### Unsubscribe OrderBook
-
-It unsubscribes all orderbook related subscriptions.
-
-* Request
-
-```javascript
 {
-  "id": <id>,
+  "book": {
+    "asks": [
+      [
+        86765000,
+        19609
+      ],
+      [
+        86770000,
+        7402
+      ]
+    ],
+    "bids": [
+      [
+        86760000,
+        18995
+      ],
+      [
+        86755000,
+        6451
+      ]
+    ]
+  },
+  "depth": 30,
+  "sequence": 1191904,
+  "symbol": "BTCUSD",
+  "type": "snapshot"
+}
+Message sample: incremental update
+
+{
+  "book": {
+    "asks": [
+      [
+        86775000,
+        4621
+      ]
+    ],
+    "bids": []
+  },
+  "depth": 30,
+  "sequence": 1191905,
+  "symbol": "BTCUSD",
+  "type": "incremental"
+}
+Unsubscribe orderBook
+Request sample
+
+{
+  "id": 0,
   "method": "orderbook.unsubscribe",
   "params": []
 }
-```
+It unsubscribes all orderbook related subscriptions.
 
-* Response:
+Subscribe trade
+Request format
 
-```javascript
-{
-  "error": null,
-  "id": <id>,
-  "result": {
-    "status": "success"
-  }
-}
-```
-
-<a name="tradesub"/>
-
-### Subscribe Trade
-
-On each successful subscription, DataGW will send the 200 history trades immediately for the subscribed symbol and all
-the later trades will be published.
-
-* Request
-
-```javascript
 {
   "id": <id>,
   "method": "trade.subscribe",
@@ -2693,46 +1873,20 @@ the later trades will be published.
     "<symbol>"
   ]
 }
-```
+On each successful subscription, DataGW will send the 200 history trades immediately for the subscribed symbol and all the later trades will be published.
 
-* Response:
+Request sample
 
-```javascript
 {
-  "error": null,
-  "id": <id>,
-  "result": {
-    "status": "success"
-  }
-}
-```
-
-* Sample:
-
-```javascript
-> {
-  "id": 1234,
+  "id": 0,
   "method": "trade.subscribe",
   "params": [
     "BTCUSD"
   ]
 }
+Trade message
+Message format
 
-< {
-  "error": null,
-  "id": 1234,
-  "result": {
-    "status": "success"
-  }
-}
-```
-
-#### Trade Message Format：
-
-DataGW publishes trade message with types: incremental, snapshot. Incremental messages are published with 20ms interval.
-And snapshot messages are published on connection initial setup for client recovery.
-
-```javascript
 {
   "trades": [
     [
@@ -2749,22 +1903,19 @@ And snapshot messages are published on connection initial setup for client recov
   "symbol": "<symbol>",
   "type": "<type>"
 }
-```
+DataGW publishes trade message with types: incremental, snapshot. Incremental messages are published with 20ms interval. And snapshot messages are published on connection initial setup for client recovery.
 
-| Field       | Type   | Description      | Possible values |
-|-------------|--------|------------------|-----------------|
-| timestamp   | Integer| Timestamp in nanoseconds for each trade ||
-| side        | String | Execution taker side| bid, ask        |
-| priceEp     | Integer| Scaled execution price  |                 |
-| qty         | Integer| Execution size   |                 |
-| sequence    | Integer| Latest message sequence ||
-| symbol      | String | Contract symbol name     ||
-| type        | String | Message type     |snapshot, incremental |
+Field	Type	Description	Possible values
+timestamp	Integer	Timestamp in nanoseconds for each trade	
+side	String	Execution taker side	bid, ask
+priceEp	Integer	Scaled execution price	
+qty	Integer	Execution size	
+sequence	Integer	Latest message sequence	
+symbol	String	Contract symbol name	
+type	String	Message type	snapshot, incremental
+Message sample: snapshot
 
-* Sample
-
-```javascript
-< {
+{
   "sequence": 1167852,
   "symbol": "BTCUSD",
   "trades": [
@@ -2795,8 +1946,9 @@ And snapshot messages are published on connection initial setup for client recov
   ],
   "type": "snapshot"
 }
+Message sample: snapshot
 
-< {
+{
   "sequence": 1188273,
   "symbol": "BTCUSD",
   "trades": [
@@ -2809,26 +1961,17 @@ And snapshot messages are published on connection initial setup for client recov
   ],
   "type": "incremental"
 }
-```
+Unsubscribe trade
+Request format: unsubscribe all trade subsciptions
 
-<a name="tradeunsub"/>
-
-### Unsubscribe Trade
-
-It unsubscribes all trade subscriptions or for a symbol.
-
-* Request
-
-```javascript
-# unsubscribe all trade subsciptions
 {
   "id": <id>,
   "method": "trade.unsubscribe",
   "params": [
   ]
 }
+Request format: unsubscribe all trade subsciptions for a symbol
 
-# unsubscribe all trade subsciptions for a symbol
 {
   "id": <id>,
   "method": "trade.unsubscribe",
@@ -2836,30 +1979,11 @@ It unsubscribes all trade subscriptions or for a symbol.
     "<symbol>"
   ]
 }
-```
+It unsubscribes all trade subscriptions or for a single symbol.
 
-* Response:
+Subscribe kline
+Request format
 
-```javascript
-{
-  "error": null,
-  "id": <id>,
-  "result": {
-    "status": "success"
-  }
-}
-```
-
-<a name="klinesub"/>
-
-### Subscribe Kline
-
-On each successful subscription, DataGW will send the 1000 history klines immediately for the subscribed symbol and all
-the later kline update will be published in real-time.
-
-* Request
-
-```javascript
 {
   "id": <id>,
   "method": "kline.subscribe",
@@ -2868,48 +1992,21 @@ the later kline update will be published in real-time.
     "<interval>"
   ]
 }
-```
+On each successful subscription, DataGW will send the 1000 history klines immediately for the subscribed symbol and all the later kline update will be published in real-time.
 
-* Response:
+Request sample: subscribe 1-day kline
 
-```javascript
 {
-  "error": null,
-  "id": <id>,
-  "result": {
-    "status": "success"
-  }
-}
-```
-
-* Sample:
-
-```javascript
-# subscribe 1-day kline
-> {
-  "id": 1234,
+  "id": 0,
   "method": "kline.subscribe",
   "params": [
     "BTCUSD",
     86400
   ]
 }
+Kline message
+Message format
 
-< {
-  "error": null,
-  "id": 1234,
-  "result": {
-    "status": "success"
-  }
-}
-```
-
-#### Kline Message Format：
-
-DataGW publishes kline message with types: incremental, snapshot. Incremental messages are published with 20ms interval.
-And snapshot messages are published on connection initial setup for client recovery.
-
-```javascript
 {
   "kline": [
     [
@@ -2931,27 +2028,9 @@ And snapshot messages are published on connection initial setup for client recov
   "symbol": "<symbol>",
   "type": "<type>"
 }
-```
+Message sample: snapshot
 
-| Field       | Type   | Description      | Possible values |
-|-------------|--------|------------------|-----------------|
-| timestamp   | Integer| Timestamp in nanoseconds for each trade ||
-| interval    | Integer| Kline interval type      | 60, 300, 900, 1800, 3600, 14400, 86400, 604800, 2592000, 7776000, 31104000 |
-| lastCloseEp | Integer| Scaled last close price  |                 |
-| openEp      | Integer| Scaled open price        |                 |
-| highEp      | Integer| Scaled high price        |                 |
-| lowEp       | Integer| Scaled low price         |                 |
-| closeEp     | Integer| Scaled close price       |                 |
-| volume      | Integer| Trade voulme during the current kline interval ||
-| turnoverEv  | Integer| Scaled turnover value    |                 |
-| sequence    | Integer| Latest message sequence  ||
-| symbol      | String | Contract symbol name     ||
-| type        | String | Message type     |snapshot, incremental |
-
-* Sample
-
-```javascript
-< {
+{
   "kline": [
     [
       1590019200,
@@ -2991,8 +2070,9 @@ And snapshot messages are published on connection initial setup for client recov
   "symbol": "BTCUSD",
   "type": "snapshot"
 }
+Message sample: snapshot
 
-< {
+{
   "kline": [
     [
       1590019200,
@@ -3010,25 +2090,31 @@ And snapshot messages are published on connection initial setup for client recov
   "symbol": "BTCUSD",
   "type": "incremental"
 }
-```
+DataGW publishes kline message with types: incremental, snapshot. Incremental messages are published with 20ms interval. And snapshot messages are published on connection initial setup for client recovery.
 
-<a name="klineunsub"/>
+Field	Type	Description	Possible values
+timestamp	Integer	Timestamp in nanoseconds for each trade	
+interval	Integer	Kline interval type	60, 300, 900, 1800, 3600, 14400, 86400, 604800, 2592000, 7776000, 31104000
+lastCloseEp	Integer	Scaled last close price	
+openEp	Integer	Scaled open price	
+highEp	Integer	Scaled high price	
+lowEp	Integer	Scaled low price	
+closeEp	Integer	Scaled close price	
+volume	Integer	Trade voulme during the current kline interval	
+turnoverEv	Integer	Scaled turnover value	
+sequence	Integer	Latest message sequence	
+symbol	String	Contract symbol name	
+type	String	Message type	snapshot, incremental
+Unsubscribe kline
+Request format: unsubscribe all kline subscriptions
 
-### Unsubscribe Kline
-
-It unsubscribes all kline subscriptions or for a symbol.
-
-* Request
-
-```javascript
-# unsubscribe all Kline subscriptions
 {
   "id": <id>,
   "method": "kline.unsubscribe",
   "params": []
 }
+Request format: unsubscribe all kline subscriptions of a symbol
 
-# unsubscribe all Kline subscriptions of a symbol
 {
   "id": <id>,
   "method": "kline.unsubscribe",
@@ -3036,267 +2122,504 @@ It unsubscribes all kline subscriptions or for a symbol.
     "<symbol>"
   ]
 }
-```
+It unsubscribes all kline subscriptions or for a single symbol.
 
-* Response:
+Subscribe account-order-position (AOP)
+Request format
 
-```javascript
-{
-  "error": null,
-  "id": <id>,
-  "result": {
-    "status": "success"
-  }
-}
-```
-
-<a name="aopsub"/>
-
-### Subscribe Account-Order-Position (AOP)
-
-AOP subscription requires the session been authorized successfully. DataGW extracts the user information from the given
-token and sends AOP messages back to client accordingly. 0 or more latest account snapshot messages will be sent to
-client immediately on subscription, and incremental messages will be sent for later updates. Each account snapshot
-contains a trading account information, holding positions, and open / max 100 closed / max 100 filled order event
-message history.
-
-* Request
-
-```javascript
 {
   "id": <id>,
   "method": "aop.subscribe",
   "params": []
 }
-```
+AOP subscription requires the session been authorized successfully. DataGW extracts the user information from the given token and sends AOP messages back to client accordingly. 0 or more latest account snapshot messages will be sent to client immediately on subscription, and incremental messages will be sent for later updates. Each account snapshot contains a trading account information, holding positions, and open / max 100 closed / max 100 filled order event message history.
 
-* Response:
+Account-order-position (AOP) message
+Message format
 
-```javascript
-{
-  "error": null,
-  "id": <id>,
-  "result": {
-    "status": "success"
-  }
-}
-```
-
-* Sample
-
-```javascript
-> {
-  "id": 1234,
-  "method": "aop.subscribe",
-  "params": []
-}
-
-< {
-  "error": null,
-  "id": 1234,
-  "result": {
-    "status": "success"
-  }
-}
-```
-
-#### Account-Order-Position (AOP) Message Sample:
-
-```javascript
 {
   "accounts": [
     {
-      "accountBalanceEv": 9992165009,
       "accountID": 604630001,
       "currency": "BTC",
-      "totalUsedBalanceEv": 10841771568,
-      "userID": 60463
+      .
+      .
+      .
     }
   ],
   "orders": [
     {
       "accountID": 604630001,
-      ...
+      .
+      .
+      .
     }
   ],
   "positions": [
     {
       "accountID": 604630001,
-      ...
+      .
+      .
+      .
     }
   ],
-  "sequence": 11450,
-  "timestamp": <timestamp>,
-  "type": "<type>"
+  "sequence":1,
+  "timestamp":<timestamp>,
+  "type":"<type>"
 }
 
-```
+Field	Type	Description	Possible values
+timestamp	Integer	Transaction timestamp in nanoseconds	
+sequence	Integer	Latest message sequence	
+symbol	String	Contract symbol name	
+type	String	Message type	snapshot, incremental
+Message sample: snapshot
 
-| Field       | Type   | Description      | Possible values |
-|-------------|--------|------------------|-----------------|
-| timestamp   | Integer| Transaction timestamp in nanoseconds | |
-| sequence    | Integer| Latest message sequence |          |
-| symbol      | String | Contract symbol name    |          |
-| type        | String | Message type     | snapshot, incremental |
 
-* Sample:
-
-```javascript
-< {"accounts":[{"accountBalanceEv":100000024,"accountID":675340001,"bonusBalanceEv":0,"currency":"BTC","totalUsedBalanceEv":1222,"userID":67534}],"orders":[{"accountID":675340001,"action":"New","actionBy":"ByUser","actionTimeNs":1573711481897337000,"addedSeq":1110523,"bonusChangedAmountEv":0,"clOrdID":"uuid-1573711480091","closedPnlEv":0,"closedSize":0,"code":0,"cumQty":2,"cumValueEv":23018,"curAccBalanceEv":100000005,"curAssignedPosBalanceEv":0,"curBonusBalanceEv":0,"curLeverageEr":0,"curPosSide":"Buy","curPosSize":2,"curPosTerm":1,"curPosValueEv":23018,"curRiskLimitEv":10000000000,"currency":"BTC","cxlRejReason":0,"displayQty":2,"execFeeEv":-5,"execID":"92301512-7a79-5138-b582-ac185223727d","execPriceEp":86885000,"execQty":2,"execSeq":1131034,"execStatus":"MakerFill","execValueEv":23018,"feeRateEr":-25000,"lastLiquidityInd":"AddedLiquidity","leavesQty":0,"leavesValueEv":0,"message":"No error","ordStatus":"Filled","ordType":"Limit","orderID":"e9a45803-0af8-41b7-9c63-9b7c417715d9","orderQty":2,"pegOffsetValueEp":0,"priceEp":86885000,"relatedPosTerm":1,"relatedReqNum":2,"side":"Buy","stopLossEp":0,"stopPxEp":0,"symbol":"BTCUSD","takeProfitEp":0,"timeInForce":"GoodTillCancel","tradeType":"Trade","transactTimeNs":1573712555309040417,"userID":67534},{"accountID":675340001,"action":"New","actionBy":"ByUser","actionTimeNs":1573711490507067000,"addedSeq":1110980,"bonusChangedAmountEv":0,"clOrdID":"uuid-1573711488668","closedPnlEv":0,"closedSize":0,"code":0,"cumQty":3,"cumValueEv":34530,"curAccBalanceEv":100000013,"curAssignedPosBalanceEv":0,"curBonusBalanceEv":0,"curLeverageEr":0,"curPosSide":"Buy","curPosSize":5,"curPosTerm":1,"curPosValueEv":57548,"curRiskLimitEv":10000000000,"currency":"BTC","cxlRejReason":0,"displayQty":3,"execFeeEv":-8,"execID":"80899855-5b95-55aa-b84e-8d1052f19886","execPriceEp":86880000,"execQty":3,"execSeq":1131408,"execStatus":"MakerFill","execValueEv":34530,"feeRateEr":-25000,"lastLiquidityInd":"AddedLiquidity","leavesQty":0,"leavesValueEv":0,"message":"No error","ordStatus":"Filled","ordType":"Limit","orderID":"7e03cd6b-e45e-48d9-8937-8c6628e7a79d","orderQty":3,"pegOffsetValueEp":0,"priceEp":86880000,"relatedPosTerm":1,"relatedReqNum":3,"side":"Buy","stopLossEp":0,"stopPxEp":0,"symbol":"BTCUSD","takeProfitEp":0,"timeInForce":"GoodTillCancel","tradeType":"Trade","transactTimeNs":1573712559100655668,"userID":67534},{"accountID":675340001,"action":"New","actionBy":"ByUser","actionTimeNs":1573711499282604000,"addedSeq":1111025,"bonusChangedAmountEv":0,"clOrdID":"uuid-1573711497265","closedPnlEv":0,"closedSize":0,"code":0,"cumQty":4,"cumValueEv":46048,"curAccBalanceEv":100000024,"curAssignedPosBalanceEv":0,"curBonusBalanceEv":0,"curLeverageEr":0,"curPosSide":"Buy","curPosSize":9,"curPosTerm":1,"curPosValueEv":103596,"curRiskLimitEv":10000000000,"currency":"BTC","cxlRejReason":0,"displayQty":4,"execFeeEv":-11,"execID":"0be06645-90b8-5abe-8eb0-dca8e852f82f","execPriceEp":86865000,"execQty":4,"execSeq":1132422,"execStatus":"MakerFill","execValueEv":46048,"feeRateEr":-25000,"lastLiquidityInd":"AddedLiquidity","leavesQty":0,"leavesValueEv":0,"message":"No error","ordStatus":"Filled","ordType":"Limit","orderID":"66753807-9204-443d-acf9-946d15d5bedb","orderQty":4,"pegOffsetValueEp":0,"priceEp":86865000,"relatedPosTerm":1,"relatedReqNum":4,"side":"Buy","stopLossEp":0,"stopPxEp":0,"symbol":"BTCUSD","takeProfitEp":0,"timeInForce":"GoodTillCancel","tradeType":"Trade","transactTimeNs":1573712618104628671,"userID":67534}],"positions":[{"accountID":675340001,"assignedPosBalanceEv":0,"avgEntryPriceEp":86875941,"bankruptCommEv":75022,"bankruptPriceEp":90000,"buyLeavesQty":0,"buyLeavesValueEv":0,"buyValueToCostEr":1150750,"createdAtNs":0,"crossSharedBalanceEv":99998802,"cumClosedPnlEv":0,"cumFundingFeeEv":0,"cumTransactFeeEv":-24,"currency":"BTC","dataVer":4,"deleveragePercentileEr":0,"displayLeverageEr":1000000,"estimatedOrdLossEv":0,"execSeq":1132422,"freeCostEv":0,"freeQty":-9,"initMarginReqEr":1000000,"lastFundingTime":1573703858883133252,"lastTermEndTime":0,"leverageEr":0,"liquidationPriceEp":90000,"maintMarginReqEr":500000,"makerFeeRateEr":0,"markPriceEp":86786292,"orderCostEv":0,"posCostEv":1115,"positionMarginEv":99925002,"positionStatus":"Normal","riskLimitEv":10000000000,"sellLeavesQty":0,"sellLeavesValueEv":0,"sellValueToCostEr":1149250,"side":"Buy","size":9,"symbol":"BTCUSD","takerFeeRateEr":0,"term":1,"transactTimeNs":1573712618104628671,"unrealisedPnlEv":-107,"updatedAtNs":0,"usedBalanceEv":1222,"userID":67534,"valueEv":103596}],"sequence":1310812,"timestamp":1573716998131003833,"type":"snapshot"}
-< {"accounts":[{"accountBalanceEv":99999989,"accountID":675340001,"bonusBalanceEv":0,"currency":"BTC","totalUsedBalanceEv":1803,"userID":67534}],"orders":[{"accountID":675340001,"action":"New","actionBy":"ByUser","actionTimeNs":1573717286765750000,"addedSeq":1192303,"bonusChangedAmountEv":0,"clOrdID":"uuid-1573717284329","closedPnlEv":0,"closedSize":0,"code":0,"cumQty":0,"cumValueEv":0,"curAccBalanceEv":100000024,"curAssignedPosBalanceEv":0,"curBonusBalanceEv":0,"curLeverageEr":0,"curPosSide":"Buy","curPosSize":9,"curPosTerm":1,"curPosValueEv":103596,"curRiskLimitEv":10000000000,"currency":"BTC","cxlRejReason":0,"displayQty":4,"execFeeEv":0,"execID":"00000000-0000-0000-0000-000000000000","execPriceEp":0,"execQty":0,"execSeq":1192303,"execStatus":"New","execValueEv":0,"feeRateEr":0,"leavesQty":4,"leavesValueEv":46098,"message":"No error","ordStatus":"New","ordType":"Limit","orderID":"e329ae87-ce80-439d-b0cf-ad65272ed44c","orderQty":4,"pegOffsetValueEp":0,"priceEp":86770000,"relatedPosTerm":1,"relatedReqNum":5,"side":"Buy","stopLossEp":0,"stopPxEp":0,"symbol":"BTCUSD","takeProfitEp":0,"timeInForce":"GoodTillCancel","transactTimeNs":1573717286765896560,"userID":67534},{"accountID":675340001,"action":"New","actionBy":"ByUser","actionTimeNs":1573717286765750000,"addedSeq":1192303,"bonusChangedAmountEv":0,"clOrdID":"uuid-1573717284329","closedPnlEv":0,"closedSize":0,"code":0,"cumQty":4,"cumValueEv":46098,"curAccBalanceEv":99999989,"curAssignedPosBalanceEv":0,"curBonusBalanceEv":0,"curLeverageEr":0,"curPosSide":"Buy","curPosSize":13,"curPosTerm":1,"curPosValueEv":149694,"curRiskLimitEv":10000000000,"currency":"BTC","cxlRejReason":0,"displayQty":4,"execFeeEv":35,"execID":"8d1848a2-5faf-52dd-be71-9fecbc8926be","execPriceEp":86770000,"execQty":4,"execSeq":1192303,"execStatus":"TakerFill","execValueEv":46098,"feeRateEr":75000,"lastLiquidityInd":"RemovedLiquidity","leavesQty":0,"leavesValueEv":0,"message":"No error","ordStatus":"Filled","ordType":"Limit","orderID":"e329ae87-ce80-439d-b0cf-ad65272ed44c","orderQty":4,"pegOffsetValueEp":0,"priceEp":86770000,"relatedPosTerm":1,"relatedReqNum":5,"side":"Buy","stopLossEp":0,"stopPxEp":0,"symbol":"BTCUSD","takeProfitEp":0,"timeInForce":"GoodTillCancel","tradeType":"Trade","transactTimeNs":1573717286765896560,"userID":67534}],"positions":[{"accountID":675340001,"assignedPosBalanceEv":0,"avgEntryPriceEp":86843828,"bankruptCommEv":75056,"bankruptPriceEp":130000,"buyLeavesQty":0,"buyLeavesValueEv":0,"buyValueToCostEr":1150750,"createdAtNs":0,"crossSharedBalanceEv":99998186,"cumClosedPnlEv":0,"cumFundingFeeEv":0,"cumTransactFeeEv":11,"currency":"BTC","dataVer":5,"deleveragePercentileEr":0,"displayLeverageEr":1000000,"estimatedOrdLossEv":0,"execSeq":1192303,"freeCostEv":0,"freeQty":-13,"initMarginReqEr":1000000,"lastFundingTime":1573703858883133252,"lastTermEndTime":0,"leverageEr":0,"liquidationPriceEp":130000,"maintMarginReqEr":500000,"makerFeeRateEr":0,"markPriceEp":86732335,"orderCostEv":0,"posCostEv":1611,"positionMarginEv":99924933,"positionStatus":"Normal","riskLimitEv":10000000000,"sellLeavesQty":0,"sellLeavesValueEv":0,"sellValueToCostEr":1149250,"side":"Buy","size":13,"symbol":"BTCUSD","takerFeeRateEr":0,"term":1,"transactTimeNs":1573717286765896560,"unrealisedPnlEv":-192,"updatedAtNs":0,"usedBalanceEv":1803,"userID":67534,"valueEv":149694}],"sequence":1315725,"timestamp":1573717286767188294,"type":"incremental"}
-```
-
-<a name="aopsubv1"/>
-
-### Subscribe Account-Order-Position (AOP) v1
-
-AOP subscription v1 requires the session been authorized successfully. DataGW extracts the user information from the given token and sends AOP messages back to client accordingly. 0 or more latest account snapshot messages will be sent to client immediately on subscription, and incremental messages will be sent for later updates. Each account snapshot contains a trading account information, holding positions, events, and open / limited closed / limited filled order event message history.
-
-* Request
-
-```
 {
-"id": <id>,
-"method": "aop_v1.subscribe",
-"params": [
-  <close/fills limit>,
-  <publish_0_size_positions>
-  <skip_0_fields>]
+  "index_market24h": {
+    "highEp": 10009,
+    "lastEp": 10007,
+    "lowEp": 10004, 
+    "openEp": 10004,
+    "symbol": ".USDT"
+  },
+  "timestamp": 1681496204104375396
 }
-```
-
-* Response:
-
-```
 {
-"error": null,
-"id": <id>,
-"result": {
-  "status": "success"
+  "accounts": [
+    {
+      "accountBalanceEv": 100000024,
+      "accountID": 675340001,
+      "bonusBalanceEv": 0,
+      "currency": "BTC",
+      "totalUsedBalanceEv": 1222,
+      "userID": 67534
+    }
+  ],
+  "orders": [
+    {
+      "accountID": 675340001,
+      "action": "New",
+      "actionBy": "ByUser",
+      "actionTimeNs": 1573711481897337000,
+      "addedSeq": 1110523,
+      "bonusChangedAmountEv": 0,
+      "clOrdID": "uuid-1573711480091",
+      "closedPnlEv": 0,
+      "closedSize": 0,
+      "code": 0,
+      "cumQty": 2,
+      "cumValueEv": 23018,
+      "curAccBalanceEv": 100000005,
+      "curAssignedPosBalanceEv": 0,
+      "curBonusBalanceEv": 0,
+      "curLeverageEr": 0,
+      "curPosSide": "Buy",
+      "curPosSize": 2,
+      "curPosTerm": 1,
+      "curPosValueEv": 23018,
+      "curRiskLimitEv": 10000000000,
+      "currency": "BTC",
+      "cxlRejReason": 0,
+      "displayQty": 2,
+      "execFeeEv": -5,
+      "execID": "92301512-7a79-5138-b582-ac185223727d",
+      "execPriceEp": 86885000,
+      "execQty": 2,
+      "execSeq": 1131034,
+      "execStatus": "MakerFill",
+      "execValueEv": 23018,
+      "feeRateEr": -25000,
+      "lastLiquidityInd": "AddedLiquidity",
+      "leavesQty": 0,
+      "leavesValueEv": 0,
+      "message": "No error",
+      "ordStatus": "Filled",
+      "ordType": "Limit",
+      "orderID": "e9a45803-0af8-41b7-9c63-9b7c417715d9",
+      "orderQty": 2,
+      "pegOffsetValueEp": 0,
+      "priceEp": 86885000,
+      "relatedPosTerm": 1,
+      "relatedReqNum": 2,
+      "side": "Buy",
+      "stopLossEp": 0,
+      "stopPxEp": 0,
+      "symbol": "BTCUSD",
+      "takeProfitEp": 0,
+      "timeInForce": "GoodTillCancel",
+      "tradeType": "Trade",
+      "transactTimeNs": 1573712555309040400,
+      "userID": 67534
+    },
+    {
+      "accountID": 675340001,
+      "action": "New",
+      "actionBy": "ByUser",
+      "actionTimeNs": 1573711490507067000,
+      "addedSeq": 1110980,
+      "bonusChangedAmountEv": 0,
+      "clOrdID": "uuid-1573711488668",
+      "closedPnlEv": 0,
+      "closedSize": 0,
+      "code": 0,
+      "cumQty": 3,
+      "cumValueEv": 34530,
+      "curAccBalanceEv": 100000013,
+      "curAssignedPosBalanceEv": 0,
+      "curBonusBalanceEv": 0,
+      "curLeverageEr": 0,
+      "curPosSide": "Buy",
+      "curPosSize": 5,
+      "curPosTerm": 1,
+      "curPosValueEv": 57548,
+      "curRiskLimitEv": 10000000000,
+      "currency": "BTC",
+      "cxlRejReason": 0,
+      "displayQty": 3,
+      "execFeeEv": -8,
+      "execID": "80899855-5b95-55aa-b84e-8d1052f19886",
+      "execPriceEp": 86880000,
+      "execQty": 3,
+      "execSeq": 1131408,
+      "execStatus": "MakerFill",
+      "execValueEv": 34530,
+      "feeRateEr": -25000,
+      "lastLiquidityInd": "AddedLiquidity",
+      "leavesQty": 0,
+      "leavesValueEv": 0,
+      "message": "No error",
+      "ordStatus": "Filled",
+      "ordType": "Limit",
+      "orderID": "7e03cd6b-e45e-48d9-8937-8c6628e7a79d",
+      "orderQty": 3,
+      "pegOffsetValueEp": 0,
+      "priceEp": 86880000,
+      "relatedPosTerm": 1,
+      "relatedReqNum": 3,
+      "side": "Buy",
+      "stopLossEp": 0,
+      "stopPxEp": 0,
+      "symbol": "BTCUSD",
+      "takeProfitEp": 0,
+      "timeInForce": "GoodTillCancel",
+      "tradeType": "Trade",
+      "transactTimeNs": 1573712559100655600,
+      "userID": 67534
+    },
+    {
+      "accountID": 675340001,
+      "action": "New",
+      "actionBy": "ByUser",
+      "actionTimeNs": 1573711499282604000,
+      "addedSeq": 1111025,
+      "bonusChangedAmountEv": 0,
+      "clOrdID": "uuid-1573711497265",
+      "closedPnlEv": 0,
+      "closedSize": 0,
+      "code": 0,
+      "cumQty": 4,
+      "cumValueEv": 46048,
+      "curAccBalanceEv": 100000024,
+      "curAssignedPosBalanceEv": 0,
+      "curBonusBalanceEv": 0,
+      "curLeverageEr": 0,
+      "curPosSide": "Buy",
+      "curPosSize": 9,
+      "curPosTerm": 1,
+      "curPosValueEv": 103596,
+      "curRiskLimitEv": 10000000000,
+      "currency": "BTC",
+      "cxlRejReason": 0,
+      "displayQty": 4,
+      "execFeeEv": -11,
+      "execID": "0be06645-90b8-5abe-8eb0-dca8e852f82f",
+      "execPriceEp": 86865000,
+      "execQty": 4,
+      "execSeq": 1132422,
+      "execStatus": "MakerFill",
+      "execValueEv": 46048,
+      "feeRateEr": -25000,
+      "lastLiquidityInd": "AddedLiquidity",
+      "leavesQty": 0,
+      "leavesValueEv": 0,
+      "message": "No error",
+      "ordStatus": "Filled",
+      "ordType": "Limit",
+      "orderID": "66753807-9204-443d-acf9-946d15d5bedb",
+      "orderQty": 4,
+      "pegOffsetValueEp": 0,
+      "priceEp": 86865000,
+      "relatedPosTerm": 1,
+      "relatedReqNum": 4,
+      "side": "Buy",
+      "stopLossEp": 0,
+      "stopPxEp": 0,
+      "symbol": "BTCUSD",
+      "takeProfitEp": 0,
+      "timeInForce": "GoodTillCancel",
+      "tradeType": "Trade",
+      "transactTimeNs": 1573712618104628700,
+      "userID": 67534
+    }
+  ],
+  "positions": [
+    {
+      "accountID": 675340001,
+      "assignedPosBalanceEv": 0,
+      "avgEntryPriceEp": 86875941,
+      "bankruptCommEv": 75022,
+      "bankruptPriceEp": 90000,
+      "buyLeavesQty": 0,
+      "buyLeavesValueEv": 0,
+      "buyValueToCostEr": 1150750,
+      "createdAtNs": 0,
+      "crossSharedBalanceEv": 99998802,
+      "cumClosedPnlEv": 0,
+      "cumFundingFeeEv": 0,
+      "cumTransactFeeEv": -24,
+      "currency": "BTC",
+      "dataVer": 4,
+      "deleveragePercentileEr": 0,
+      "displayLeverageEr": 1000000,
+      "estimatedOrdLossEv": 0,
+      "execSeq": 1132422,
+      "freeCostEv": 0,
+      "freeQty": -9,
+      "initMarginReqEr": 1000000,
+      "lastFundingTime": 1573703858883133200,
+      "lastTermEndTime": 0,
+      "leverageEr": 0,
+      "liquidationPriceEp": 90000,
+      "maintMarginReqEr": 500000,
+      "makerFeeRateEr": 0,
+      "markPriceEp": 86786292,
+      "orderCostEv": 0,
+      "posCostEv": 1115,
+      "positionMarginEv": 99925002,
+      "positionStatus": "Normal",
+      "riskLimitEv": 10000000000,
+      "sellLeavesQty": 0,
+      "sellLeavesValueEv": 0,
+      "sellValueToCostEr": 1149250,
+      "side": "Buy",
+      "size": 9,
+      "symbol": "BTCUSD",
+      "takerFeeRateEr": 0,
+      "term": 1,
+      "transactTimeNs": 1573712618104628700,
+      "unrealisedPnlEv": -107,
+      "updatedAtNs": 0,
+      "usedBalanceEv": 1222,
+      "userID": 67534,
+      "valueEv": 103596
+    }
+  ],
+  "sequence": 1310812,
+  "timestamp": 1573716998131004000,
+  "type": "snapshot"
 }
+Message sample: incremental
+
+{
+  "accounts": [
+    {
+      "accountBalanceEv": 99999989,
+      "accountID": 675340001,
+      "bonusBalanceEv": 0,
+      "currency": "BTC",
+      "totalUsedBalanceEv": 1803,
+      "userID": 67534
+    }
+  ],
+  "orders": [
+    {
+      "accountID": 675340001,
+      "action": "New",
+      "actionBy": "ByUser",
+      "actionTimeNs": 1573717286765750000,
+      "addedSeq": 1192303,
+      "bonusChangedAmountEv": 0,
+      "clOrdID": "uuid-1573717284329",
+      "closedPnlEv": 0,
+      "closedSize": 0,
+      "code": 0,
+      "cumQty": 0,
+      "cumValueEv": 0,
+      "curAccBalanceEv": 100000024,
+      "curAssignedPosBalanceEv": 0,
+      "curBonusBalanceEv": 0,
+      "curLeverageEr": 0,
+      "curPosSide": "Buy",
+      "curPosSize": 9,
+      "curPosTerm": 1,
+      "curPosValueEv": 103596,
+      "curRiskLimitEv": 10000000000,
+      "currency": "BTC",
+      "cxlRejReason": 0,
+      "displayQty": 4,
+      "execFeeEv": 0,
+      "execID": "00000000-0000-0000-0000-000000000000",
+      "execPriceEp": 0,
+      "execQty": 0,
+      "execSeq": 1192303,
+      "execStatus": "New",
+      "execValueEv": 0,
+      "feeRateEr": 0,
+      "leavesQty": 4,
+      "leavesValueEv": 46098,
+      "message": "No error",
+      "ordStatus": "New",
+      "ordType": "Limit",
+      "orderID": "e329ae87-ce80-439d-b0cf-ad65272ed44c",
+      "orderQty": 4,
+      "pegOffsetValueEp": 0,
+      "priceEp": 86770000,
+      "relatedPosTerm": 1,
+      "relatedReqNum": 5,
+      "side": "Buy",
+      "stopLossEp": 0,
+      "stopPxEp": 0,
+      "symbol": "BTCUSD",
+      "takeProfitEp": 0,
+      "timeInForce": "GoodTillCancel",
+      "transactTimeNs": 1573717286765896400,
+      "userID": 67534
+    },
+    {
+      "accountID": 675340001,
+      "action": "New",
+      "actionBy": "ByUser",
+      "actionTimeNs": 1573717286765750000,
+      "addedSeq": 1192303,
+      "bonusChangedAmountEv": 0,
+      "clOrdID": "uuid-1573717284329",
+      "closedPnlEv": 0,
+      "closedSize": 0,
+      "code": 0,
+      "cumQty": 4,
+      "cumValueEv": 46098,
+      "curAccBalanceEv": 99999989,
+      "curAssignedPosBalanceEv": 0,
+      "curBonusBalanceEv": 0,
+      "curLeverageEr": 0,
+      "curPosSide": "Buy",
+      "curPosSize": 13,
+      "curPosTerm": 1,
+      "curPosValueEv": 149694,
+      "curRiskLimitEv": 10000000000,
+      "currency": "BTC",
+      "cxlRejReason": 0,
+      "displayQty": 4,
+      "execFeeEv": 35,
+      "execID": "8d1848a2-5faf-52dd-be71-9fecbc8926be",
+      "execPriceEp": 86770000,
+      "execQty": 4,
+      "execSeq": 1192303,
+      "execStatus": "TakerFill",
+      "execValueEv": 46098,
+      "feeRateEr": 75000,
+      "lastLiquidityInd": "RemovedLiquidity",
+      "leavesQty": 0,
+      "leavesValueEv": 0,
+      "message": "No error",
+      "ordStatus": "Filled",
+      "ordType": "Limit",
+      "orderID": "e329ae87-ce80-439d-b0cf-ad65272ed44c",
+      "orderQty": 4,
+      "pegOffsetValueEp": 0,
+      "priceEp": 86770000,
+      "relatedPosTerm": 1,
+      "relatedReqNum": 5,
+      "side": "Buy",
+      "stopLossEp": 0,
+      "stopPxEp": 0,
+      "symbol": "BTCUSD",
+      "takeProfitEp": 0,
+      "timeInForce": "GoodTillCancel",
+      "tradeType": "Trade",
+      "transactTimeNs": 1573717286765896400,
+      "userID": 67534
+    }
+  ],
+  "positions": [
+    {
+      "accountID": 675340001,
+      "assignedPosBalanceEv": 0,
+      "avgEntryPriceEp": 86843828,
+      "bankruptCommEv": 75056,
+      "bankruptPriceEp": 130000,
+      "buyLeavesQty": 0,
+      "buyLeavesValueEv": 0,
+      "buyValueToCostEr": 1150750,
+      "createdAtNs": 0,
+      "crossSharedBalanceEv": 99998186,
+      "cumClosedPnlEv": 0,
+      "cumFundingFeeEv": 0,
+      "cumTransactFeeEv": 11,
+      "currency": "BTC",
+      "dataVer": 5,
+      "deleveragePercentileEr": 0,
+      "displayLeverageEr": 1000000,
+      "estimatedOrdLossEv": 0,
+      "execSeq": 1192303,
+      "freeCostEv": 0,
+      "freeQty": -13,
+      "initMarginReqEr": 1000000,
+      "lastFundingTime": 1573703858883133200,
+      "lastTermEndTime": 0,
+      "leverageEr": 0,
+      "liquidationPriceEp": 130000,
+      "maintMarginReqEr": 500000,
+      "makerFeeRateEr": 0,
+      "markPriceEp": 86732335,
+      "orderCostEv": 0,
+      "posCostEv": 1611,
+      "positionMarginEv": 99924933,
+      "positionStatus": "Normal",
+      "riskLimitEv": 10000000000,
+      "sellLeavesQty": 0,
+      "sellLeavesValueEv": 0,
+      "sellValueToCostEr": 1149250,
+      "side": "Buy",
+      "size": 13,
+      "symbol": "BTCUSD",
+      "takerFeeRateEr": 0,
+      "term": 1,
+      "transactTimeNs": 1573717286765896400,
+      "unrealisedPnlEv": -192,
+      "updatedAtNs": 0,
+      "usedBalanceEv": 1803,
+      "userID": 67534,
+      "valueEv": 149694
+    }
+  ],
+  "sequence": 1315725,
+  "timestamp": 1573717286767188200,
+  "type": "incremental"
 }
-```
+Unsubscribe account-order-position (AOP)
+Request format
 
-* Sample
-```
-> {
-  "id": 1234,
-  "method": "aop_v1.subscribe",
-  "params": [5, true, false]
-}
-
-< {
-  "error": null,
-  "id": 1234,
-  "result": {
-    "status": "success"
-  }
-}
-```
-
-
-
-
-#### Account-Order-Position (AOP) Message Sample:
-
-```javascript
-{"accounts": [{ "accountBalanceEv": 999998500550, "accountID": 11324490004, "bonusBalanceEv": 0, "currency": "ETH",  "totalUsedBalanceEv": 302173448, "userID": 1132449  } ],"events": [],"orders": {"closed": [ { "accountID": 11324490004,...}], "fills": [ { "accountID": 11324490004,... } ],"open": [ { "accountID": 11324490004,... }   ]},"positions": [  {   "accountID": 11324490004,...}], "sequence": 115915989, "timestamp": <timestamp>, "type": "<type>", "version": "v1"}
-
-```
-
-| Field       | Type   | Description      | Possible values |
-|-------------|--------|------------------|-----------------|
-| timestamp   | Integer| Transaction timestamp in nanoseconds | |
-| sequence    | Integer| Latest message sequence |          |
-| symbol      | String | Contract symbol name    |          |
-| type        | String | Message type     | snapshot, incremental |
-| version     | String | Message version  | v1 |
-
-
-
-* Sample:
-
-```
-{"accounts":[{"accountBalanceEv":304011000007611398,"accountID":11324490001,"bonusBalanceEv":0,"currency":"BTC","totalUsedBalanceEv":100032635,"userID":1132449}],"events":[],"orders":{"closed":[{"accountID":11324490001,"bonusChangedAmountEv":0,"clOrdID":"38a54851-f5a5-91a2-c86f-343caded0384","closedPnlEv":0,"closedSize":0,"code":0,"cumQty":1000000,"cumValueEv":2367167637,"currency":"BTC","cxlRejReason":0,"displayQty":0,"leavesQty":0,"leavesValueEv":0,"ordStatus":"Filled","ordType":"Limit","orderID":"06518c40-6fb2-4e95-9d91-e8342de6d2e1","orderQty":1000000,"pegOffsetValueEp":0,"priceEp":422455000,"side":"Buy","slTrigger":"ByMarkPrice","stopLossEp":0,"stopPxEp":0,"symbol":"BTCUSD","takeProfitEp":0,"timeInForce":"GoodTillCancel","tpTrigger":"ByLastPrice","transactTimeNs":1647935193813494272,"userID":1132449},{"accountID":11324490001,"bonusChangedAmountEv":0,"clOrdID":"6bb07b9c-c171-6c8d-eeb3-8f4ef870ae8e","closedPnlEv":0,"closedSize":0,"code":11081,"cumQty":0,"cumValueEv":0,"currency":"BTC","cxlRejReason":0,"displayQty":0,"leavesQty":1000000,"leavesValueEv":2367116024,"ordStatus":"Rejected","ordType":"Limit","orderID":"84682434-ac59-4a23-8915-193295f81913","orderQty":1000000,"pegOffsetValueEp":0,"priceEp":422455000,"side":"Buy","slTrigger":"ByMarkPrice","stopLossEp":0,"stopPxEp":0,"symbol":"BTCUSD","takeProfitEp":0,"timeInForce":"GoodTillCancel","tpTrigger":"ByLastPrice","transactTimeNs":1647935206668239427,"userID":1132449}],"fills":[{"accountID":11324490001,"bonusChangedAmountEv":0,"currency":"BTC","execFeeEv":1100230,"execID":"6b72f087-1bc4-5ad2-8de7-0fcb948e3238","execPriceEp":422445000,"execQty":619715,"execSeq":1045041976,"execStatus":"TakerFill","execValueEv":1466972031,"ordType":"Limit","orderID":"06518c40-6fb2-4e95-9d91-e8342de6d2e1","orderQty":1000000,"priceEp":422455000,"side":"Buy","symbol":"BTCUSD","tradeType":"Trade","transactTimeNs":1647935193813494272,"userID":1132449},{"accountID":11324490001,"bonusChangedAmountEv":0,"currency":"BTC","execFeeEv":535137,"execID":"659de6ab-e4dd-5e5d-b5c3-654a2db8b5cb","execPriceEp":422445000,"execQty":301421,"execSeq":1045041976,"execStatus":"TakerFill","execValueEv":713515368,"ordType":"Limit","orderID":"06518c40-6fb2-4e95-9d91-e8342de6d2e1","orderQty":1000000,"priceEp":422455000,"side":"Buy","symbol":"BTCUSD","tradeType":"Trade","transactTimeNs":1647935193813494272,"userID":1132449}],"open":[]},"positions":[{"accountID":11324490001,"assignedPosBalanceEv":100032635,"avgEntryPriceEp":419422835,"bankruptCommEv":585024000000,"bankruptPriceEp":5000,"buyLeavesQty":0,"buyLeavesValueEv":0,"buyValueToCostEr":1150750,"createdAtNs":0,"crossSharedBalanceEv":304010999907578763,"cumClosedPnlEv":18515572,"cumFundingFeeEv":0,"cumTransactFeeEv":10904174,"curTermRealisedPnlEv":7612065,"currency":"BTC","dataVer":27,"deleveragePercentileEr":0,"displayLeverageEr":1000000,"estimatedOrdLossEv":0,"execSeq":1045041976,"freeCostEv":0,"freeQty":-3900160,"initMarginReqEr":1000000,"lastFundingTime":1647415223469509283,"lastTermEndTime":1647423491682801920,"leverageEr":0,"liquidationPriceEp":5000,"maintMarginReqEr":500000,"makerFeeRateEr":0,"markPriceEp":422792875,"orderCostEv":0,"posCostEv":100032635,"positionMarginEv":304010414983611398,"positionStatus":"Normal","riskLimitEv":10000000000,"sellLeavesQty":0,"sellLeavesValueEv":0,"sellValueToCostEr":1149250,"side":"Buy","size":3900160,"symbol":"BTCUSD","takerFeeRateEr":0,"term":2,"transactTimeNs":1647935206668239427,"unrealisedPnlEv":74120406,"updatedAtNs":0,"usedBalanceEv":100032635,"userID":1132449,"valueEv":9298873779}],"sequence":849885032,"timestamp":1647949615819850918,"type":"snapshot","version":"v1"}
-
-```
-
-
-<a name="aopunsub"/>
-
-### Unsubscribe Account-Order-Position (AOP)
-
-* Request：
-
-```javascript
 {
   "id": <id>,
   "method": "aop.unsubscribe",
   "params": []
 }
-```
+It unsubscribes all account-order-positions.
 
-* Response:
+Subscribe 24 hours ticker
+Reuqest sample
 
-```javascript
 {
-  "error": null,
-  "id": <id>,
-  "result": {
-    "status": "success"
-  }
-}
-```
-
-<a name="tickersub"/>
-
-### Subscribe 24 Hours Ticker
-
-On each successful subscription, DataGW will publish 24-hour ticker metrics for all symbols every 1 second.
-
-* Request
-
-```javascript
-{
-  "id": <id>,
-  "method": "market24h.subscribe",
-  "params": []
-}
-```
-
-* Response:
-
-```javascript
-{
-  "error": null,
-  "id": <id>,
-  "result": {
-    "status": "success"
-  }
-}
-```
-
-* Sample:
-
-```javascript
-> {
   "method": "market24h.subscribe",
   "params": [],
-  "id": 1234
+  "id": 0
 }
+24-Hours ticker message
+Message format
 
-< {
-  "error": null,
-  "id": 1234,
-  "result": {
-    "status": "success"
-  }
-}
-```
-
-#### Hours Ticker Message Format：
-
-```javascript
 {
   "market24h": {
     "open": <open priceEp>,
@@ -3314,27 +2637,8 @@ On each successful subscription, DataGW will publish 24-hour ticker metrics for 
   },
   "timestamp": <timestamp>
 }
-```
+Message sample
 
-| Field         | Type   | Description                                | Possible values |
-|---------------|--------|--------------------------------------------|--------------|
-| open priceEp  | Integer| The scaled open price in last 24 hours     |              |
-| high priceEp  | Integer| The scaled highest price in last 24 hours  |              |
-| low priceEp   | Integer| The scaled lowest price in last 24 hours   |              |
-| close priceEp | Integer| The scaled close price in last 24 hours    |              |
-| index priceEp | Integer| Scaled index price                         |              |
-| mark priceEp  | Integer| Scaled mark price                          |              |
-| open interest | Integer| current open interest                      |              |
-| funding rateEr| Integer| Scaled funding rate                        |              |
-| predicated funding rateEr| Integer| Scaled predicated funding rate  |              |
-| timestamp     | Integer| Timestamp in nanoseconds                   |              |
-| symbol        | String | Contract symbol name                       | [Trading symbols](#symbpricesub) |
-| turnoverEv    | Integer| The scaled turnover value in last 24 hours |              |
-| volume        | Integer| Symbol trade volume in last 24 hours       |              |
-
-* Sample:
-
-```javascript
 {
   "market24h": {
     "close": 87425000,
@@ -3353,78 +2657,1587 @@ On each successful subscription, DataGW will publish 24-hour ticker metrics for 
   },
   "timestamp": 1576490244024818000
 }
-```
+On each successful subscription, DataGW will publish 24-hour ticker metrics for all symbols every 1 second.
 
-<a name="symbpricesub"/>
+Field	Type	Description	Possible values
+open priceEp	Integer	The scaled open price in last 24 hours	
+high priceEp	Integer	The scaled highest price in last 24 hours	
+low priceEp	Integer	The scaled lowest price in last 24 hours	
+close priceEp	Integer	The scaled close price in last 24 hours	
+index priceEp	Integer	Scaled index price	
+mark priceEp	Integer	Scaled mark price	
+open interest	Integer	current open interest	
+funding rateEr	Integer	Scaled funding rate	
+predicated funding rateEr	Integer	Scaled predicated funding rate	
+timestamp	Integer	Timestamp in nanoseconds	
+symbol	String	Contract symbol name	
+turnoverEv	Integer	The scaled turnover value in last 24 hours	
+volume	Integer	Symbol trade volume in last 24 hours	
+Subscribe price tick
+Request sample: subscribe a single symbol.
 
-### Subscribe tick event for symbol price
-
-* Every trading symbol has a suite of other symbols, each symbol follows same patterns,
-  i.e. `index` symbol follows a pattern `.<BASECURRENCY>`,
-  `mark` symbol follows a pattern `.M<BASECURRENCY>`,
-  predicated funding rate's symbol follows a pattern `.<BASECURRENCY>FR`,
-  while funding rate symbol follows a pattern `.<BASECURRENCY>FR8H`
-* Price is retrieved by subscribing symbol tick.
-* all available symbols (pfr=predicated funding rate)
-
-   | symbol      | index symbol |  mark symbol  | pfr symbol   | funding rate symbol |
-   |-------------|--------------|---------------|--------------|---------------------|
-   | BTCUSD      | .BTC         | .MBTC         | .BTCFR       | .BTCFR8H            |
-   | XRPUSD      | .XRP         | .MXRP         | .XRPFR       | .XRPFR8H            |
-   | ETHUSD      | .ETH         | .METH         | .ETHFR       | .ETHFR8H            |
-   | LINKUSD     | .LINK        | .MLINK        | .LINKFR      | .LINKFR8H           |
-   | XTZUSD      | .XTZ         | .MXTZ         | .XTZFR       | .XTZFR8H            |
-   | LTCUSD      | .LTC         | .MLTC         | .LTCFR       | .LTCFR8H            |
-   | GOLDUSD     | .GOLD        | .MGOLD        | .GOLDFR      | .GOLDFR8H           |
-   | ADAUSD      | .ADA         | .MADA         | .ADAFR       | .ADAFR8H            |
-   | BCHUSD      | .BCH         | .MBCH         | .BCHFR       | .BCHFR8H            |
-   | COMPUSD     | .COMP        | .MCOMP        | .COMPFR      | .COMPFR8H           |
-   | ALGOUSD     | .ALGO        | .MALGO        | .ALGOFR      | .ALGOFR8H           |
-   | YFIUSD      | .YFI         | .MYFI         | .YFIFR       | .YFIFR8H            |
-   | DOTUSD      | .DOT         | .MDOT         | .DOTFR       | .DOTFR8H            |
-   | UNIUSD      | .UNI         | .MUNI         | .UNIFR       | .UNIFR8H            |
-   | BATUSD      | .BAT         | .MBAT         | .BATFR       | .BATFR8H            |
-   | CHZUSD      | .CHZ         | .MCHZ         | .CHZFR       | .CHZFR8H            |
-   | MANAUSD     | .MANA        | .MMANA        | .MANAFR      | .MANAFR8H           |
-   | ENJUSD      | .ENJ         | .MENJ         | .ENJFR       | .ENJFR8H            |
-   | SUSHIUSD    | .SUSHI       | .MSUSHI       | .SUSHIFR     | .SUSHIFR8H          |
-   | SNXUSD      | .SNX         | .MSNX         | .SNXFR       | .SNXFR8H            |
-   | GRTUSD      | .GRT         | .MGRT         | .GRTFR       | .GRTFR8H            |
-   | MKRUSD      | .MKR         | .MMKR         | .MKRFR       | .MKRFR8H            |
-   | TRXUSD      | .TRX         | .MTRX         | .TRXFR       | .TRXFR8H            |
-   | EOSUSD      | .EOS         | .MEOS         | .EOSFR       | .EOSFR8H            |
-   | ONTUSD      | .ONT         | .MONT         | .ONTFR       | .ONTFR8H            |
-   | NEOUSD      | .NEO         | .MNEO         | .NEOFR       | .NEOFR8H            |
-   | ZECUSD      | .ZEC         | .MZEC         | .ZECFR       | .ZECFR8H            |
-   | FILUSD      | .FIL         | .MFIL         | .FILFR       | .FILFR8H            |
-   | KSMUSD      | .KSM         | .MKSM         | .KSMFR       | .KSMFR8H            |
-   | XMRUSD      | .XMR         | .MXMR         | .XMRFR       | .XMRFR8H            |
-   | QTUMUSD     | .QTUM        | .MQTUM        | .QTUMFR      | .QTUMFR8H           |
-   | XLMUSD      | .XLM         | .MXLM         | .XLMFR       | .XLMFR8H            |
-   | ATOMUSD     | .ATOM        | .MATOM        | .ATOMFR      | .ATOMFR8H           |
-   | LUNAUSD     | .LUNA        | .MLUNA        | .LUNAFR      | .LUNAFR8H           |
-   | SOLUSD      | .SOL         | .MSOL         | .SOLFR       | .SOLFR8H            |
-   | u1000RSRUSD | .u1000RSR    | .Mu1000RSR    | .u1000RSRFR  | .u1000RSRFR8H       |
-
-* Request
-
-    * The symbol in params can be replaced by any symbol.
-
-```javascript
 {
   "method": "tick.subscribe",
   "params": [
-    <symbol>
+    ".BTC"
   ],
-  "id": <id>
+  "id": 1580631267153
 }
-```
+Every trading symbol has a suite of other symbols, each symbol follows same patterns, i.e. index symbol follows a pattern .<BASECURRENCY>, mark symbol follows a pattern .M<BASECURRENCY>, predicated funding rate's symbol follows a pattern .<BASECURRENCY>FR, while funding rate symbol follows a pattern .<BASECURRENCY>FR8H
+Price is retrieved by subscribing symbol tick.
+all available symbols in products
+Tick message
+Message format
 
-* Response
+{
+  "tick": {
+    "last": <priceEp>,
+    "scale": <scale>,
+    "symbol": <symbol>
+    "timestamp": <timestamp_in_nano>
+  }
+}
+Message sample
 
-ack message
+{
+  "tick": {
+    "last": 93385362,
+    "scale": 4,
+    "symbol": ".BTC",
+    "timestamp": 1580635719408000000
+  }
+}
+Field	Type	Description	Possible values
+priceEp	Integer	The scaled open price in last 24 hours	
+scale	Integer	The price scale factor, e.g. 4 denotes price scaled with factor 1e4.	4,6,8
+symbol	String	Symbol	
+USDⓈ-M Perpetual Rest API
+Query product information
+Request
 
-```javascript
+GET /public/products
+USDⓈ-M perpetual contracts using USDT or USDC as margin.
+You can find products info with hedged mode under node 'perpProductsV2'.
+Contract risklimit information are defined in .riskLimitsV2[].
+Contract which delisted has status with 'Delisted' .
+Query product information plus
+Request
+
+GET /public/products-plus
+USDⓈ-M perpetual contracts using USDT or USDC as margin.
+You can find products info with hedged mode under node 'perpProductsV2'.
+Contract risklimit information are defined in .riskLimitsV2[].
+Contract which delisted has status with 'Delisted' .
+list time is defined in timeline[1].
+delist time is defined in timeline[3].
+Place order (HTTP PUT, prefered)
+Request format
+
+PUT /g-orders/create?clOrdID=<clOrdID>&symbol=<symbol>&reduceOnly=<reduceOnly>&closeOnTrigger=<closeOnTrigger>&orderQtyRq=<orderQtyRq>&ordType=<ordType>&priceRp=<priceRp>&side=<side>&posSide=<posSide>&text=<text>&timeInForce=<timeInForce>&stopPxRp=<stopPxRp>&takeProfitRp=<takeProfitRp>&stopLossRp=<stopLossRp>&pegOffsetValueRp=<pegOffsetValueRp>&pegPriceType=<pegPriceType>&triggerType=<triggerType>&tpTrigger=<tpTrigger>&tpSlTs=<tpSlTs>&slTrigger=<slTrigger>&stpInstruction=<stpInstruction>
+* Order creation supports self trade prevention (STP). * Contact the Phemex support to enable stpGroupId for your account. * Once stpGroupId is enabled, the parent account and sub-accounts will, by default, share the same stpGroupId. * Users ONLY need to provide stpInstruction as an order parameter; the stpGroupId is automatically assigned once enabled. * The stpInstruction in the taker order will have the priority to determine STP action when STP is triggered and both taker and maker orders have stpInstruction set. * Both stpGroupId and stpInstruction are required to activate STP.
+
+Response sample
+
+{
+  "code": 0,
+  "data": {
+    "actionTimeNs": 1580547265848034600,
+    "bizError": 0,
+    "clOrdID": "137e1928-5d25-fecd-dbd1-705ded659a4f",
+    "closedPnlRv": "1271.9",
+    "closedSizeRq": "0.01",
+    "cumQtyRq": "0.01",
+    "cumValueRv": "1271.9",
+    "displayQtyRq": "0.01",
+    "execInst": "ReduceOnly",
+    "execStatus": "Init",
+    "leavesQtyRq": "0.01",
+    "leavesValueRv": "1271.9",
+    "ordStatus": "Init",
+    "orderID": "ab90a08c-b728-4b6b-97c4-36fa497335bf",
+    "orderQtyRq": "0.01",
+    "orderType": "Limit",
+    "pegOffsetValueRp": "1271.9",
+    "pegPriceType": "LastPeg",
+    "priceRp": "98970000",
+    "reduceOnly": true,
+    "side": "Sell",
+    "stopDirection": "Rising",
+    "stopPxRp": "1271.9",
+    "symbol": "BTCUSDT",
+    "timeInForce": "GoodTillCancel",
+    "transactTimeNs": 0,
+    "trigger": "ByMarkPrice"
+  },
+  "msg": "string"
+}
+Field	Type	Required	Description	Possible values
+clOrdID	String	-	client order id, max length is 40	
+symbol	String	Yes	Which symbol to place order	Trading symbols
+reduceOnly	Boolean	-	whether reduce position side only. Enable this flag, i.e. reduceOnly=true, position side won't change	true, false
+closeOnTrigger	Boolean	-	implicitly reduceOnly, plus cancel other orders in the same direction(side) when necessary	true, false
+orderQtyRq	String	-	Order real quantity	"1"
+ordType	String	-	Order type, default to Limit	Market,Limit,Stop,StopLimit,MarketIfTouched,LimitIfTouched,
+ProtectedMarket,MarketAsLimit,StopAsLimit,
+MarketIfTouchedAsLimit,Bracket,BoTpLimit,BoSlLimit,BoSlMarket
+priceRp	String	-	Real price, required for limit order	"1"
+side	String	Yes	Order direction, Buy or Sell	Buy, Sell
+posSide	String	Yes	Position direction	"Merged" for oneway mode ,
+"Long" / "Short" for hedge mode
+text	String	-	Order comments	
+timeInForce	String	-	Time in force. default to GoodTillCancel	GoodTillCancel, ImmediateOrCancel, FillOrKill, PostOnly, RPIPostOnly
+stopPxRp	String	-	Trigger price of conditional order	"1"
+takeProfitRp	String	-	trigger price of take-profit order attached to position opening	"1"
+tpPxRp	String	-	limit price of take-profit order attached to position opening	"1"
+stopLossRp	String	-	trigger price of stop-loss order attached to position opening	"1"
+slPxRp	String	-	limit price of stop-loss order attached to position opening	"1"
+pegOffsetValueRp	String	-	Trailing offset from current price. Negative value when position is long, positive when position is short	"1"
+pegPriceType	String	-	Trailing order price type	LastPeg, MidPricePeg, MarketPeg, PrimaryPeg, TrailingStopPeg, TrailingTakeProfitPeg
+triggerType	String	-	Trigger source	ByMarkPrice, ByIndexPrice, ByLastPrice, ByAskPrice, ByBidPrice, ByMarkPriceLimit, ByLastPriceLimit
+tpTrigger	String	-	Trigger source	ByMarkPrice, ByIndexPrice, ByLastPrice, ByAskPrice, ByBidPrice, ByMarkPriceLimit, ByLastPriceLimit
+slTrigger	String	-	Trigger source	ByMarkPrice, ByIndexPrice, ByLastPrice, ByAskPrice, ByBidPrice, ByMarkPriceLimit, ByLastPriceLimit
+stpInstruction	String	-	Self trade prevention(STP) instruction, order action when stp triggered	None, CancelMaker, CancelTaker, CancelBoth
+Place order (HTTP POST)
+HTTP Request:
+Request fields are the same as above place-order
+
+Order creation supports self trade prevention (STP).
+Contact the Phemex support to enable stpGroupId for your account.
+Once stpGroupId is enabled, the parent account and sub-accounts will, by default, share the same stpGroupId.
+Users ONLY need to provide stpInstruction as an order parameter; the stpGroupId is automatically assigned once enabled.
+The stpInstruction in the taker order will have the priority to determine STP action when STP is triggered and both taker and maker orders have stpInstruction set.
+Both stpGroupId and stpInstruction are required to activate STP.
+Request format
+
+POST /g-orders
+Request body:
+
+{
+  "clOrdID": "137e1928-5d25-fecd-dbd1-705ded659a4f",
+  "closeOnTrigger": true,
+  "displayQtyRq": "0.01",
+  "ordType": "Limit",
+  "orderQtyRq": "0.01",
+  "pegOffsetValueRp": "1271.9",
+  "pegPriceType": "LastPeg",
+  "posSide": "Long",
+  "priceRp": "1271.9",
+  "reduceOnly": true,
+  "side": "Buy",
+  "slTrigger": "ByMarkPrice",
+  "stopLossRp": "1271.9",
+  "stopPxRp": "1271.9",    
+  "symbol": "BTCUSDT",
+  "takeProfitRp": "1271.9",
+  "text": "string",
+  "timeInForce": "GoodTillCancel",
+  "tpTrigger": "ByMarkPrice",
+  "triggerType": "ByMarkPrice",
+  "stpInstruction": "CancelBoth"
+}
+Response sample
+
+{
+  "code": 0,
+  "data": {
+    "actionTimeNs": 1580547265848034600,
+    "bizError": 0,
+    "clOrdID": "137e1928-5d25-fecd-dbd1-705ded659a4f",
+    "closedPnlRv": "1271.9",
+    "closedSizeRq": "0.01",
+    "cumQtyRq": "0.01",
+    "cumValueRv": "1271.9",
+    "displayQtyRq": "0.01",
+    "execInst": "ReduceOnly",
+    "execStatus": "Init",
+    "leavesQtyRq": "0.01",
+    "leavesValueRv": "1271.9",
+    "ordStatus": "Init",
+    "orderID": "ab90a08c-b728-4b6b-97c4-36fa497335bf",
+    "orderQtyRq": "0.01",
+    "orderType": "Limit",
+    "pegOffsetValueRp": "1271.9",
+    "pegPriceType": "LastPeg",
+    "priceRq": "98970000",
+    "reduceOnly": true,
+    "side": "Sell",
+    "stopDirection": "Rising",
+    "stopPxRp": "1271.9",
+    "symbol": "BTCUSDT",
+    "timeInForce": "GoodTillCancel",
+    "transactTimeNs": 0,
+    "trigger": "ByMarkPrice"
+  },
+  "msg": "string"
+}
+Field	Type	Required	Description	Possible values
+clOrdID	String	-	client order id, max length is 40	
+symbol	String	Yes	Which symbol to place order	Trading symbols
+reduceOnly	Boolean	-	whether reduce position side only. Enable this flag, i.e. reduceOnly=true, position side won't change	true, false
+closeOnTrigger	Boolean	-	implicitly reduceOnly, plus cancel other orders in the same direction(side) when necessary	true, false
+orderQtyRq	String	-	Order real quantity	"1"
+ordType	String	-	Order type, default to Limit	Market,Limit,Stop,StopLimit,MarketIfTouched,LimitIfTouched,
+ProtectedMarket,MarketAsLimit,StopAsLimit,
+MarketIfTouchedAsLimit,Bracket,BoTpLimit,BoSlLimit,BoSlMarket
+priceRp	String	-	Real price, required for limit order	"1"
+side	String	Yes	Order direction, Buy or Sell	Buy, Sell
+posSide	String	Yes	Position direction	"Merged" for oneway mode ,
+"Long" / "Short" for hedge mode
+text	String	-	Order comments	
+timeInForce	String	-	Time in force. default to GoodTillCancel	GoodTillCancel, ImmediateOrCancel, FillOrKill, PostOnly, RPIPostOnly
+stopPxRp	String	-	Trigger price of conditional order	"1"
+takeProfitRp	String	-	trigger price of take-profit order attached to position opening	"1"
+tpPxRp	String	-	limit price of take-profit order attached to position opening	"1"
+stopLossRp	String	-	trigger price of stop-loss order attached to position opening	"1"
+slPxRp	String	-	limit price of stop-loss order attached to position opening	"1"
+pegOffsetValueRp	String	-	Trailing offset from current price. Negative value when position is long, positive when position is short	"1"
+pegPriceType	String	-	Trailing order price type	LastPeg, MidPricePeg, MarketPeg, PrimaryPeg, TrailingStopPeg, TrailingTakeProfitPeg
+triggerType	String	-	Trigger source	ByMarkPrice, ByIndexPrice, ByLastPrice, ByAskPrice, ByBidPrice, ByMarkPriceLimit, ByLastPriceLimit
+tpTrigger	String	-	Trigger source	ByMarkPrice, ByIndexPrice, ByLastPrice, ByAskPrice, ByBidPrice, ByMarkPriceLimit, ByLastPriceLimit
+slTrigger	String	-	Trigger source	ByMarkPrice, ByIndexPrice, ByLastPrice, ByAskPrice, ByBidPrice, ByMarkPriceLimit, ByLastPriceLimit
+stpInstruction	String	-	Self trade prevention(STP) instruction, order action when stp triggered	None, CancelMaker, CancelTaker, CancelBoth
+Amend order by orderID
+Request format
+
+PUT /g-orders/replace?symbol=<symbol>&orderID=<orderID>&origClOrdID=<origClOrdID>&price=<price>&priceRp=<priceRp>&orderQtyRq=<orderQtyRq>&stopPxRp=<stopPxRp>&takeProfitRp=<takeProfitRp>&stopLossRp=<stopLossRp>&pegOffsetValueRp=<pegOffsetValueRp>&pegPriceType=<pegPriceType>&triggerType=<triggerType>&posSide=<posSide>
+Response sample
+
+{
+  "code": 0,
+  "data": {
+    "actionTimeNs": 0,
+    "bizError": 0,
+    "clOrdID": "137e1928-5d25-fecd-dbd1-705ded659a4f",
+    "closedPnlRv": "1271.9",
+    "closedSizeRq": "0.01",
+    "cumQtyRq": "0.01",
+    "cumValueRv": "1271.9",
+    "displayQtyRq": "0.01",
+    "execInst": "ReduceOnly",
+    "execStatus": "Init",
+    "leavesQtyRq": "0.01",
+    "leavesValueRv": "1271.9",
+    "ordStatus": "Init",
+    "orderID": "ab90a08c-b728-4b6b-97c4-36fa497335bf",
+    "orderQtyRq": "0.01",
+    "orderType": "Limit",
+    "pegOffsetValueRp": "1271.9",
+    "pegPriceType": "LastPeg",
+    "priceRp": "1271.9",
+    "reduceOnly": true,
+    "side": "Sell",
+    "stopDirection": "Rising",
+    "stopPxRp": "1271.9",
+    "symbol": "BTCUSDT",
+    "timeInForce": "GoodTillCancel",
+    "transactTimeNs": 0,
+    "trigger": "ByMarkPrice",
+    "takeProfitRp":"1271.9",
+    "stopLossRp":"1271.9"
+  },
+  "msg": "string"
+}
+Field	Required	Description
+symbol	Yes	order symbol, cannot be changed
+orderID	-	order id, cannot be changed
+origClOrdID	-	original clOrderID, cannot be changed
+priceRp	-	new order price, real value
+orderQtyRq	-	new orderQty, real value
+stopPxRp	-	new stop price, real value
+takeProfitRp	-	new stop profit price, real value
+stopLossRp	-	new stop loss price, real value
+pegOffsetValueRp	-	new trailing offset, real value
+pegPriceType	-	new peg price type
+triggerType	-	new triggerType
+posSide	Yes	posSide to check, can not be changed
+NOTE:
+1) orderID and origClOrdID cannot both be empty.
+
+Cancel Single Order by orderID
+Request format
+
+DELETE /g-orders/cancel?orderID=<orderID>&posSide=<posSide>&symbol=<symbol>
+Response sample
+
+{
+  "code": 0,
+  "data": {
+    "actionTimeNs": 450000000,
+    "bizError": 0,
+    "clOrdID": "137e1928-5d25-fecd-dbd1-705ded659a4f",
+    "closedPnlRv": "1271.9",
+    "closedSizeRq": "0.01",
+    "cumQtyRq": "0.01",
+    "cumValueRv": "1271.9",
+    "displayQtyRq": "0.01",
+    "execInst": "ReduceOnly",
+    "execStatus": "Init",
+    "leavesQtyRq": "0.01",
+    "leavesValueRv": "0.01",
+    "ordStatus": "Init",
+    "orderID": "ab90a08c-b728-4b6b-97c4-36fa497335bf",
+    "orderQtyRq": "0.01",
+    "orderType": "Limit",
+    "pegOffsetValueRp": "1271.9",
+    "pegPriceType": "LastPeg",
+    "priceRq": "0.01",
+    "reduceOnly": true,
+    "side": "Sell",
+    "stopDirection": "Rising",
+    "stopPxRp": "0.01",
+    "symbol": "BTCUSDT",
+    "timeInForce": "GoodTillCancel",
+    "transactTimeNs": 450000000,
+    "trigger": "ByMarkPrice"
+  },
+  "msg": "string"
+}
+Field	Type	Required	Description
+orderID	String	No	order id, cannot be changed,
+clOrdID	String	No	clOrdID id, cannot be changed
+symbol	String	Yes	which symbol to cancel order
+posSide	String	Yes	position direction
+NOTE:
+1) orderID and clOrdID cannot both be empty.
+
+Bulk Cancel Orders
+Request format
+
+DELETE /g-orders?symbol=<symbol>&orderID=<orderID1>,<orderID2>,<orderID3>&posSide=<posSide>
+Response sample
+
+{
+  "code": 0,
+  "data": {
+    "actionTimeNs": 450000000,
+    "bizError": 0,
+    "clOrdID": "137e1928-5d25-fecd-dbd1-705ded659a4f",
+    "closedPnlRv": "1271.9",
+    "closedSizeRq": "0.01",
+    "cumQtyRq": "0.01",
+    "cumValueRv": "1271.9",
+    "displayQtyRq": "0.01",
+    "execInst": "ReduceOnly",
+    "execStatus": "Init",
+    "leavesQtyRq": "0.01",
+    "leavesValueRv": "1271.9",
+    "ordStatus": "Init",
+    "orderID": "ab90a08c-b728-4b6b-97c4-36fa497335bf",
+    "orderQtyRq": "0.01",
+    "orderType": "Limit",
+    "pegOffsetValueRp": "1271.9",
+    "pegPriceType": "LastPeg",
+    "priceRq": "0.01",
+    "reduceOnly": true,
+    "side": "string",
+    "stopDirection": "Rising",
+    "stopPxRp": "1271.9",
+    "symbol": "BTCUSDT",
+    "timeInForce": "GoodTillCancel",
+    "transactTimeNs": 450000000,
+    "trigger": "ByMarkPrice"
+  },
+  "msg": "string"
+}
+Field	Type	Required	Description
+orderID	String	No	list of order ids to be cancelled
+clOrdID	String	No	list of clOrdIDs to be cancelled
+symbol	String	Yes	which symbol to cancel order
+posSide	String	Yes	position direction
+NOTE:
+1) orderID and clOrdID cannot both be empty.
+
+Cancel All Orders
+Cancel all orders for hedge supported symbols.
+In order to cancel all orders, include conditional order and active order, one must invoke this API twice with different arguments.
+untriggered=false to cancel active order including triggerred conditional order.
+untriggered=true to cancel conditional order, the order is not triggerred.
+Request format
+
+DELETE /g-orders/all?symbol=<symbol>&untriggered=<untriggered>&text=<text>
+Response sample
+
+{
+  "code": 0,
+  "data": 0,
+  "msg": "string"
+}
+Field	Type	Required	Description
+symbol	String	-	list of symbols to cancel all orders
+untriggered	boolean	-	
+text	String	-	
+Query Account Positions
+Request format
+
+GET /g-accounts/accountPositions?currency=<currency>&symbol=<symbol>
+Response sample
+
+{
+  "code": 0,
+  "data": {
+    "account": {
+      "accountBalanceRv": "1271.9",
+      "accountId": 123450001,
+      "bonusBalanceRv": "1271.9",
+      "currency": "BTC",
+      "totalUsedBalanceRv": "1271.9",
+      "userID": 12345
+    },
+    "positions": [
+      {
+        "accountID": 123450001,
+        "assignedPosBalanceRv": "1271.9",
+        "avgEntryPrice": "1271.9",
+        "avgEntryPriceRp": "1271.9",
+        "bankruptCommRv": "1271.9",
+        "bankruptPriceRp": "1271.9",
+        "buyValueToCostRr": "0.1",
+        "cumClosedPnlRv": "1271.9",
+        "cumFundingFeeRv": "1271.9",
+        "cumTransactFeeRv": "1271.9",
+        "curTermRealisedPnlRv": "1271.9",
+        "currency": "BTC",
+        "deleveragePercentileRr": "0.1",
+        "estimatedOrdLossRv": "1271.9",
+        "execSeq": 0,
+        "initMarginReqRr": "0.1",
+        "lastFundingTimeNs": 450000000,
+        "lastTermEndTimeNs": 450000000,
+        "leverageRr": "0",
+        "liquidationPriceRp": "1271.9",
+        "maintMarginReqRr": "0.1",
+        "makerFeeRateRr": "0.1",
+        "markPriceRp": "1271.9",
+        "posCostRv": "1271.9",
+        "posMode": "Hedged",
+        "posSide": "Long",
+        "positionMarginRv": "1271.9",
+        "positionStatus": "Normal",
+        "riskLimitRv": "0.1",
+        "sellValueToCostRr": "0.1",
+        "side": "Sell",
+        "size": "0",
+        "symbol": "BTC",
+        "takerFeeRateRr": "0.1",
+        "term": 0,
+        "transactTimeNs": 450000000,
+        "usedBalanceRv": "1271.9",
+        "userID": 12345,
+        "valueRv": "1271.9"
+      }
+    ]
+  },
+  "msg": "string"
+}
+Request parameters
+Field	Type	Required	Description	Possible values
+symbol	String	-		BTCUSDT
+currency	String	Yes		USDT, USDC
+Response Fields
+Field	Type	Description
+leverageRr	Int	when negative, cross margin; when positive, isolated margin
+Query Account Positions with unrealized PNL
+Request format
+
+GET /g-accounts/positions?currency=<currency>
+Response sample
+
+{
+  "code": 0,
+  "msg": "",
+  "data": {
+    "account": {
+      "userID": 4200013,
+      "accountId": 42000130003,
+      "currency": "USDT",
+      "accountBalanceRv": "730.97309163",
+      "totalUsedBalanceRv": "1.02037554",
+      "bonusBalanceRv": "0"
+    },
+    "positions": [
+      {
+        "accountID": 42000130003,
+        "symbol": "XEMUSDT",
+        "currency": "USDT",
+        "side": "Buy",
+        "positionStatus": "Normal",
+        "leverageRr": "-10",
+        "initMarginReqRr": "0.1",
+        "maintMarginReqRr": "0.01",
+        "riskLimitRv": "200000",
+        "sizeRq": "186",
+        "valueRv": "9.951",
+        "avgEntryPriceRp": "0.0535",
+        "posCostRv": "1.00047354",
+        "assignedPosBalanceRv": "1.086606978",
+        "bankruptCommRv": "0.00001116",
+        "bankruptPriceRp": "0.0001",
+        "positionMarginRv": "730.97308047",
+        "liquidationPriceRp": "0.0001",
+        "deleveragePercentileRr": "0",
+        "buyValueToCostRr": "0.10114",
+        "sellValueToCostRr": "0.10126",
+        "markPriceRp": "0.053036917",
+        "markValueEv": 0,
+        "unRealisedPosLossEv": 0,
+        "estimatedOrdLossRv": "0",
+        "usedBalanceRv": "1.086606978",
+        "takeProfitEp": 0,
+        "stopLossEp": 0,
+        "cumClosedPnlRv": "0",
+        "cumFundingFeeRv": "0",
+        "cumTransactFeeRv": "0.0059706",
+        "realisedPnlEv": 0,
+        "unRealisedPnlRv": "-0.086133438",
+        "cumRealisedPnlEv": 0,
+        "term": 1,
+        "lastTermEndTimeNs": 0,
+        "lastFundingTimeNs": 0,
+        "curTermRealisedPnlRv": "-0.0059706",
+        "execSeq": 2260172450,
+        "posSide": "Long",
+        "posMode": "Hedged"
+      },
+      {
+        "accountID": 42000130003,
+        "symbol": "XEMUSDT",
+        "currency": "USDT",
+        "side": "None",
+        "positionStatus": "Normal",
+        "crossMargin": false,
+        "leverageRr": "-10",
+        "initMarginReqRr": "0.1",
+        "maintMarginReqRr": "0.01",
+        "riskLimitRv": "200000",
+        "sizeRq": "0",
+        "valueRv": "0",
+        "avgEntryPriceRp": "0",
+        "posCostRv": "0",
+        "assignedPosBalanceRv": "0",
+        "bankruptCommRv": "0",
+        "bankruptPriceRp": "0",
+        "positionMarginRv": "0",
+        "liquidationPriceRp": "0",
+        "deleveragePercentileRr": "0",
+        "buyValueToCostRr": "0.10114",
+        "sellValueToCostRr": "0.10126",
+        "markPriceRp": "0.053036917",
+        "markValueEv": 0,
+        "unRealisedPosLossEv": 0,
+        "estimatedOrdLossRv": "0",
+        "usedBalanceRv": "0",
+        "takeProfitEp": 0,
+        "stopLossEp": 0,
+        "cumClosedPnlRv": "0",
+        "cumFundingFeeRv": "0",
+        "cumTransactFeeRv": "0",
+        "realisedPnlEv": 0,
+        "unRealisedPnlRv": "0",
+        "cumRealisedPnlEv": 0,
+        "term": 1,
+        "lastTermEndTimeNs": 0,
+        "lastFundingTimeNs": 0,
+        "curTermRealisedPnlRv": "0",
+        "execSeq": 0,
+        "posSide": "Short",
+        "posMode": "Hedged"
+      }
+    ]
+  }
+}
+Request parameters
+Field	Type	Required	Description
+currency	String	Yes	
+Response Fields
+Field	Type	Description
+leverageRr	Int	when negative, cross margin; when positive, isolated margin
+NOTE: Highly recommend calculating unRealisedPnlRv in client side with latest markPriceRp to avoid ratelimit penalty.
+
+Query risk unit
+Request format
+
+GET /g-accounts/risk-unit
+Response sample
+
+{
+  "code": 0,
+  "msg": "",
+  "data": [
+    {
+      "userId": 11339116,
+      "riskMode": "CrossAsset",
+      "valuationCcy": 3,
+      "symbol": "",
+      "posSide": "",
+      "marginRatioRr": 80.11309869,
+      "totalBalanceRv": 89552.96995523879,
+      "totalEquityRv": 93424.33406986,
+      "estAvailableBalanceRv": 72476.455163092,
+      "totalFreeRv": 0,
+      "totalPosUnpnlRv": 3871.36411462121,
+      "totalPosCostRv": 20947.878906768,
+      "totalPosMMRv": 1166.1555424824,
+      "totalOrdUsedBalanceRv": 0,
+      "totalOrdOpenLossRv": 0,
+      "fixedUsedRv": 0
+    }
+  ]
+}
+Switch Position Mode Synchronously
+Request format
+
+PUT /g-positions/switch-pos-mode-sync?symbol=<symbol>&targetPosMode=<targetPosMode>
+Response sample
+
+{
+  "code": 0,
+  "data": "string",
+  "msg": "string"
+}
+Field	Type	Required	Description	Possible values
+symbol	String	Yes	symbol to switch position mode	
+targetPosMode	String	Yes	the target position mode	OneWay, Hedged
+Set Leverage
+Request format
+
+PUT /g-positions/leverage?leverageRr=<leverage>&longLeverageRr=<longLeverageRr>&shortLeverageRr=<shortLeverageRr>&symbol=<symbol>
+Response sample
+
+{
+  "code": 0,
+  "data": "string",
+  "msg": "string"
+}
+Field	Type	Required	Description
+symbol	String	Yes	symbol to set leverage
+leverageRr	String	-	new leverage value, if leverageRr exists, the position side is merged.
+longLeverageRr	String	-	new long leverage value, if longLeverageRr exists, the position side is hedged.
+both longLeverageRr and shortLeverageRr should exist.
+shortLeverageRr	String	-	new short leverage value, if shortLeverageRr exists, the position side is hedged.
+both longLeverageRr and shortLeverageRr should exist.
+Set RiskLimit
+Risk Limit Modification Notice: For hedged contracts, the 'Set Position Risk Limit API' has been deprecated. It is no longer possible to manually set the 'Risk Limit'. Instead, simply adjust the leverage multiplier as required, and the 'Risk Limit' will be automatically adjusted.
+
+New Risk Limit Configuration Explanation: A new attribute called leverageMargin has been added to the properties of symbol pairs. By locating the corresponding index_id within the leverageMargins node, one can find the associated 'Risk Limit' information. The configuration is as follows:
+
+Configuration
+
+{
+  "index_id": 1,
+  "items": [
+    {
+      "notionalValueRv": 50000,
+      "maxLeverage": 20,
+      "maintenanceMarginRateRr": "0.01",
+      "maintenanceAmountRv": "0"
+    },
+    {
+      "notionalValueRv": 100000,
+      "maxLeverage": 10,
+      "maintenanceMarginRateRr": "0.06",
+      "maintenanceAmountRv": "0"
+    },
+    {
+      "notionalValueRv": 200000,
+      "maxLeverage": 5,
+      "maintenanceMarginRateRr": "0.16",
+      "maintenanceAmountRv": "0"
+    },
+    {
+      "notionalValueRv": 300000,
+      "maxLeverage": 2,
+      "maintenanceMarginRateRr": "0.46",
+      "maintenanceAmountRv": "0"
+    },
+    {
+      "notionalValueRv": 500000,
+      "maxLeverage": 1,
+      "maintenanceMarginRateRr": "0.5",
+      "maintenanceAmountRv": "0"
+    }
+  ]
+}
+For more information, please refer to the link: https://phemex.com/contract/leverage-margin
+
+Assign Position Balance
+Request format
+
+POST /g-positions/assign?posBalanceRv=<posBalanceRv>&posSide=<posSide>&symbol=<symbol>
+Response sample
+
+{
+  "code": 0,
+  "data": "string",
+  "msg": "string"
+}
+Field	Type	Required	Description
+symbol	String	Yes	symbol to assign position balance
+posSide	String	Yes	position side to assign position balance
+posBalanceRv	String	Yes	the position balance value
+Query open orders by symbol
+Order status includes New, PartiallyFilled, Filled, Canceled, Rejected, Triggered, Untriggered;
+Open order status includes New, PartiallyFilled, Untriggered;
+Request format
+
+GET /g-orders/activeList?symbol=<symbol>
+Response sample * Full order
+
+{
+    "code": 0,
+    "msg": "",
+    "data": {
+        "rows": [
+            {
+                "bizError": 0,
+                "orderID": "c2621102-1cc0-4686-b520-9879311bcc26",
+                "clOrdID": "",
+                "symbol": "BTCUSDT",
+                "side": "Sell",
+                "actionTimeNs": 1678163665765381733,
+                "transactTimeNs": 1678163665769528669,
+                "orderType": "Limit",
+                "priceRp": "22490.4",
+                "orderQtyRq": "0.005",
+                "displayQtyRq": "0.005",
+                "timeInForce": "GoodTillCancel",
+                "reduceOnly": false,
+                "closedPnlRv": "0",
+                "closedSizeRq": "0",
+                "cumQtyRq": "0",
+                "cumValueRv": "0",
+                "leavesQtyRq": "0.005",
+                "leavesValueRv": "112.452",
+                "stopDirection": "UNSPECIFIED",
+                "stopPxRp": "0",
+                "trigger": "UNSPECIFIED",
+                "pegOffsetValueRp": "0",
+                "pegOffsetProportionRr": "0",
+                "execStatus": "New",
+                "pegPriceType": "UNSPECIFIED",
+                "ordStatus": "New",
+                "execInst": "CloseOnTrigger",
+                "takeProfitRp": "0",
+                "stopLossRp": "0"
+            }
+        ],
+        "nextPageArg": ""
+    }
+}
+Field	Type	Description	Possible values
+symbol	String	which symbol to query	Trading symbols
+Query closed orders by symbol
+This API is for closed orders. For open orders, please use open order query
+Request format
+
+GET /exchange/order/v2/orderList?symbol=<symbol>&currency=<currency>&ordStatus=<ordStatus>&ordType=<ordType>&start=<start>&end=<end>&offset=<offset>&limit=<limit>&withCount=<withCount>
+Response sample
+
+{
+    "code": 0,
+    "msg": "OK",
+    "data": {
+        "total": 1,
+        "rows": [
+            {
+                "createdAt": 1666179379726,
+                "symbol": "ETHUSDT",
+                "orderQtyRq": "0.78",
+                "side": 1,
+                "priceRp": "1271.9",
+                "execQtyRq": "0.78",
+                "leavesQtyRq": "0",
+                "execPriceRp": "1271.9",
+                "orderValueRv": "992.082",
+                "leavesValueRv": "0",
+                "cumValueRv": "992.082",
+                "stopDirection": 0,
+                "stopPxRp": "0",
+                "trigger": 0,
+                "actionBy": 1,
+                "execFeeRv": "0.0012719",
+                "ordType": 2,
+                "ordStatus": 7,
+                "clOrdId": "2739dc9",
+                "orderId": "2739dc90-41c6-449f-8774-0a62c8d8e320",
+                "execStatus": 6,
+                "bizError": 0,
+                "totalPnlRv": null,
+                "avgTransactPriceRp": null,
+                "orderDetailsVos": null,
+                "tradeType": 1
+            }
+        ]
+    }
+}
+Field	Type	Required	Description	Possible values
+symbol	String	No	which symbol to query	Trading symbols
+currency	String	Yes	which currency to query	
+ordStatus	Integer	No	order status code list filter	New(5), PartiallyFilled(6), Untriggered(1), Filled(7), Canceled(8)
+ordType	Integer	No	order type code list filter	Market (1), Limit (2), Stop (3), StopLimit (4), MarketIfTouched (5), LimitIfTouched (6), ProtectedMarket (7), MarketAsLimit (8), StopAsLimit (9), MarketIfTouchedAsLimit (10), Bracket (11), BoTpLimit (12), BoSlLimit (13), BoSlMarket (14)
+start	Integer	Yes	start time range, Epoch millis，available only from the last 2 month	
+end	Integer	Yes	end time range, Epoch millis	
+offset	Integer	Yes	offset to resultset	
+limit	Integer	Yes	limit of resultset, max 200	
+withCount	boolean	No	if true, result info will contains count info.	true,false
+Response
+
+Field	Type	Description	Possible values
+execStatus	Integer	exec status code	Aborted(2), MakerFill(6), TakerFill(7), Expired(8), Canceled(11), CreateRejected(19)
+tradeType	Integer	trade type code	Trade(1), Funding(4), LiqTrade(6), AdlTrade(7)
+side	Integer	side code	Buy(1), Sell(2)
+orderType	Integer	order type code	Marketranslation missing: en.1, Limitranslation missing: en.2, Stop(3), StopLimitranslation missing: en.4, MarketIfTouched(5), LimitIfTouched(6)
+ordStatus	Integer	order status code	Created(0), Untriggered(1), Deactivated(2), Triggered(3), Rejected(4), New(5), PartiallyFilled(6), Filled(7), Canceled(8)
+actionBy	Integer	action by code	ByUser(1)
+action	Integer	user code	New(1), Cancel(2), Replace(3), CancelAll(4), LiqRequestranslation missing: en.11, SettleFundingFee(13)
+trigger	Integer	trigger code	UNSPECIFIED(0), ByMarkPrice(1), ByLastPrice(3)
+Query closed positions
+Request format
+
+GET /api-data/g-futures/closedPosition?symbol=<symbol>&currency=<currency>
+Response sample
+
+{
+    "code": 0,
+    "msg": "OK",
+    "data": {
+        "total": 2,
+        "rows": [
+            {
+                "symbol": "ETHUSDT",
+                "currency": "USDT",
+                "term": 0,
+                "closedSizeRq": 1,
+                "side": 1,
+                "cumEntryValueRv": None,
+                "closedPnlRv": "-0.2",
+                "exchangeFeeRv": "0.007113",
+                "fundingFeeRv": "0.78",
+                "finished": "0",
+                "openedTimeNs": 1694542394835,
+                "updatedTimeNs": 1694542398837,
+                "openPrice": "5.93900000",
+                "closePrice": 2,
+                "roi": "-0.01008799",
+                "leverage": 6
+            },
+            {
+                "symbol": "ETHUSDT",
+                "currency": "USDT",
+                "term": 0,
+                "closedSizeRq": 20,
+                "side": 1,
+                "cumEntryValueRv": None,
+                "closedPnlRv": "-55",
+                "exchangeFeeRv": "0.7113",
+                "fundingFeeRv": "3.52",
+                "finished": "0",
+                "openedTimeNs": 1693542394835,
+                "updatedTimeNs": 1693542398837,
+                "openPrice": "1998",
+                "closePrice": "1888",
+                "roi": "-0.28799",
+                "leverage": 20
+            }
+        ]
+    }
+}
+Field	Type	Required	Description	Possible values
+symbol	String	No	which symbol to query	Trading symbols
+currency	String	No	which currency to query	USDT...
+offset	Integer	No	offset to resultset	
+limit	Integer	No	limit of resultset, max 200	
+withCount	Boolean	No	if true, result info will contains count info.	true, false
+NOTE:
+1) symbol and currency cannot both be empty.
+2) user trade queries from database and its data is limited for the last 90 days.
+
+Query user trade
+Request format
+
+GET /exchange/order/v2/tradingList?symbol=<symbol>&currency=<currency>&execType=<execType>&offset=<offset>&limit=<limit>&withCount=<withCount>
+Response sample
+
+{
+    "code": 0,
+    "msg": "OK",
+    "data": {
+        "total": 4,
+        "rows": [
+            {
+                "createdAt": 1666226932259,
+                "symbol": "ETHUSDT",
+                "currency": "USDT",
+                "action": 1,
+                "tradeType": 1,
+                "execQtyRq": "0.01",
+                "execPriceRp": "1271.9",
+                "side": 1,
+                "orderQtyRq": "0.78",
+                "priceRp": "1271.9",
+                "execValueRv": "12.719",
+                "feeRateRr": "0.0001",
+                "execFeeRv": "0.0012719",
+                "ordType": 2,
+                "execId": "8718cae",
+                "execStatus": 6,
+                "posSide": 3,
+                "ptFeeRv": 0,
+                "ptPriceRp": 0
+            },
+            {
+                "createdAt": 1666226903754,
+                "symbol": "ETHUSDT",
+                "currency": "USDT",
+                "action": 1,
+                "tradeType": 1,
+                "execQtyRq": "0.07",
+                "execPriceRp": "1271.9",
+                "side": 1,
+                "orderQtyRq": "0.07",
+                "priceRp": "1271.9",
+                "execValueRv": "89.033",
+                "feeRateRr": "0.0001",
+                "execFeeRv": "0.0089033",
+                "ordType": 2,
+                "execId": "8b8a8a0",
+                "execStatus": 6,
+                "posSide": 3,
+                "ptFeeRv": 0,
+                "ptPriceRp": 0
+            }
+        ]
+    }
+}
+Field	Type	Required	Description	Possible values
+symbol	String	No	which symbol to query	Trading symbols
+currency	String	Yes	which currency to query	USDT...
+execType	Integer	No	trade type code list filter	Trade(1),LiqTrade(6),AdlTrade(7)
+offset	Integer	Yes	offset to resultset	
+limit	Integer	Yes	limit of resultset, max 200	
+withCount	Boolean	No	if true, result info will contains count info.	true,false
+NOTE:
+1) symbol and currency cannot both be empty.
+2) user trade queries from database and its data is limited for the last 90 days.
+
+Possible trade types
+TradeTypes	Description
+Trade	Normal trades
+Funding	Funding on positions
+AdlTrade	Auto-delevearage trades
+LiqTrade	Liquidation trades
+Response
+Field	Type	Description	Possible values
+execStatus	Integer	exec status code	Aborted(2), MakerFill(6), TakerFill(7), Expired(8), Canceled(11), CreateRejected(19)
+tradeType	Integer	trade type code	Trade(1),LiqTrade(6),AdlTrade(7)
+side	Integer	side code	Buy(1),Sell(2)
+orderType	Integer	order type code	Market (1),Limit (2),Stop(3),StopLimit (4),MarketIfTouched (5),LimitIfTouched (6)
+ordStatus	Integer	order status code	Created(0),Untriggered(1),Deactivated(2),Triggered(3),Rejected(4),New(5),PartiallyFilled(6),Filled(7),Canceled(8)
+actionBy	Integer	action by code	ByUser(1)
+trigger	Integer	trigger code	UNSPECIFIED(0),ByMarkPrice(1),ByLastPrice(3)
+Query Order Book
+Request format
+
+
+  GET /md/v2/orderbook?symbol=<symbol>
+Response format
+
+  {
+    "error": null,
+    "id": 0,
+    "result": {
+    "orderbook_p": {
+      "asks": [
+        [
+          <priceRp>,
+          <size>
+        ],
+        ...
+        ...
+        ...
+      ],
+      "bids": [
+        [
+          <priceRp>,
+          <size>
+        ],
+        ...
+        ...
+        ...
+      ],
+    ]
+    },
+    "depth": 30,
+    "sequence": <sequence>,
+    "timestamp": <timestamp>,
+    "symbol": "<symbol>",
+    "type": "snapshot"
+      }
+  }
+
+Field	Type	Description	Possible values
+symbol	String	Contract symbol name	Trading symbols
+Field	Type	Description	Possible values
+timestamp	Integer	Timestamp in nanoseconds	
+priceRp	String	Real book level price	
+sizeRq	String	Real book level size	
+sequence	Integer	current message sequence	
+symbol	String	Contract symbol name	Trading symbols
+Sample：
+  GET /md/v2/orderbook?symbol=BTCUSDT
+  {
+      "error": null,
+      "id": 0,
+      "result": {
+          "depth": 30,
+          "orderbook_p": {
+              "asks": [
+                  [
+                      "20675.7",
+                      "0.736"
+                  ],
+                  [
+                      "20676.2",
+                      "0.613"
+                  ]
+              ],
+              "bids": [
+                  [
+                      "20672.4",
+                      "0.818"
+                  ],
+                  [
+                      "20672.2",
+                      "0.614"
+                  ]
+              ]
+          },
+          "sequence": 77770771,
+          "symbol": "BTCUSDT",
+          "timestamp": 1666860123727907896,
+          "type": "snapshot"
+      }
+  }
+
+Query kline
+NOTE: kline interfaces have rate limits rule, please check the Other group under api groups. Kline under generation beyond the latest interval is not included in the response.
+
+Request format
+
+  GET /exchange/public/md/v2/kline/last?symbol=<symbol>&resolution=<resolution>&limit=<limit>
+Response format
+
+{
+  "code": 0,
+  "msg": "OK",
+  "data": {
+    "total": -1,
+    "rows": [[<timestamp>, <interval>, <last_close>, <open>, <high>, <low>, <close>, <volume>,<turnover>],[...]]
+  }
+}
+Field	Type	Required	Description	Possible values
+symbol	String	Yes	which symbol to query	Trading symbols
+resolution	Integer	Yes	Kline Interval	MINUTE_1(60),MINUTE_5(300),MINUTE_15(900),MINUTE_30(1800),HOUR_1(3600),HOUR_4(14400),DAY_1(86400),WEEK_1(604800),MONTH_1(2592000),SEASON_1(7776000),YEAR_1(31104000)
+limit	Integer	No	records limit	5
+Value of resolutions
+resolution	Description
+60	MINUTE_1
+300	MINUTE_5
+900	MINUTE_15
+1800	MINUTE_30
+3600	HOUR_1
+14400	HOUR_4
+86400	DAY_1
+604800	WEEK_1
+2592000	MONTH_1
+7776000	SEASON_1
+31104000	YEAR_1
+Value of limits
+limit	Description
+5	limit 5
+10	limit 10
+50	limit 50
+100	limit 100
+500	limit 500
+1000	limit 1000
+NOTE: for backward compatibility reason, phemex also provides kline query with from/to, however, this interface is NOT recommended.
+
+GET /exchange/public/md/v2/kline/list?symbol=<symbol>&to=<to>&from=<from>&resolution=<resolution>
+Field	Type	Required	Description	Possible Values
+symbol	String	Yes	symbol name	BTCUSD,ETHUSD,uBTCUSD,cETHUSD,XRPUSD...
+from	Integer	Yes	start time in seconds	value aligned in resolution boundary
+to	Integer	Yes	end time in seconds	value aligned in resolution boundary; Number of k-lines return between [from, to) should be less than 2000
+resolution	Integer	Yes	kline interval	the same as described above
+Query Trade
+Request format GET /md/v2/trade?symbol=<symbol>
+
+Response format
+
+  {
+    "error": null,
+    "id": 0,
+    "result": {
+    "sequence": <sequence>,
+    "symbol": <symbol>,
+    "trades_p": [
+                    [
+                        <timestamp>,
+                        <Side>,
+                        <PriceRp>,
+                        <SizeRq>
+                    ],
+                    [
+                        <timestamp>,
+                        <Side>,
+                        <PriceRp>,
+                        <SizeRq>
+                    ],
+                    ...
+                    ...
+                    ...
+                ],
+    "type": "snapshot"
+    }
+  }
+Field	Type	Description	Possible values
+symbol	String	Contract symbol name	Trading symbols
+Field	Type	Description	Possible values
+timestamp	Integer	Timestamp in nanoseconds	
+Side	String	Trade Side, Buy or Sell	
+priceRp	String	Real trade price	
+sizeRq	String	Real trade size	
+sequence	Integer	current message sequence	
+symbol	String	Contract symbol name	Trading symbols
+Sample:
+  GET /md/v2/trade?symbol=BTCUSDT
+
+  {
+    "error": null,
+    "id": 0,
+    "result": {
+        "sequence": 77766796,
+        "symbol": "BTCUSDT",
+        "trades_p": [
+            [
+                1666860389799499000,
+                "Buy",
+                "20702.1",
+                "0.949"
+            ],
+            [
+                1666860377636154600,
+                "Sell",
+                "20675.5",
+                "0.785"
+            ],
+            ...
+            ...
+            ...
+        ],
+        "type": "snapshot"
+    }
+  }
+Query 24 ticker
+there are two differnent response format for 24 ticker
+
+Request format 1 (v2 will be removed later, v3 is recommended) GET /md/v2/ticker/24hr?symbol=<symbol>
+
+  GET /md/v2/ticker/24hr?symbol=<symbol>
+Response sample
+
+{
+    "error": null,
+    "id": 0,
+    "result": {
+        "closeRp": "1903.16",
+        "fundingRateRr": "0.0001",
+        "highRp": "1932.31",
+        "indexPriceRp": "1903.62867093",
+        "lowRp": "1854.52",
+        "markPriceRp": "1903.16",
+        "openInterestRv": "6880.97",
+        "openRp": "1891.97",
+        "predFundingRateRr": "0.0001",
+        "symbol": "ETHUSDT",
+        "timestamp": 1681349614932856300,
+        "turnoverRv": "127962734.6031",
+        "volumeRq": "67460.4"
+    }
+}
+Field	Type	Required	Description	Possible values
+symbol	String	Yes	which symbol to query	Trading symbols
+  GET /md/v2/ticker/24hr?symbol=BTCUSDT
+Request format 2 (recommended) GET /md/v3/ticker/24hr?symbol=<symbol>
+
+Response sample
+
+{
+    "error": null,
+    "id": 0,
+    "result": {
+        "askRp": "1906.03",
+        "bidRp": "1906",
+        "fundingRateRr": "0.0001",
+        "highRp": "1932.31",
+        "indexRp": "1906.275",
+        "lastRp": "1905.63",
+        "lowRp": "1854.52",
+        "markRp": "1905.733555189",
+        "openInterestRv": "7115",
+        "openRp": "1885.18",
+        "predFundingRateRr": "0.0001",
+        "symbol": "ETHUSDT",
+        "timestamp": 1681350167054888200,
+        "turnoverRv": "128200614.5585",
+        "volumeRq": "67580.6"
+    }
+}
+  GET /md/v3/ticker/24hr?symbol=BTCUSDT
+Query 24 ticker for all symbols
+also there are two differnent response format for 24 ticker with all ticker
+
+you can use path below (v3 is recommended) to get data with array list
+
+  GET /md/v2/ticker/24hr/all
+  GET /md/v3/ticker/24hr/all  
+Query Orders History
+Request format
+
+GET /api-data/g-futures/orders?symbol=<symbol>
+Response sample
+
+[
+    {
+        "actionTimeNs": 1667562110213260743,
+        "bizError": 0,
+        "clOrdId": "cfffa744-712d-867a-e397-9888eec3f6d1",
+        "closedPnlRv": "0",
+        "closedSizeRq": "0",
+        "cumQtyRq": "0.001",
+        "cumValueRv": "20.5795",
+        "displayQtyRq": "0.001",
+        "leavesQtyRq": "0",
+        "leavesValueRv": "0",
+        "orderId": "743fc923-cb01-4261-88d1-b35dba2cdac0",
+        "orderQtyRq": "0.001",
+        "ordStatus": "Filled",
+        "ordType": "Market",
+        "priceRp": "21206.7",
+        "reduceOnly": false,
+        "side": "Buy",
+        "stopDirection": "UNSPECIFIED",
+        "stopLossRp": "0",
+        "symbol": "BTCUSDT",
+        "takeProfitRp": "0",
+        "timeInForce": "ImmediateOrCancel",
+        "transactTimeNs": 1667562110221077395
+    }
+]
+Field	Type	Required	Description	Possible Values
+symbol	String	False	the symbol to query	"BTCUSDT" ...
+symbols	String	False	the symbols to query	"BTCUSDT, LINKUSDT" ...
+currency	String	False	the currency to query	"USDT" ...
+start	Long	False	start time in millisecond	default 2 days ago from the end
+end	Long	False	end time in millisecond	default now
+offset	Integer	False	page start from 0	start from 0, default 0
+limit	Integer	False	page size	default 20, max 200
+NOTE:
+1) symbol and currency cannot both be empty.
+2) When the symbol parameter is present, searching by symbol is prioritised.
+3) If only the currency is provided, it retrieves all symbols under that currency.
+4) Searching for specific symbols under a currency needs both symbols and currency parameter.
+
+Query Orders By Ids
+Request format
+
+GET /api-data/g-futures/orders/by-order-id?symbol=<symbol>
+Response sample
+
+[
+    {
+        "orderId": "743fc923-cb01-4261-88d1-b35dba2cdac0",
+        "clOrdId": "cfffa744-712d-867a-e397-9888eec3f6d1",
+        "symbol": "BTCUSDT",
+        "side": "Buy",
+        "ordType": "Market",
+        "actionTimeNs": 1667562110213260743,
+        "priceRp": "21206.7",
+        "orderQtyRq": "0.001",
+        "displayQtyRq": "0.001",
+        "timeInForce": "ImmediateOrCancel",
+        "reduceOnly": false,
+        "takeProfitRp": "0",
+        "stopLossRp": "0",
+        "closedPnlRv": "0",
+        "closedSizeRq": "0",
+        "cumQtyRq": "0.001",
+        "cumValueRv": "20.5795",
+        "leavesQtyRq": "0",
+        "leavesValueRv": "0",
+        "stopDirection": "UNSPECIFIED",
+        "ordStatus": "Filled",
+        "transactTimeNs": 1667562110221077395,
+        "bizError": 0
+    }
+]
+Field	Type	Required	Description	Possible Values
+symbol	String	True	the currency to query	BTCUSDT ...
+orderID	String	False	order id	orderID and clOrdID can not be both empty. If both IDs are given, it will return list of orders which match both orderID or clOrdID
+clOrdID	String	False	client order id	refer to orderID
+Query Trades History
+Request format
+
+GET /api-data/g-futures/trades?symbol=<symbol>
+Response sample
+
+[
+    {
+        "transactTimeNs": 1669407633926215067,
+        "symbol": "BTCUSDT",
+        "currency": "USDT",
+        "action": "New",
+        "posSide": "Short",
+        "side": "Sell",
+        "tradeType": "Trade",
+        "execQtyRq": "0.001",
+        "execPriceRp": "16600",
+        "orderQtyRq": "0.001",
+        "priceRp": "16600",
+        "execValueRv": "16.6",
+        "feeRateRr": "0.0001",
+        "execFeeRv": "0.00166",
+        "closedSizeRq": "0",
+        "closedPnlRv": "0",
+        "ordType": "LimitIfTouched",
+        "execID": "5c3d96e1-8874-53b6-b6e5-9dcc4d28b4ab",
+        "orderID": "fcdfeafa-ed68-45d4-b2bd-7bc27f2b2b0b",
+        "clOrdID": "",                                
+        "execStatus": "MakerFill",                                                  
+    }
+]
+Field	Type	Required	Description	Possible Values
+symbol	String	False	the symbol to query	"BTCUSDT" ...
+symbols	String	False	the symbols to query	"BTCUSDT, LINKUSDT" ...
+currency	String	False	the currency to query	"USDT" ...
+start	Long	False	start time in millisecond	default 2 days ago from the end
+end	Long	False	end time in millisecond	default now
+offset	Integer	False	page start from 0	start from 0, default 0
+limit	Integer	False	page size	default 20, max 200
+NOTE:
+1) symbol and currency cannot both be empty.
+2) When the symbol parameter is present, searching by symbol is prioritised.
+3) If only the currency is provided, it retrieves all symbols under that currency.
+4) Searching for specific symbols under a currency needs both symbols and currency parameter.
+
+Query funding fee history
+Request format
+
+GET /api-data/g-futures/funding-fees?symbol=<symbol>
+Request parameters
+Parameter	Type	Required	Description	Case
+symbol	String	True	the currency to query	BTCUSDT...
+offset	Integer	False	page starts from 0	default 0
+limit	Integer	False	page size	default 20, max 200
+Response sample
+
+[
+  {
+    "symbol": "ETHUSDT",
+    "currency": "USDT",
+    "execQtyRq": "0.16",
+    "side": "Buy",
+    "execPriceRp": "1322.84500459",
+    "execValueRv": "211.65520073",
+    "fundingRateRr": "0.0001",
+    "feeRateRr": "0.0001",
+    "execFeeRv": "0.02116552",
+    "createTime": 1671004800021
+  }
+]
+Query real funding rates
+Request format
+
+GET contract-biz/public/real-funding-rates?symbol=<symbol>
+Request parameters
+Parameter	Type	Required	Description	Case
+symbol	String	False	the symbol to query	BTCUSDT...,defaultValue 'ALL'
+orderByColumn	String	False	order by column	symbol,fundingInterval,toNextfundingInterval,fundingRate,interestRate,default 'symbol'
+orderBy	String	False	asc or desc	asc,desc,default 'asc'
+pageNum	Integer	False	page number	default 1
+pageSize	Integer	False	page size	default 20
+Response sample
+
+[
+  {
+    "symbol": "BTCUSDT",
+    "fundingInterval": 28800,
+    "toNextfundingInterval": 2519,
+    "nextfundingTime": 1742457600000,
+    "fundingRate": "0.00001369",
+    "interestRate": "0.0001",
+    "fundingRateCap": "0.02",
+    "fundingRateFloor": "-0.02"
+  }
+]
+USDⓈ-M Perpetual Websocket API
+Heartbeat
+Each client is required to actively send heartbeat (ping) message to Phemex data gateway ('DataGW' in short) with interval less than 30 seconds, otherwise DataGW will drop the connection. If a client sends a ping message, DataGW will reply with a pong message.
+Clients can use WS built-in ping message or the application level ping message to DataGW as heartbeat. The heartbeat interval is recommended to be set as 5 seconds, and actively reconnect to DataGW if don't receive messages in 3 heartbeat intervals.
+Request
+
+{
+  "id": 0,
+  "method": "server.ping",
+  "params": []
+}
+Response
+
+{
+  "error": null,
+  "id": 0,
+  "result": "pong"
+}
+API Rate Limits
+Each Client has concurrent connection limit to 5 in maximum.
+Each connection has subscription limit to 20 in maximum.
+Each connection has throttle limit to 20 request/s.
+API User Authentication
+Market trade/orderbook are published publicly without user authentication. While for client private account/position/order data, the client should send user.auth message to Data Gateway to authenticate the session.
+
+Request format
+
+{
+  "method": "user.auth",
+  "params": [
+    "API",
+    "<token>",
+    "<signature>",
+    "<expiry>"
+  ],
+  "id": 1234
+}
+Request sample
+
+{
+  "method": "user.auth",
+  "params": [
+    "API",
+    "806066b0-f02b-4d3e-b444-76ec718e1023",
+    "8c939f7a6e6716ab7c4240384e07c81840dacd371cdcf5051bb6b7084897470e",
+    1570091232
+  ],
+  "id": 1234
+}
+Response sample
+
+{
+  "error": null,
+  "id": 1234,
+  "result": {
+    "status": "success"
+  }
+}
+Field	Type	Description	Possible values
+type	String	Token type	API
+token	String	API Key	
+signature	String	Signature generated by a funtion as HMacSha256(API Key + expiry) with API Secret	
+expiry	Integer	A future time after which request will be rejected, in epoch second. Maximum expiry is request time plus 2 minutes	
+Subscribe OrderBook
+On each successful subscription, DataGW will immediately send the current Order Book snapshot to client and all later order book updates will be published.
+
+Request sample
+
+{
+  "id": 1234,
+  "method": "orderbook_p.subscribe",
+  "params": [
+    "BTCUSDT"
+  ]
+}
+Response sample
+
+{
+  "error": null,
+  "id": 1234,
+  "result": {
+    "status": "success"
+  }
+}
+Subscribe orderBook with Depth
+Subscribe orderbook update messages with depth = and interval = 20ms, depth can only be one of following number: 0, 1, 5, 10, 30. When depth=0, full orderbook will be published to client. The 2nd parameter is either “false” or "true". “false” indicates about 20ms interval of orderbook change, and it is the minimum interval that the market data service publishing orderbook now. The “true” parameter indicates about 120ms interval, aggregation of 20 ms market data service interval + 100 ms WS service interval. On each successful subscription, DataGW will immediately send the current Order Book snapshot to client and all later order book updates will be published.
+
+How to manage local orderbook? 1, After subscribing to the incremental load push (such as books 5 levels) of Order Book Channel, users firstreceive the initial full load of market depth. After the incremental load is subsequently received, update thelocal full load. 2, lf there is the same price, compare the size. lf the size is 0, delete this depth data. lf the size changes replace the original data. (noted that if the price is within depth and the size is unchagned, the level will NOT published by incremental updates) 3, lf it is not same price, sort by price (bid in descending order, ask in ascending order), and insert the depth information into the full load. 4, Sort updated orderbook and keep top 5 levels (noted that the old price levels that falls behind the top 5 levels will not update anymore untill it comes back to top 5 levels).
+
+Request format
+
+{
+  "id": 1234,
+  "method": "orderbook_p.subscribe",
+  "params": [
+     "BTCUSDT",
+     false,
+    "<depth>"
+  ]
+}
+Response sample
+
+{
+  "error": null,
+  "id": 1234,
+  "result": {
+    "status": "success"
+  }
+}
+OrderBook Message:
+DataGW publishes order book message with types: incremental, snapshot. Incremental messages are published with 20ms interval. And snapshot messages are published with 60-second interval for client self-verification.
+
+Response format
+
+{
+  "book": {
+    "asks": [
+      [
+        "<priceEp>",
+        "<qty>"
+      ],
+      "..."
+    ],
+    "bids": [
+      [
+        "<priceEp>",
+        "<qty>"
+      ],
+      "..."
+    ]
+  },
+  "depth": "<depth>",
+  "sequence": "<sequence>",
+  "timestamp": "<timestamp>",
+  "symbol": "<symbol>"
+}
+Sample：
+Response sample
+
+{"depth":30,"orderbook_p":{"asks":[["20702.9","0.718"],["20703.9","0.524"],["20704.9","0"],["20720.8","0"]],"bids":[["20703.1","0"],["20701.3","0"],["20701.2","0"],["20700.5","1.622"],["20473.7","1.074"],["20441.3","0.904"]]},"sequence":77668172,"symbol":"BTCUSDT","timestamp":1666854171201355264,"type":"incremental"}
+{"depth":30,"orderbook_p":{"asks":[],"bids":[["20700.5","0"],["20340.5","0.06"]]},"sequence":77668209,"symbol":"BTCUSDT","timestamp":1666854173705089711,"type":"incremental"}
+Field	Type	Description	Possible values
+side	String	Price level side	bid, ask
+priceEp	String	Raw price	
+qty	String	Price level size	
+sequence	Integer	Latest message sequence	
+depth	Integer	Market depth	30
+type	String	Message type	snapshot, incremental
+Unsubscribe OrderBook
+It unsubscribes all orderbook related subscriptions.
+
+Request format
+
+{
+  "id": <id>,
+  "method": "orderbook_p.unsubscribe",
+  "params": []
+}
+Response format
+
 {
   "error": null,
   "id": <id>,
@@ -3432,344 +4245,1399 @@ ack message
     "status": "success"
   }
 }
-```
+Subscribe Trade
+On each successful subscription, DataGW will send the 200 history trades immediately for the subscribed symbol and all the later trades will be published.
 
-push event
+Request sample
 
-```javascript
 {
-  "tick": {
-    "last": <priceEp>,
-    "scale": <scale>,
-    "symbol": <symbol>
-    "timestamp": <timestamp_nano>
+  "id": 1234,
+  "method": "trade_p.subscribe",
+  "params": [
+    "BTCUSDT"
+  ]
+}
+Response sample
+
+{
+  "error": null,
+  "id": 1234,
+  "result": {
+    "status": "success"
   }
 }
-```
+Trade Message Format：
+DataGW publishes trade message with types: incremental, snapshot. Incremental messages are published with 20ms interval. And snapshot messages are published on connection initial setup for client recovery.
 
-* Sample
+Response format
 
-```javascript
-{"method":"tick.subscribe","params":[".BTC"],"id":1580631267153}
-{"error":null,"id":1580631267153,"result":{"status":"success"}}
-{"tick":{"last":93385362,"scale":4,"symbol":".BTC","timestamp":1580635719408000000}}
-{"tick":{"last":93390304,"scale":4,"symbol":".BTC","timestamp":1580635719821000000}}
-{"tick":{"last":93403484,"scale":4,"symbol":".BTC","timestamp":1580635721424000000}}
-```
-
-## Table of Contents
-
-* [Phemex Public API](#publicapi)
-    * [General Public API Information](#general)
-* [REST API Standards](#restapi)
-    * [HTTP Restful Response](#restresponse)
-        * [HTTP Return Codes](#httpreturncodes)
-        * [HTTP Restful Response Format](#responseformat)
-        * [Restful Response Error Codes](#errorcode)
-    * [HTTP REST Request Header](#httprestheader)
-    * [API Rate Limits](#apiratelimits)
-    * [Endpoint security type](#securitytype)
-        * [Signature Example 1: HTTP GET Request](#signatureexample1)
-        * [Singature Example 2: HTTP GET Request with multiple query string](#signatureexample2)
-        * [Signature Example 3: HTTP POST Request](#signatureexample3)
-    * [Request/Response field explained](#fieldexplained)
-        * [Spot currency and Symbol](#spotCurrencySym)
-        * [Common constants](#commconsts)
-    * [REST API List](#restapilist)
-        * [Market API List](#marketapilist)
-            * [Query Product Information](#queryproductinfo)
-        * [Market Data API List ](#mdapilist)
-            * [Query Order Book](#queryorderbook)
-            * [Query Recent Trades](#querytrades)
-            * [Query 24 Hours Ticker](#query24hrsticker)
-        * [Spot Trading Api List](#spotTradingApi)
-            * [Place Order With PUT method, *Preferred*](#spotPutPlaceOrder)
-            * [Place Order](#spotPlaceOrder)
-            * [Amend Order](#spotAmendOrder)
-            * [Cancel Order](#spotCancelOrder)
-            * [Cancel All Order by Symbol](#spotCancelAll)
-            * [Query Open Order by clOrdID or orderID](#spotQueryOpenOrder)
-            * [List all Open Orders by Symbol](#spotListAllOpenOrder)
-            * [Query Wallets](#spotQueryWallet)
-            * [Query Closed orders, *Deprecated*](#spotQueryClosedOrder)
-            * [Query history trades, *Deprecated*](#spotQueryHistTrade)
-        * [Spot Asset Api List](#spotAssetAPIList)
-            * [Query Deposit address](#depositAddr)
-            * [Query Deposit history](#depositHist)
-            * [Query withdraw history](#withdrawHist)
-        * [Spot Data Api List](#spotDataAPIList)
-            * [Query Funds History](#spotDataFundsHist)
-            * [Query Orders History](#spotDataOrdersHist)
-            * [Query Orders By Ids](#spotDataOrdersByIds)
-            * [Query PNLs](#spotDataPnls)
-            * [Query Trades](#spotDataTradesHist)
-            * [Query Trades By Ids](#spotDataTradesByIds)
-
-* [Websocket API Standards](#wsapi)
-    * [Session Management](#sessionmanagement)
-    * [API Rate Limits](#wsapiratelimits)
-    * [WebSocket API List](#wsapilist)
-        * [Heartbeat](#heartbeat)
-        * [API User Authentication](#apiuserauth)
-        * [Subscribe OrderBook](#booksub)
-        * [Subscribe Full OrderBook](#booksub2)
-        * [Unsubscribe OrderBook](#bookunsub)
-        * [Subscribe Trade](#tradesub)
-        * [Unsubscribe Trade](#tradeunsub)
-        * [Subscribe Kline](#klinesub)
-        * [Unsubscribe Kline](#klinesub)
-        * [Subscribe Wallet-Order](#wosub)
-        * [Unsubscribe Wallet-Order](#wounsub)
-        * [Subscribe 24 Hours Ticker](#tickersub)
-        * [All Spot trading currencies](#currencyinfo)
-        * [All Spot trading products](#productinfo)
-        * [Subscribe Investment Account](#investmentaccount)
-
-<a name="publicapi"/>
-
-# Phemex Public API
-
-<a name="general"/>
-
-## General Public API Information
-
-* Phemex provides HTTP Rest API for client to operate Orders, all endpoints return a JSON object.
-* The default Rest API base endpoint is: **https://api.phemex.com**. The High rate limit Rest API base endpoint
-  is: **https://vapi.phemex.com**. Or for the testnet is:  **https://testnet-api.phemex.com**
-* Phemex provides WebSocket API for client to receive market data, order and position updates.
-* The WebSocket API url is: **wss://phemex.com/ws**. The High rate limit WebSocket API url is: **wss:
-  //vapi.phemex.com/ws**. Or for the testnet is:  **wss://testnet.phemex.com/ws**
-
-<a name="restapi"/>
-
-# REST API Standards
-
-<a name="restresponse"/>
-
-## Restful API Response
-
-<a name="httpreturncodes"/>
-
-### HTTP Return Codes
-
-* HTTP `401` return code is used when unauthenticated
-* HTTP `403` return code is used when lack of priviledge.
-* HTTP `429` return code is used when breaking a request rate limit.
-* HTTP `5XX` return codes are used for Phemex internal errors. Note: This doesn't means the operation failed, the
-  execution status is **UNKNOWN** and could be Succeed.
-
-<a name="responseformat"/>
-
-### Rest Response format
-
-* All restful API except ***starting*** with `/md` shares same response format.
-
-```javascript
 {
-  "code": <code>,
-  "msg": <msg>,
-  "data": <data>
+  "trades": [
+    [
+      <timestamp>,
+      "<side>",
+      "<price>",
+      "<qty>"
+    ],
+    .
+    .
+    .
+  ],
+  "sequence": <sequence>,
+  "symbol": "<symbol>",
+  "type": "<type>"
 }
-```
+Response sample
 
-| Field | Description | 
-|-------|------|
-| code | 0 means `success`, non-zero means `error`|
-| msg  | when code is non-zero, it gives short error description |
-| data | operation dependant |
+{
+    "sequence": 77702250,
+    "symbol": "BTCUSDT",
+    "trades_p": [
+        [
+            1666856076819029800,
+            "Sell",
+            "20700.3",
+            "0.649"
+        ]
+    ],
+    "type": "incremental"
+}
+{
+    "sequence": 77663551,
+    "symbol": "BTCUSDT",
+    "trades_p": [
+        [
+            1666856062351916300,
+            "Sell",
+            "20703.6",
+            "0.669"
+        ],
+        [
+            1666854025545354000,
+            "Buy",
+            "20699",
+            "0.001"
+        ]
+    ],
+    "type": "snapshot"
+}
+Field	Type	Description	Possible values
+timestamp	Integer	Timestamp in nanoseconds for each trade	
+side	String	Execution taker side	bid, ask
+price	String	Raw price	
+qty	String	Execution size	
+sequence	Integer	Latest message sequence	
+symbol	String	Contract symbol name	
+type	String	Message type	snapshot, incremental
+Unsubscribe Trade
+It unsubscribes all trade subscriptions or for a symbol.
 
-<a name="errorcode"/>
+Request format * unsubscribe all trade subsciptions javascript { "id": <id>, "method": "trade_p.unsubscribe", "params": [ ] } Request format * unsubscribe all trade subsciptions for a symbol javascript { "id": <id>, "method": "trade_p.unsubscribe", "params": [ "<symbol>" ] }
 
-### Error codes
+Response sample
 
-[Trading Error Codes](TradingErrorCode.md)
+{
+  "error": null,
+  "id": <id>,
+  "result": {
+    "status": "success"
+  }
+}
+Subscribe Kline
+On each successful subscription, DataGW will send the 1000 history klines immediately for the subscribed symbol and all the later kline update will be published in real-time.
 
-## HTTP REST Request Header
+Request format
 
-Every HTTP Rest Request must have the following Headers:
+{
+  "id": <id>,
+  "method": "kline_p.subscribe",
+  "params": [
+    "<symbol>",
+    "<interval>"
+  ]
+}
+Response format
 
-* x-phemex-access-token : This is ***API-KEY*** (id field) from Phemex site.
-* x-phemex-request-expiry : This describes the Unix ***EPoch SECONDS*** to expire the request, normally it should be (
-  Now() + 1 minute)
-* x-phemex-request-signature : This is HMAC SHA256 signature of the http request. Secret is ***API Secret***, its
-  formula is : HMacSha256( URL Path + QueryString + Expiry + body )
+{
+  "error": null,
+  "id": <id>,
+  "result": {
+    "status": "success"
+  }
+}
+Request sample * subscribe 1-day kline json { "id": 1234, "method": "kline_p.subscribe", "params": [ "BTCUSDT", 86400 ] }
 
-Optional Headers:
+Response sample
 
-* x-phemex-request-tracing: a unique string to trace http-request, less than 40 bytes. This header is a must in
-  resolving latency issues.
+{
+  "error": null,
+  "id": 1234,
+  "result": {
+    "status": "success"
+  }
+}
+Kline Message Format：
+DataGW publishes kline message with types: incremental, snapshot. Incremental messages are published with 20ms interval. And snapshot messages are published on connection initial setup for client recovery.
 
-<a name="apiratelimits"/>
+Response format
 
-## API Rate Limits
+{
+  "kline": [
+    [
+      <timestamp>,
+      "<interval>",
+      <lastClose>,
+      <open>,
+      <high>,
+      <low>,
+      <close>,
+      <volume>,
+      <turnover>,
+    ],
+    .
+    .
+    .
+  ],
+  "sequence": <sequence>,
+  "symbol": "<symbol>",
+  "type": "<type>"
+}
+Response sample
 
-* [Order spamming limitations](https://phemex.com/user-guides/order-spamming-limitations)
-* RateLimit group of contract trading api is ***SPOTORDER***.
-* RateLimit Explained [phemex ratelimite docs](/Generic-API-Info.en.md)
-* Contract trading api response carries following headers.
+{
+    "kline_p": [
+        [
+            1666856340,
+            60,
+            "20689.5",
+            "20686.2",
+            "20695.4",
+            "20686.2",
+            "20691.6",
+            "2.742",
+            "56731.5609"
+        ],
+        [
+            1666856280,
+            60,
+            "20700.1",
+            "20712.7",
+            "20712.7",
+            "20689.1",
+            "20689.5",
+            "4.407",
+            "91208.3065"
+        ]        
+    ],
+    "sequence": 77711279,
+    "symbol": "BTCUSDT",
+    "type": "snapshot"
+}
+{
+    "kline_p": [
+        [
+            1666856520,
+            60,
+            "20685",
+            "20684.8",
+            "20684.8",
+            "20675.2",
+            "20675.2",
+            "3.547",
+            "73353.8417"
+        ]
+    ],
+    "priceScale": 0,
+    "sequence": 77715046,
+    "symbol": "BTCUSDT",
+    "type": "incremental"
+}
+Field	Type	Description	Possible values
+timestamp	Integer	Timestamp in nanoseconds for each trade	
+interval	Integer	Kline interval type	60, 300, 900, 1800, 3600, 14400, 86400, 604800, 2592000, 7776000, 31104000
+lastClose	String	Unscaled last close price	
+open	String	Unscaled open price	
+high	String	Unscaled high price	
+low	String	Unscaled low price	
+close	String	Unscaled close price	
+volume	String	Trade voulme during the current kline interval	
+turnover	String	Unscaled turnover value	
+sequence	Integer	Latest message sequence	
+symbol	String	Contract symbol name	
+type	String	Message type	snapshot, incremental
+Unsubscribe Kline
+It unsubscribes all kline subscriptions or for a symbol.
 
-```
-X-RateLimit-Remaining-SPOTORDER, # Remaining request permits in this minute
-X-RateLimit-Capacity-SPOTORDER, # Request ratelimit capacity
-X-RateLimit-Retry-After-SPOTORDER, # Reset timeout in seconds for current ratelimited user
-```
+Request format * unsubscribe all Kline subscriptions javascript { "id": <id>, "method": "kline_p.unsubscribe", "params": [] } Request format * unsubscribe all Kline subscriptions of a symbol javascript { "id": <id>, "method": "kline_p.unsubscribe", "params": [ "<symbol>" ] }
 
-<a name="securitytype"/>
+Response sample
 
-## Endpoint security type
+{
+  "error": null,
+  "id": <id>,
+  "result": {
+    "status": "success"
+  }
+}
+Subscribe Account-Order-Position (AOP)
+AOP subscription requires the session been authorized successfully. DataGW extracts the user information from the given token and sends AOP messages back to client accordingly. 0 or more latest account snapshot messages will be sent to client immediately on subscription, and incremental messages will be sent for later updates. Each account snapshot contains a trading account information, holding positions, and open / max 100 closed / max 100 filled order event message history.
 
-* Each API call must be signed and pass to server in HTTP header `x-phemex-request-signature`.
-* Endpoints use `HMAC SHA256` signatures. The `HMAC SHA256 signature` is a keyed `HMAC SHA256` operation. Use
-  your `apiSecret` as the key and the string `URL Path + QueryString + Expiry + body )` as the value for the HMAC
-  operation.
-* `apiSecret` = `Base64::urlDecode(API Secret)`
-* The `signature` is **case sensitive**.
+Request format
 
-<a name="signatureexample1"/>
+{
+  "id": <id>,
+  "method": "aop_p.subscribe",
+  "params": []
+}
+Response format
 
-### Signature Example 1: HTTP GET Request
+{
+  "error": null,
+  "id": <id>,
+  "result": {
+    "status": "success"
+  }
+}
+Request sample
 
-* API REST Request URL: https://api.phemex.com/spot/wallets?currency=BTC
-    * Request Path: /spot/wallets
-    * Request Query: currency=BTC
-    * Request Body: <null>
-    * Request Expiry: 1587552406
-    * Signature: HMacSha256( /spot/wallets + currency=BTC + 1587552406 )
+{
+  "id": 1234,
+  "method": "aop_p.subscribe",
+  "params": []
+}
+Response sample
 
-<a name="signatureexample2"/>
+{
+  "error": null,
+  "id": 1234,
+  "result": {
+    "status": "success"
+  }
+}
+Account-Order-Position (AOP) Message Sample:
+Message sample: snapshot
 
-### Singature Example 2: HTTP GET Request with multiple query string
 
-* API REST Request
-  URL: https://api.phemex.com/spot/orders/active?symbol=sBTCUSDT&orderID=bc2b8ff1-a73b-4673-aa5b-fda632285fcc
-    * Request Path: /spot/orders/active
-    * Request Query: symbol=sBTCUSDT&orderID=bc2b8ff1-a73b-4673-aa5b-fda632285fcc
-    * Request Body: <null>
-    * Request Expire: 1587552407
-    * Signature: HMacSha256(/spot/orders/active + symbol=sBTCUSDT&orderID=bc2b8ff1-a73b-4673-aa5b-fda632285fcc +
-      1587552407)
-    * signed string is `/spot/orders/activesymbol=sBTCUSDT&orderID=bc2b8ff1-a73b-4673-aa5b-fda632285fcc1587552407`
+{
+  "index_market24h": {
+    "highEp": 10009,
+    "lastEp": 10007,
+    "lowEp": 10004,
+    "openEp": 10004,
+    "symbol": ".USDT"
+  },
+  "timestamp": 1681496204104375396}
+{
+  "accounts_p":[
+    {
+      "accountBalanceRv":"1508.452588802237",
+      "accountID":9328670003,
+      "bonusBalanceRv":"0",
+      "currency":"USDT",
+      "totalUsedBalanceRv":"343.132599666883",
+      "userID":932867
+    }
+  ],
+  "orders_p":[
+    {
+      "accountID":9328670003,
+      "action":"New",
+      "actionBy":"ByUser",
+      "actionTimeNs":1666858780876924611,
+      "addedSeq":77751555,
+      "apRp":"0",
+      "bonusChangedAmountRv":"0",
+      "bpRp":"0",
+      "clOrdID":"c0327a7d-9064-62a9-28f6-2db9aaaa04e0",
+      "closedPnlRv":"0",
+      "closedSize":"0",
+      "code":0,
+      "cumFeeRv":"0",
+      "cumQty":"0",
+      "cumValueRv":"0",
+      "curAccBalanceRv":"1508.489893982237",
+      "curAssignedPosBalanceRv":"24.62786650928",
+      "curBonusBalanceRv":"0",
+      "curLeverageRr":"-10",
+      "curPosSide":"Buy",
+      "curPosSize":"0.043",
+      "curPosTerm":1,
+      "curPosValueRv":"894.0689",
+      "curRiskLimitRv":"1000000",
+      "currency":"USDT",
+      "cxlRejReason":0,
+      "displayQty":"0.003",
+      "execFeeRv":"0",
+      "execID":"00000000-0000-0000-0000-000000000000",
+      "execPriceRp":"20723.7",
+      "execQty":"0",
+      "execSeq":77751555,
+      "execStatus":"New",
+      "execValueRv":"0",
+      "feeRateRr":"0",
+      "leavesQty":"0.003",
+      "leavesValueRv":"63.4503",
+      "message":"No error",
+      "ordStatus":"New",
+      "ordType":"Market",
+      "orderID":"fa64c6f2-47a4-4929-aab4-b7fa9bbc4323",
+      "orderQty":"0.003",
+      "pegOffsetValueRp":"0",
+      "posSide":"Long",
+      "priceRp":"21150.1",
+      "relatedPosTerm":1,
+      "relatedReqNum":11,
+      "side":"Buy",
+      "slTrigger":"ByMarkPrice",
+      "stopLossRp":"0",
+      "stopPxRp":"0",
+      "symbol":"BTCUSDT",
+      "takeProfitRp":"0",
+      "timeInForce":"ImmediateOrCancel",
+      "tpTrigger":"ByLastPrice",
+      "tradeType":"Amend",
+      "transactTimeNs":1666858780881545305,
+      "userID":932867
+    }
+  ],
+  "positions_p": [
+    {
+      "accountID": 9328670003,
+      "assignedPosBalanceRv": "0",
+      "avgEntryPriceRp": "0",
+      "bankruptCommRv": "0",
+      "bankruptPriceRp": "0",
+      "buyLeavesQty": "0",
+      "buyLeavesValueRv": "0",
+      "buyValueToCostRr": "0.10114",
+      "createdAtNs": 0,
+      "crossSharedBalanceRv": "266.079483950342",
+      "cumClosedPnlRv": "-0.8092",
+      "cumFundingFeeRv": "0.013573252307",
+      "cumPtFeeRv": "0",
+      "cumTransactFeeRv": "0.27247008",
+      "curTermRealisedPnlRv": "-0.11368032",
+      "currency": "USDT",
+      "dataVer": 40,
+      "deleveragePercentileRr": "0",
+      "displayLeverageRr": "-10",
+      "estimatedOrdLossRv": "0",
+      "execSeq": 7659244869,
+      "freeCostRv": "0",
+      "freeQty": "0",
+      "initMarginReqRr": "0.1",
+      "lastFundingTime": 1699833600000000000,
+      "lastTermEndTime": 1699545458473086582,
+      "leverageRr": "-10",
+      "liquidationPriceRp": "0",
+      "maintMarginReqRr": "0.005",
+      "makerFeeRateRr": "0.0001",
+      "markPriceRp": "37214.088278684",
+      "minPosCostRv": "0",
+      "orderCostRv": "0",
+      "posCostRv": "0",
+      "posMode": "OneWay",
+      "posSide": "Long",
+      "positionMarginRv": "0",
+      "positionStatus": "Normal",
+      "riskLimitRv": "2000000",
+      "sellLeavesQty": "0",
+      "sellLeavesValueRv": "0",
+      "sellValueToCostRr": "0.10126",
+      "side": "None",
+      "size": "0",
+      "symbol": "BTCUSDT",
+      "takerFeeRateRr": "0.0006",
+      "term": 7,
+      "transactTimeNs": 1699833600004313941,
+      "unrealisedPnlRv": "0",
+      "updatedAtNs": 0,
+      "usedBalanceRv": "0",
+      "userID": 932867,
+      "valueRv": "0"
+    }
+  ],
+  "sequence": 59553602,
+  "timestamp": 1701414172164093977,
+  "type": "snapshot",
+  "version": 0
+}
 
-<a name="signatureexample3"/>
+> Message sample: incremental
 
-### Signature Example 3: HTTP POST Request
+```json
 
-* API REST Request URL: https://api.phemex.com/spot/orders
-    * Request Path: /spot/orders
-    * Request Query: <null>
-    * Request Body:
-   ```json
-   {"symbol":"sBTCUSDT","clOrdID":"ece0187f-7e02-44b5-a778-404125f124fa","side":"Buy","qtyType":"ByBase","quoteQtyEv":"0","baseQtyEv":"100000","priceEp":"700000000","stopPxEp":"0","execInst":"","ordType":"Limit","timeInForce":"","text":""}
-   ```
-    * Request Expiry: 1587552407
-    * signed string is
-   ```
-    /spot/orders1587552407{"symbol":"sBTCUSDT","clOrdID":"ece0187f-7e02-44b5-a778-404125f124fa","side":"Buy","qtyType":"ByBase","quoteQtyEv":"0","baseQtyEv":"100000","priceEp":"700000000","stopPxEp":"0","execInst":"","ordType":"Limit","timeInForce":"","text":""}
-   ```
+{
+  "accounts_p": [
+    {
+      "accountBalanceRv": "512.097102123158",
+      "accountID": 9328670003,
+      "bonusBalanceRv": "197.754035960875",
+      "currency": "USDT",
+      "status": 0,
+      "totalUsedBalanceRv": "0.0074407494",
+      "tradeLevel": 0,
+      "userID": 932867
+    }
+  ],
+  "orders_p": [
+    {
+      "accountID": 9328670003,
+       "action": "New",
+       "actionBy": "ByUser",
+       "actionTimeNs": 1701414861467927198,
+       "addedSeq": 7757755866,
+       "bonusChangedAmountRv": "0",
+       "clOrdID": "3811d9a0-96e4-2150-6f9a-686514cbb266",
+       "cl_req_code": 0,
+       "closedPnlRv": "0",
+       "closedSize": "0",
+       "code": 0,
+       "cumFeeRv": "0",
+       "cumPtFeeRv": "0",
+       "cumQty": "0",
+       "cumValueRv": "0",
+       "curAccBalanceRv": "511.465393303158",
+       "curAssignedPosBalanceRv": "2.04508414",
+       "curBonusBalanceRv": "197.760331550875",
+       "curLeverageRr": "-10",
+       "curPosSide": "Buy",
+       "curPosSize": "0.01",
+       "curPosTerm": 3,
+       "curPosValueRv": "20.341",
+       "curRiskLimitRv": "1000000",
+       "currency": "USDT",
+       "cxlRejReason": 0,
+       "displayQty": "0.01",
+       "execFeeRv": "0",
+       "execID": "00000000-0000-0000-0000-000000000000",
+       "execInst": "CloseOnTrigger",
+       "execPriceRp": "0",
+       "execQty": "0",
+       "execSeq": 7757755866,
+       "execStatus": "New",
+       "execValueRv": "0",
+       "feeRateRr": "0",
+       "leavesQty": "0.01",
+       "leavesValueRv": "15.7389",
+       "message": "No error",
+       "ordStatus": "New",
+       "ordType": "Market",
+       "orderID": "2ce8a2ae-fda4-44d0-af70-bca632fd9869",
+       "orderQty": "0.01",
+       "pegOffsetProportionRr": "0",
+       "pegOffsetValueRp": "0",
+       "posSide": "Merged",
+       "priceRp": "1573.89",
+       "ptFeeRv": "0",
+       "ptPriceRp": "0",
+       "relatedPosTerm": 3,
+       "relatedReqNum": 78,
+       "side": "Sell",
+       "slPxRp": "0",
+       "slTimeInForce": "ImmediateOrCancel",
+       "slTrigger": "ByMarkPrice",
+       "stopLossRp": "0",
+       "stopPxRp": "0",
+       "symbol": "ETHUSDT",
+       "takeProfitRp": "0",
+       "timeInForce": "ImmediateOrCancel",
+       "tpPxRp": "0",
+       "tpTimeInForce": "ImmediateOrCancel",
+       "tpTrigger": "ByLastPrice",
+       "transactTimeNs": 1701414861472716784,
+       "userID": 932867
+    }
+  ],
+  "positions_p": [
+    {
+      "accountID": 9328670003,
+      "assignedPosBalanceRv": "0",
+      "avgEntryPriceRp": "0",
+      "bankruptCommRv": "0",
+      "bankruptPriceRp": "0",
+      "buyLeavesQty": "0",
+      "buyLeavesValueRv": "0",
+      "buyValueToCostRr": "0.10114",
+      "createdAtNs": 0,
+      "crossSharedBalanceRv": "512.089661373758",
+      "cumClosedPnlRv": "1.2114",
+      "cumFundingFeeRv": "0.038701322568",
+      "cumPtFeeRv": "0",
+      "cumTransactFeeRv": "0.0668598",
+      "curTermRealisedPnlRv": "0.613379890738",
+      "currency": "USDT",
+      "dataVer": 78,
+      "deleveragePercentileRr": "0",
+      "displayLeverageRr": "-10",
+      "estimatedOrdLossRv": "0",
+      "execSeq": 7757755866,
+      "freeCostRv": "0",
+      "freeQty": "0",
+      "initMarginReqRr": "0.1",
+      "lastFundingTime": 1701388800000000000,
+      "lastTermEndTime": 1701414861472716784,
+      "leverageRr": "-10",
+      "liquidationPriceRp": "0",
+      "maintMarginReqRr": "0.005",
+      "makerFeeRateRr": "0.0001",
+      "markPriceRp": "2100.851224773",
+      "minPosCostRv": "0",
+      "orderCostRv": "0",
+      "posCostRv": "0",
+      "posMode": "OneWay",
+      "posSide": "Merged",
+      "positionMarginRv": "0",
+      "positionStatus": "Normal",
+      "riskLimitRv": "1000000",
+      "sellLeavesQty": "0",
+      "sellLeavesValueRv": "0",
+      "sellValueToCostRr": "0.10126",
+      "side": "None",
+      "size": "0",
+      "symbol": "ETHUSDT",
+      "takerFeeRateRr": "0.0006",
+      "term": 4,
+      "transactTimeNs": 1701414861472716784,
+      "unrealisedPnlRv": "0",
+      "updatedAtNs": 0,
+      "usedBalanceRv": "0",
+      "userID": 932867,
+      "valueRv": "0"
+    }
+  ],
+  "sequence": 59555555,
+  "timestamp": 1701414861475827540,
+  "type": "incremental",
+  "version": 0
+}
 
-## Request/response field explained
 
-<a name="spotCurrencySym"/>
 
-<a name="spotCurrency"/>
+Field	Type	Description	Possible values
+timestamp	Integer	Transaction timestamp in nanoseconds	
+sequence	Integer	Latest message sequence	
+symbol	String	Contract symbol name	
+type	String	Message type	snapshot, incremental
+Unsubscribe Account-Order-Position (AOP)
+Request format
 
-### Spot Currency and Symbols
+{
+  "id": <id>,
+  "method": "aop_p.unsubscribe",
+  "params": []
+}
+Response format
 
-* Spot Currency and its scale factor
-  See [all spot trading currencies](#currencyinfo) for details.
+{
+  "error": null,
+  "id": <id>,
+  "result": {
+    "status": "success"
+  }
+}
+Subscribe account margin (RAS)
+RiskUnit is the unit of risk evaluation, which contains summary information of positions or assets within its scope. Each user must have at least one main riskMode riskunit, which could be Classic or MultiAsset. Besides the main riskMode, user may have isolated riskMode riskunits.
 
-<a name="spotSymList"/>
+Classic RiskMode This is the main riskMode type. Each type of contract (for example, usdt contract, btc inverse contract, eth inverse contract etc) has its own risk unit in Classic riskMode, with a scope to evaluate the risk summary of all cross positions in a this contract. User in this mode would trade different contracts separately, which means each contract has its own balance, risk evaluation and liquidation process.
+The unique key of such risk unit is:
+{ riskMode : Classic , valuationCurrency : {thisContractSettleCcy} , symbol :{thisContractMajorSymbol}, posSide :0 }
 
-* Spot symbol and its scale factor
+MultiAsset RiskMode: This is another main risk mode type. Each type of contract (for example, usdt contract, btc inverse contract, eth inverse contract etc) has its own risk unit in MultiAsset riskMode, with a scope to evaluate the risk summary of all cross positions in this contract. Although each risk unit in each contract has a separate liquidation process, assets or balance in one contract can be used as collaterals to another contract, thus risk evaluation could be correlated. For example, the margin ratio of the btc contract risk unit can change because part of its balance is used as collateral for usdt contract positions.
+The unique key of such riskunit is:
+{ riskMode : MultiAsset , valuationCurrency : {thisContractSettleCcy} , symbol :{thisContractMajorSymbol}, posSide :0 }
 
-All spot symbols use the same price and ratio scale factors (price scale facor(Ep) = 8, ratio scale factor(Er) = 8).
+Isolated RiskMode: This is not a main risk mode type, so user doesnot necessarily have this riskunits under the main mode. When user has one riskuni tin IsolatedriskMode, it will be related to one isolated position.
+The unique key of such riskunit is:
+{ riskMode : Isolated , valuationCurrency : {isolatedPosSettleCcy} , symbol :{isolatedPosSymbol}, posSide :{isolatedPosSide} }
 
-See [all spot trading products](#productinfo) for details.
+RAS subscription requires the session been authorized successfully. DataGW extracts the user information from the given token and sends RAS messages back to client accordingly. Latest account snapshot messages will be sent to client immediately on subscription, and incremental messages will be sent for later updates. Each account snapshot contains one risk unit for cross margin positions, and each one risk unit for each isolated position. And also one risk wallet for each currency.
 
-<a name="commconsts"/>
+Request format
 
-### Common constants
+{
+    "id": <id>,
+    "method": "ras_p.subscribe",
+    "params": {}
+}
+Response fromat
 
-* order type
+{
+    "error": null,
+    "id": <id>,
+    "result": {
+        "stauts": "success"
+    }
+}
+Sample
 
-| order type | description |
-|-----------|-------------|
-| Limit | -- |
-| Market | -- |
-| Stop | -- |
-| StopLimit | -- |
-| MarketIfTouched | -- |
-| LimitIfTouched | -- |
-| MarketAsLimit | -- |
-| StopAsLimit | -- |
-| MarketIfTouchedAsLimit | -- |
+{
+    "id": 1234,
+    "method": "ras_p.subscribe",
+    "params": {}
+}
 
-* order Status
+{
+    "error": null,
+    "id": 1234,
+    "result": {
+        "stauts": "success"
+    }
+}
+account margin (RAS) Message Sample:
+{
+  "risk_units": [
+    {
+      "lastUpdateTimeNs": "2024-06-07T02:01:51.246394043Z",
+      "marginRatioRr": "999",
+      "posSide": 0,
+      "riskMode": "CrossAsset",
+      "symbol": "",
+      "totalBalanceRv": "1806.82960617341",
+      "totalEquityRv": "1806.82960617341",
+      "userID": 944384,
+      "userStatus": "Normal",
+      "valuationCurrency": "USDT",
+      "version": 111
+    },
+    {
+      "lastUpdateTimeNs": "2024-06-07T02:01:51.246394134Z",
+      "marginRatioRr": "14.28230196",
+      "posSide": 3,
+      "riskMode": "Isolated",
+      "symbol": "BTCUSDT",
+      "totalBalanceRv": "1075.34407386659",
+      "totalEquityRv": "1075.657452068207",
+      "userID": 944384,
+      "userStatus": "Normal",
+      "valuationCurrency": "USDT",
+      "version": 76
+    },
+    {
+      "lastUpdateTimeNs" : 2024-06-07T02:01:51.246394134Z ,
+      "marginRatioRr" :"14.3917512113",
+      "posSide" :3,
+      "riskMode" : Isolated ,
+      "symbol" : BTCUSDT ,
+      "totalBalanceRv" :"1075.34407386659",
+      "totalEquityRv" :"1075.657452068207",
+      "totalPosCostRv" :"1075.34407386659",
+      "totalPosMMRv" :"74.741248391009",
+      "totalPosUnpnlRv" :"0.313378201617",
+      "userID":944384,
+      "userStatus" : Normal ,
+      "userType" : Normal ,
+      "valuationCurrency" : USDT ,
+      "version" :76
+    }
+  ],
+  "risk_wallets": [
+    {
+      "balanceRv": "2882.17368004",
+      "clReqVid": 1,
+      "currency": "USDT",
+      "lastUpdateTimeNs": "2024-06-07T02:01:51.246394235Z",
+      "userID": 944384,
+      "version": 51
+    }
+  ],
+  "sequence": 13144420,
+  "timestamp": 0,
+  "type": "snapshot"
+}
+Field	Type	Description	Possible values
+timestamp	Integer	Transaction timestamp in nanoseconds	
+sequence	Integer	Latest message sequence	
+type	String	Message type	snapshot, incremental
+Fields in RiskUnit
+Field	Type	Description	Possible Values
+riskMode	String	"CrossAsset" for Cross Margin Positions, and "Isolated" for isolated position	CrossAsset, Isolated
+estAvailableBalanceRv	String	estimated available balance for new orders	
+fixedUsedRv	String	margins allocated to fully hedged positions and bankrupt commission	
+lastUpdateTimeNs	Integer	the time in ns the message is generated	
+MarginRatioRr	String	the margin ratio level for the current risk unit	
+posSide	Integer	the position side	Long, Short, Merged
+symbol	String	Contract symbol name	
+totalBalanceRv	String	sum of balanceRv of all risk wallet	
+totalEquityRv	String	total equity excluding debt and interest	
+totalPosCostRv	String	total initial margin of position(s)	
+totalPosMMRv	String	total maintainence margin of position(s)	
+totalPosUnpnlRv	String	sum of unrealised pnl of position(s)	
+userID	Integer	user id	
+userStatus	String	user status	"Unspecified/Normal" for normal, "Banned" for banned, "Liq*" for liquidation
+userType	String	user type	always "Normal" for user
+valuationCurrency	String	settle currency	
+version	Integer	risk unit version	
+Fields of RiskWallet
+Field	Type	Description	Possible values
+balanceRv	String	available balance, including bonus and debt	
+currency	String	wallet currency	
+lastUpdateTimeNs	Integer	the time in ns the message is generated	
+userID	Integer	user id	
+version	Integer	wallet version	
+totalContractDebtRv	String	the outstanding debt of the currency arising from trades	
+totalInterestRv	String	the outstanding interest of the currency	
+Unsubscribe account margin (RAS)
+Request format
 
-| order status | description | 
-|------------|-------------|
-| Untriggered | Conditional order waiting to be triggered |
-| Triggered | Conditional order being triggered|
-| Rejected | Order rejected |
-| New | Order placed in cross engine |
-| PartiallyFilled | Order partially filled |
-| Filled | Order fully filled |
-| Canceled | Order canceled |
+{
+    "id": <id>,
+    "method": "ras_p.unsubscribe",
+    "params": []
+}
+Response format
 
-* TimeInForce
+{
+    "error": null,
+    "id": <id>,
+    "result": {
+        "status": "success"
+    }
+}
+Subscribe 24 Hours Ticker
+On each successful subscription, DataGW will publish 24-hour ticker metrics for all symbols every 1 second.
 
-| timeInForce | description |
-|------------|-------------|
-| GoodTillCancel | -- |
-| PostOnly | -- |
-| ImmediateOrCancel | -- |
-| FillOrKill | -- |
+Request format
 
-* Trigger source
+* Subscribe single symbol
+{
+  "id": <id>,
+  "method": "market24h_p.subscribe",
+  "params": []
+}
 
-| trigger | description |
-|------------|-------------|
-| ByLastPrice | trigger by last price |
+* Subscribe all symbols
+{
+  "id": <id>,
+  "method": "perp_market24h_pack_p.subscribe",
+  "params": []
+}
+Response format
 
-<a name="restapilist"/>
+{
+  "error": null,
+  "id": <id>,
+  "result": {
+    "status": "success"
+  }
+}
+Request sample
 
-## REST API List
+{
+  "method": "perp_market24h_pack_p.subscribe",
+  "params": [],
+  "id": 1234
+}
+Response sample
 
-<a name="marketapilist"/>
+{
+  "error": null,
+  "id": 1234,
+  "result": {
+    "status": "success"
+  }
+}
+Hours Ticker Message Format：
+Response format
 
-### Market API List
+{
+    "data": [
+        [
+            <symbol>,
+            <openRp>,
+            <highRp>,
+            <lowRp>,
+            <lastRp>,
+            <volumeRq>,
+            <turnoverRv>,
+            <openInterestRv>,
+            <indexRp>,
+            <markRp>,
+            <fundingRateRr>,
+            <predFundingRateRr>,
+            <bidRp>,
+            <askRp>
+        ]
+    ],
+    "fields": [
+        "symbol",
+        "openRp",
+        "highRp",
+        "lowRp",
+        "lastRp",
+        "volumeRq",
+        "turnoverRv",
+        "openInterestRv",
+        "indexRp",
+        "markRp",
+        "fundingRateRr",
+        "predFundingRateRr",
+        "bidRp",
+        "askRp"
+    ],
+    "method": "perp_market24h_pack_p.update",
+    "timestamp": 1666862556850547000,
+    "type": "snapshot"
+}
+Response sample
 
-<a name="queryproductinfo"/>
+{
+    "data": [
+        [
+          "ETHUSDT"
+          "2741.72"
+          "2751.79"
+          "2665.64"
+          "2672.37"
+          "17602.76"
+          "47636475.2596"
+          "10136.8942265"
+          "2673.9822165"
+          "2672.68"
+          "0.0001"
+          "0.0001"
+          "2672.91"
+          "2672.92"
+        ],
+        [
+          "BTCUSDT"
+          "64057.2"
+          "64181.9"
+          "62565"
+          "62799.9"
+          "3331.699"
+          "210947547.9712"
+          "1268.8391029"
+          "62831.82728394"
+          "62806.9"
+          "0.0001"
+          "0.0001"
+          "62799.9"
+          "62800"
+        ]
+    ],
+    "fields": [
+        "symbol",
+        "openRp",
+        "highRp",
+        "lowRp",
+        "lastRp",
+        "volumeRq",
+        "turnoverRv",
+        "openInterestRv",
+        "indexRp",
+        "markRp",
+        "fundingRateRr",
+        "predFundingRateRr",
+        "bidRp",
+        "askRp"
+    ],
+    "method": "perp_market24h_pack_p.update",
+    "timestamp": 1666862556850547000,
+    "type": "snapshot"
+}
+Field	Type	Description	Possible values
+symbol	String	Contract symbol name	Trading symbols
+openRp	String	The unscaled open price in last 24 hours	
+highRp	String	The unscaled highest price in last 24 hours	
+lowRp	String	The unscaled lowest price in last 24 hours	
+lastRp	String	The unscaled close price in last 24 hours	
+volumeRq	String	Symbol trade volume in last 24 hours	
+turnoverRv	String	The unscaled turnover value in last 24 hours	
+openInterestRv	String	current open interest	
+indexRp	String	Unscaled index price	
+markRp	String	Unscaled mark price	
+fundingRateRr	String	Unscaled funding rate	
+predFundingRateRr	String	Unscaled predicated funding rate	
+bidRp	String	best bid price	
+askRp	String	best ask price	
 
-#### Query Product Information
+Subscribe tick event for symbol price
+Every trading symbol has a suite of other symbols, each symbol follows same patterns, i.e. index symbol follows a pattern .<BASECURRENCY><QUOTECURRENCY>, mark symbol follows a pattern .M<BASECURRENCY><QUOTECURRENCY>, predicated funding rate's symbol follows a pattern .<BASECURRENCY><QUOTECURRENCY>FR, while funding rate symbol follows a pattern .<BASECURRENCY><QUOTECURRENCY>FR8H
+Price is retrieved by subscribing symbol tick.
+all available symbols (pfr=predicated funding rate)
+symbol	index symbol	mark symbol	pfr symbol	funding rate symbol
+BTCUSDT	.BTCUSDT	.MBTCUSDT	.BTCUSDTFR	.BTCUSDTFR8H
+ETHUSDT	.ETHUSDT	.METHUSDT	.ETHUSDTFR	.ETHUSDTFR8H
+XRPUSDT	.XRPUSDT	.MXRPUSDT	.XRPUSDTFR	.XRPUSDTFR8H
+ADAUSDT	.ADAUSDT	.MADAUSDT	.ADAUSDTFR	.ADAUSDTFR8H
+Request format * The symbol in params can be replace by any symbol. javascript { "method": "tick_p.subscribe", "params": [ <symbol> ], "id": <id> }
 
-* Request：
+Response format
 
-```
+{
+    "error": null,
+        "id": <id>,
+        "result": {
+            "status": "success"
+        }
+}
+push event
+Response format
+
+{
+    "tick": {
+        "last": <price>,
+        "symbol": <symbol>
+        "timestamp": <timestamp_nano>
+    }
+}
+Response sample
+
+{"tick_p":{"last":"20639.38692364","symbol":".BTCUSDT","timestamp":1666863393552000000}}
+{"tick_p":{"last":"20639.15408363","symbol":".BTCUSDT","timestamp":1666863394538132741}}
+Spot REST API
+Endpoint security type
+Each API call must be signed and pass to server in HTTP header x-phemex-request-signature.
+Endpoints use HMAC SHA256 signatures. The HMAC SHA256 signature is a keyed HMAC SHA256 operation. Use your apiSecret as the key and the string URL Path + QueryString + Expiry + body ) as the value for the HMAC operation.
+The signature is case sensitive.
+Query product information
+Request
+
 GET /public/products
-```
+Spot symbols are defined in .products[] with type=Spot.
+Spot currencies are defined in .currencies[].
+Query product information plus
+Request
 
-<a name="mdapilist"/>
+GET /public/products-plus
+Spot symbols are defined in .products[] with type=Spot.
+list time is defined in timeline[1].
+delist time is defined in timeline[3].
+Spot currencies are defined in .currencies[].
+Query server time
+Request
 
-### Market Data API List
+GET /public/time
+return server time
+Response sample
 
-<a name="queryorderbook"/>
+{
+    "code": 0,
+    "msg": "",
+    "data": {
+        "serverTime": 1676172826345
+    }
+} 
+Price/Ratio/Value scales
+Fields with post-fix "Ep", "Er" or "Ev" have been scaled based on symbol setting.
 
-#### Query Order Book
+Fields with post-fix "Ep" are scaled prices, priceScale in products
+Fields with post-fix "Er" are scaled ratios, ratioScale in products
+Fields with post-fix "Ev" are scaled values, valueScale of settleCurrency in products
+NOTE:
+1) ratioScale is always scaled 8.
+2) priceScale follows the valueScale of quote-currency, and must follow quote-ticksize criteria.
+e.g. priceScale of sBTCUSDT follows USDT-valueScale, i.e. 1e8; the scaled price of sBTCUSDT must be multiple times of quoteTickSizeEv=1e6.
+3) qtySale follows the valueScale of base-currency, and must follow base-tickSize criteria.
+e.g. qtyScale of sETHUSDT follows ETH-valueScale, i.e. 1e8; the scaled qty of sETHUSDT must be mulitple times of baseTickSizeEv=10000.
 
-* Request：
+Common order fields
+Order type
+Order type	Description
+Limit	--
+Market	--
+Stop	--
+StopLimit	--
+MarketIfTouched	--
+LimitIfTouched	--
+MarketAsLimit	--
+StopAsLimit	--
+MarketIfTouchedAsLimit	--
+Order status
+Order status	Description
+Untriggered	Conditional order waiting to be triggered
+Triggered	Conditional order being triggered
+Rejected	Order rejected
+New	Order placed in cross engine
+PartiallyFilled	Order partially filled
+Filled	Order fully filled
+Canceled	Order canceled
+TimeInForce
+TimeInForce	Description
+GoodTillCancel	--
+PostOnly	--
+ImmediateOrCancel	--
+FillOrKill	--
+Trigger source
+Trigger	Description
+ByLastPrice	Trigger by last price
+Place order (HTTP PUT, prefered)
+Request format
 
-```
+PUT /spot/orders/create?symbol=<symbol>&trigger=<trigger>&clOrdID=<clOrdID>&priceEp=<priceEp>&baseQtyEv=<baseQtyEv>&quoteQtyEv=<quoteQtyEv>&stopPxEp=<stopPxEp>&text=<text>&side=<side>&qtyType=<qtyType>&ordType=<ordType>&timeInForce=<timeInForce>&execInst=<execInst>
+Response format
+
+{
+  "code": 0,
+  "msg": "",
+  "data": {
+    "orderID": "d1d09454-cabc-4a23-89a7-59d43363f16d",
+    "clOrdID": "309bcd5c-9f6e-4a68-b775-4494542eb5cb",
+    "priceEp": 0,
+    "action": "New",
+    "trigger": "UNSPECIFIED",
+    "pegPriceType": "UNSPECIFIED",
+    "stopDirection": "UNSPECIFIED",
+    "bizError": 0,
+    "symbol": "sBTCUSDT",
+    "side": "Buy",
+    "baseQtyEv": 0,
+    "ordType": "Limit",
+    "timeInForce": "GoodTillCancel",
+    "ordStatus": "Created",
+    "cumFeeEv": 0,
+    "cumBaseQtyEv": 0,
+    "cumQuoteQtyEv": 0,
+    "leavesBaseQtyEv": 0,
+    "leavesQuoteQtyEv": 0,
+    "avgPriceEp": 0,
+    "cumBaseAmountEv": 0,
+    "cumQuoteAmountEv": 0,
+    "quoteQtyEv": 0,
+    "qtyType": "ByBase",
+    "stopPxEp": 0,
+    "pegOffsetValueEp": 0
+  }
+}
+Field	Type	Required	Description	Possible values
+symbol	String	Yes		Spot Symbols
+side	Enum	Yes		Sell, Buy
+qtyType	Enum	Yes	Set order quantity by base or quote currency	ByBase, ByQuote
+quoteQtyEv	Integer	--	Required if qtyType = ByQuote	
+baseQtyEv	Integer	--		Required if qtyType = ByBase
+priceEp	Integer			Scaled price
+stopPxEp	Integer	--	used in conditionalorder	
+trigger	Enum	--	Required in conditional order	ByLastPrice
+timeInForce	Enum	No	Default GoodTillCancel	GoodTillCancel, PostOnly,ImmediateOrCancel,FillOrKill
+ordType	Enum	No	Default to Limit	Market, Limit, Stop, StopLimit, MarketIfTouched, LimitIfTouched
+Place order (HTTP POST)
+Request format
+
+POST /spot/orders
+{
+  "symbol": "sBTCUSDT",
+  "clOrdID": "",
+  "side": "Buy/Sell",
+  "qtyType": "ByBase/ByQuote",
+  "quoteQtyEv": 0,
+  "baseQtyEv": 0,
+  "priceEp": 0,
+  "stopPxEp": 0,
+  "trigger": "UNSPECIFIED",
+  "ordType": "Limit",
+  "timeInForce": "GoodTillCancel"
+}
+Amend order
+Request format
+
+PUT /spot/orders?symbol=<symbol>&orderID=<orderID>&origClOrdID=<origClOrdID>&priceEp=<priceEp>&baseQtyEv=<baseQtyEv>&quoteQtyEv=<quoteQtyEv>&stopPxEp=<stopPxEp> 
+Field	Type	Required	Description
+symbol		Yes	order symbol, cannot be changed
+orderID		-	order id, cannot be changed
+origClOrdID		-	origClOrdID , cannot be changed
+priceEp		-	scaled price
+baseQtyEv		Yes	scaled base-currency quantity
+quoteQtyEv		Yes	scaled quote-currency quantity
+stopPxEp		Yes	used in conditionalorder
+1) orderID and origClOrdID can't both be empty 2) The quantity to be changed must be the same currency as placing order. e.g. If placing order is by baseQtyEv, amending order can be only by baseQtyEv as.
+
+Cancel order
+Request format
+
+DELETE /spot/orders?symbol=<symbol>&orderID=<orderID>
+DELETE /spot/orders?symbol=<symbol>&clOrdID=<clOrdID>
+Cancel all order by symbol
+Request format
+
+DELETE /spot/orders/all?symbol=<symbol>&untriggered=<untriggered>
+Field	Type	Required	Description
+symbol	Enum	Yes	The symbol to cancel
+untriggered	Boolean	No	set false to cancel non-conditiaonal order, true to conditional order
+Query open order by order ID or client order ID
+Request format
+
+GET /spot/orders/active?symbol=<symbol>&orderID=<orderID>
+GET /spot/orders/active?symbol=<symbol>&clOrDID=<clOrdID>
+Query all open orders by symbol
+Request format
+
+GET /spot/orders?symbol=<symbol>
+Query wallets
+Parameter	Type	Required	Description	Case
+currency	String	No	the currency to query	BTC, USDT...
+NOTE: GET /spot/wallets queries the wallets of all currencies
+
+Request format
+
+GET /spot/wallets?currency=<currency>
+Response format
+
+{
+  "code": 0,
+  "msg": "",
+  "data": [
+    {
+      "currency": "BTC",
+      "balanceEv": 0,
+      "lockedTradingBalanceEv": 0,
+      "lockedWithdrawEv": 0,
+      "lastUpdateTimeNs": 0
+    }
+  ]
+}
+Query orders by order ID or client order ID
+Request format
+
+GET /api-data/spots/orders/by-order-id?symbol=<symbol>&oderId=<orderID>&clOrdID=<clOrdID>
+Field	Type	Required	Description	Possible Values
+symbol	String	True	the trade symbol to query	sBTCUSDT ...
+orderID	String	False	Order id	Either orderID or clOrdID is required.
+clOrdID	String	False	Client order id	Refer to orderID
+Response format
+
+[
+  {
+    "avgPriceEp": 0,
+    "avgTransactPriceEp": 0,
+    "baseQtyEv": "string",
+    "createTimeNs": 0,
+    "cumBaseValueEv": 0,
+    "cumFeeEv": 0,
+    "cumQuoteValueEv": 0,
+    "execStatus": "string",
+    "feeCurrency": "string",
+    "leavesBaseQtyEv": 0,
+    "leavesQuoteQtyEv": 0,
+    "ordStatus": "string",
+    "ordType": "string",
+    "orderID": "string",
+    "priceEp": 0,
+    "qtyType": "string",
+    "quoteQtyEv": 0,
+    "side": "string",
+    "stopDirection": "string",
+    "stopPxEp": 0,
+    "symbol": "string",
+    "timeInForce": "string"
+  }
+]
+Query order history
+Request format
+
+GET /api-data/spots/orders?symbol=<symbol>
+Response format
+
+[
+  {
+    "avgPriceEp": 0,
+    "avgTransactPriceEp": 0,
+    "baseQtyEv": "string",
+    "createTimeNs": 0,
+    "cumBaseValueEv": 0,
+    "cumFeeEv": 0,
+    "cumQuoteValueEv": 0,
+    "execStatus": "string",
+    "feeCurrency": "string",
+    "leavesBaseQtyEv": 0,
+    "leavesQuoteQtyEv": 0,
+    "ordStatus": "string",
+    "ordType": "string",
+    "orderID": "string",
+    "priceEp": 0,
+    "qtyType": "string",
+    "quoteQtyEv": 0,
+    "side": "string",
+    "stopDirection": "string",
+    "stopPxEp": 0,
+    "symbol": "string",
+    "timeInForce": "string"
+  }
+]
+Field	Type	Required	Description	Possible Values
+symbol	String	True	The trade symbol to query	sBTCUSDT ...
+start	Integer	False	Start time in millisecond	Default to 2 days before the end time
+end	Integer	False	End time in millisecond	Default to now
+offset	Integer	False	Page start from 0	Start from 0, default 0
+limit	Integer	False	Page size	Default to 20, max 200
+Query trade history
+Request format
+
+GET /api-data/spots/trades?symbol=<symbol>
+Response format
+
+[
+  {
+    "action": "string",
+    "baseCurrency": "string",
+    "baseQtyEv": 0,
+    "clOrdID": "string",
+    "execBaseQtyEv": 0,
+    "execFeeEv": 0,
+    "execId": "string",
+    "execInst": "string",
+    "execPriceEp": 0,
+    "execQuoteQtyEv": 0,
+    "execStatus": "string",
+    "feeCurrency": "string",
+    "feeRateEr": 0,
+    "leavesBaseQtyEv": 0,
+    "leavesQuoteQtyEv": 0,
+    "ordStatus": "string",
+    "ordType": "string",
+    "orderID": "string",
+    "priceEP": 0,
+    "qtyType": "string",
+    "quoteCurrency": "string",
+    "quoteQtyEv": 0,
+    "side": "string",
+    "stopDirection": "string",
+    "stopPxEp": 0,
+    "symbol": "string",
+    "timeInForce": "string",
+    "tradeType": "string",
+    "transactTimeNs": 0
+  }
+]
+Field	Type	Required	Description	Possible Values
+symbol	String	True	The currency to query	sBTCUSDT ...
+start	Integer	False	Start time in millisecond	Default to 2 days before the end time
+end	Integer	False	End time in millisecond	Default to now
+offset	Integer	False	Page start from 0	Start from 0, default 0
+limit	Integer	False	Page size	Default 20, max 200
+Query PnL
+Request format
+
+GET /api-data/spots/pnls
+Response format
+
+[
+  {
+    "collectTime": 0,
+    "cumPnlEv": 0,
+    "dailyPnlEv": 0,
+    "userId": 0
+  }
+]
+Field	Type	Required	Description	Possible Values
+start	Integer	False	Start time in millisecond	Default to 2 days before the end time
+end	Integer	False	End time in millisecond	Default to now
+Query chain information
+Request format
+
+GET /exchange/public/cfg/chain-settings?currency=<currency>
+Query deposit address by currency
+Request format
+
+GET /exchange/wallets/v2/depositAddress?currency=<currency>&chainName=<chainName>
+Response format
+
+{
+  "address": "1Cdxxxxxxxxxxxxxx",
+  "tag": null
+}
+chainName shall be queried from chain information.
+Field	Type	Required	Description	Possible Values
+currency	String	True	the currency to query	BTC,ETH, USDT ...
+chainName	String	True	the chain for this currency	BTC, ETH, EOS
+Query recent deposit history
+Request format
+
+GET /exchange/wallets/depositList?currency=<currency>&offset=<offset>&limit=<limit>
+Response format
+
+{
+  "address": "1xxxxxxxxxxxxxxxxxx",
+  "amountEv": 1000000,
+  "confirmations": 1,
+  "createdAt": 1574685871000,
+  "currency": "BTC",
+  "currencyCode": 1,
+  "status": "Success",
+  "txHash": "9e84xxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "type": "Deposit"
+}
+ Response data is limited to 3 months.
+Field	Type	Required	Description	Possible Values
+currency	String	True	the currency to query	BTC,ETH, ...
+Query recent withdraw history
+Request format
+
+GET /exchange/wallets/withdrawList?currency=<currency>&offset=<offset>&limit=<limit>
+Response format
+
+{
+  "address": "1Lxxxxxxxxxxx",
+  "amountEv": 200000,
+  "currency": "BTC",
+  "currencyCode": 1,
+  "expiredTime": 0,
+  "feeEv": 50000,
+  "rejectReason": null,
+  "status": "Succeed",
+  "txHash": "44exxxxxxxxxxxxxxxxxxxxxx",
+  "withdrawStatus": ""
+}
+ Response data is limited to 3 months.
+Field	Type	Required	Description	Possible Values
+currency	String	True	the currency to query	BTC,ETH, ...
+Query funds history
+Request format
+
+GET /api-data/spots/funds?currency=<currency>
+Response format
+
+{
+  "code": 0,
+  "msg": "OK",
+  "data": {
+    "rows":[{
+      "id": 0,
+      "currency": "string",
+      "execId": "string",
+      "amountEv": 0,
+      "feeEv": 0,
+      "side": "string",
+      "action": "string",
+      "balanceEv": 0,
+      "bizCode": 0,
+      "execSeq": 0,
+      "transactTimeNs": 0,
+      "text": "string",
+      "createTime": 0,
+    }]
+  }
+}
+ Response data is limited to 3 months.
+Field	Type	Required	Description	Possible Values
+Currency	String	True	the currency to query	USDT,TRY,BRZ,USDC, ...
+Query fee rate by quote currency
+Request format
+
+GET /api-data/spots/fee-rate?quoteCurrency=<quoteCurrency>
+Response format
+
+{
+  "symbolFeeRates": [
+    {
+      "takerFeeRateEr": 80000,
+      "makerFeeRateEr": 80000,
+      "symbol": "sETHTRY"
+    }
+  ]
+}
+Field	Type	Required	Description	Possible Values
+currency	String	True	the currency to query	BTC,ETH, USDT ...
+start	Integer	False	start time in millisecond	default 2 days ago from the end
+end	Integer	False	end time in millisecond	default now
+offset	Integer	False	page start from 0	start from 0, default 0
+limit	Integer	False	page size	default 20, max 200
+Query order book
+Request format
+
 GET /md/orderbook?symbol=<symbol>
-```
+Response format
 
-| Field       | Type   | Description                                | Possible values |
-|-------------|--------|--------------------------------------------|--------------|
-| symbol      | String | symbol name                                | [Trading symbols](#productinfo) |
-
-* Response:
-
-```javascript
 {
   "error": null,
   "id": 0,
@@ -3802,23 +5670,17 @@ GET /md/orderbook?symbol=<symbol>
     "type": "snapshot"
   }
 }
-```
+Field	Type	Description	Possible values
+timestamp	Integer	Timestamp in nanoseconds	
+priceEp	Integer	Scaled book level price	
+size	Integer	Scaled book level size	
+sequence	Integer	current message sequence	
+symbol	String	Spot symbol name	
+Request sample
 
-| Field       | Type   | Description                                | Possible values |
-|-------------|--------|--------------------------------------------|--------------|
-| timestamp   | Integer| Timestamp in nanoseconds                   |              |
-| priceEp     | Integer| Scaled book level price                    |              |
-| size        | Integer| Scaled book level size                     |              |
-| sequence    | Integer| current message sequence                   |              |
-| symbol      | String | Spot symbol name                       | [Trading symbols](#productinfo) |
-
-* Sample：
-
-```
 GET /md/orderbook?symbol=sBTCUSDT
-```
+Response sample
 
-```json
 {
   "error": null,
   "id": 0,
@@ -3852,25 +5714,55 @@ GET /md/orderbook?symbol=sBTCUSDT
     "type": "snapshot"
   }
 }
-```
+Query full order book
+Request format
 
-<a name="querytrades"/>
+GET /md/fullbook?symbol=<symbol>
+Request sample
 
-#### Query Recent Trades
+GET /md/orderbook?symbol=sBTCUSDT
+Response sample
 
-* Request：
+{
+  "error": null,
+  "id": 0,
+  "result": {
+    "book": {
+      "asks": [
+        [
+          877050000000,
+          1000000
+        ],
+        [
+          877100000000,
+          200000
+        ]
+      ],
+      "bids": [
+        [
+          877000000000,
+          2000000
+        ],
+        [
+          876950000000,
+          200000
+        ]
+      ]
+    },
+    "depth": 0,
+    "sequence": 455476965,
+    "timestamp": 1583555482434235628,
+    "symbol": "sBTCUSDT",
+    "type": "snapshot"
+  }
+}
+ The depth value is 0 in full book response.
+Query recent trades
+Request format
 
-```
 GET /md/trade?symbol=<symbol>
-```
+Response format
 
-| Field       | Type   | Description                                | Possible values |
-|-------------|--------|--------------------------------------------|--------------|
-| symbol      | String | symbol name                                | [Trading symbols](#productinfo) |
-
-* Response:
-
-```javascript
 {
   "error": null,
   "id": 0,
@@ -3892,24 +5784,18 @@ GET /md/trade?symbol=<symbol>
   }
 }
 
-```
+Field	Type	Description	Possible values
+timestamp	Integer	Timestamp in nanoseconds	
+side	String	Trade side string	Buy, Sell
+priceEp	Integer	Scaled trade price	
+size	Integer	Scaled trade size	
+sequence	Integer	Current message sequence	
+symbol	String	Spot symbol name	
+Request sample
 
-| Field       | Type   | Description                                | Possible values |
-|-------------|--------|--------------------------------------------|--------------|
-| timestamp   | Integer| Timestamp in nanoseconds                   |              |
-| side        | String | Trade side string                          | Buy, Sell    |
-| priceEp     | Integer| Scaled trade price                         |              |
-| size        | Integer| Scaled trade size                          |              |
-| sequence    | Integer| Current message sequence                   |              |
-| symbol      | String | Spot symbol name                       | [Trading symbols](#productinfo) |
-
-* Sample：
-
-```
 GET /md/trade?symbol=sBTCUSDT
-```
+Response sample
 
-```json
 {
   "error": null,
   "id": 0,
@@ -3934,25 +5820,52 @@ GET /md/trade?symbol=sBTCUSDT
   }
 }
 
-```
+Query 24 hours ticker for all symbols
+Request format
 
-<a name="query24hrsticker"/>
+GET /md/spot/ticker/24hr/all
+Response format
 
-#### Query 24 Hours Ticker
+{
+  "error": null,
+  "id": 0,
+  "result": [
+    {
+      "askEp": <ask priceEp>,
+      "bidEp": <bid priceEp>,
+      "highEp": <high priceEp>,
+      "indexEp": <index priceEp>,
+      "lastEp": <last priceEp>,
+      "lowEp": <low priceEp>,
+      "openEp": <open priceEp>,
+      "symbol": <symbol>,
+      "timestamp": <timestamp>,
+      "turnoverEv": <turnoverEv>,
+      "volumeEv": <volumeEv>
+    },
+    ...
+    // other more symbols
+    ...
+  ]
+}
+Field	Type	Description	Possible Value
+open priceEp	Integer	The scaled open price in last 24 hours	
+high priceEp	Integer	The scaled highest price in last 24 hours	
+low priceEp	Integer	The scaled lowest price in last 24 hours	
+index priceEp	Integer	The scaled index price in last 24 hours	
+last priceEp	Integer	The scaled last price	
+bid priceEp	Integer	Scaled bid price	
+ask priceEp	Integer	Scaled ask price	
+timestamp	Integer	Timestamp in nanoseconds	
+symbol	String	symbol name	Spot Symbols
+turnoverEv	Integer	The scaled turnover value in last 24 hours	
+volumeEv	Integer	The scaled trade volume in last 24 hours	
+Query 24 hours ticker
+Request format
 
-* Request：
-
-```
 GET /md/spot/ticker/24hr?symbol=<symbol>
-```
+Response format
 
-| Field       | Type   | Description                                | Possible values |
-|-------------|--------|--------------------------------------------|--------------|
-| symbol      | String | symbol name                                | [Trading symbols](#productinfo) |
-
-* Response:
-
-```javascript
 {
   "error": null,
   "id": 0,
@@ -3963,34 +5876,28 @@ GET /md/spot/ticker/24hr?symbol=<symbol>
     "lastEp": <last priceEp>,
     "bidEp": <bid priceEp>,
     "askEp": <ask priceEp>,
-    "symbol": "<symbol>",
+    "symbol": <symbol>,
     "turnoverEv": <turnoverEv>,
     "volumeEv": <volumeEv>,
     "timestamp": <timestamp>
   }
 }
-```
+Field	Type	Description	Possible values
+open priceEp	Integer	The scaled open price in last 24 hours	
+high priceEp	Integer	The scaled highest price in last 24 hours	
+low priceEp	Integer	The scaled lowest price in last 24 hours	
+last priceEp	Integer	The scaled last price	
+bid priceEp	Integer	Scaled bid price	
+ask priceEp	Integer	Scaled ask price	
+timestamp	Integer	Timestamp in nanoseconds	
+symbol	String	symbol name	Trading symbols
+turnoverEv	Integer	The scaled turnover value in last 24 hours	
+volumeEv	Integer	The scaled trade volume in last 24 hours	
+Request sample
 
-| Field         | Type   | Description                                | Possible values |
-|---------------|--------|--------------------------------------------|--------------|
-| open priceEp  | Integer| The scaled open price in last 24 hours     |              |
-| high priceEp  | Integer| The scaled highest price in last 24 hours  |              |
-| low priceEp   | Integer| The scaled lowest price in last 24 hours   |              |
-| last priceEp  | Integer| The scaled last price                      |              |
-| bid priceEp   | Integer| Scaled bid price                           |              |
-| ask priceEp   | Integer| Scaled ask price                           |              |
-| timestamp     | Integer| Timestamp in nanoseconds                   |              |
-| symbol        | String | symbol name                                | [Trading symbols](#productinfo) |
-| turnoverEv    | Integer| The scaled turnover value in last 24 hours |              |
-| volumeEv      | Integer| The scaled trade volume in last 24 hours   |              |
-
-* Sample：
-
-```
 GET /md/spot/ticker/24hr?symbol=sBTCUSDT
-```
+Response sample
 
-```json
 {
   "error": null,
   "id": 0,
@@ -4007,952 +5914,27 @@ GET /md/spot/ticker/24hr?symbol=sBTCUSDT
     "volumeEv": 11841148100
   }
 }
-```
+Spot Websocket API
+Heartbeat
+Request
 
-<a name="mdapilistv1"/>
-
-### Market Data API List
-
-<a name="queryorderbookv1"/>
-
-#### Query Order Book
-
-* Request：
-
-```
-GET /v1/md/orderbook?symbol=<symbol>
-```
-
-| Field       | Type   | Description                                | Possible values |
-|-------------|--------|--------------------------------------------|--------------|
-| symbol      | String | Spot symbol name                       | [Trading symbols](#productinfo) |
-
-* Response:
-
-```javascript
 {
-  "error": null,
   "id": 0,
-  "result": {
-    "book": {
-      "asks": [
-        [
-          <priceEp>,
-          <size>
-        ],
-        ...
-        ...
-        ...
-      ],
-      "bids": [
-        [
-          <priceEp>,
-          <size>
-        ],
-        ...
-        ...
-        ...
-      ],
-    ]
-    },
-    "depth": 30,
-    "sequence": <sequence>,
-    "symbol": "<symbol>",
-    "timestamp": "<timestamp>",
-    "type": "snapshot"
-  }
-}
-```
-
-| Field       | Type   | Description                                | Possible values |
-|-------------|--------|--------------------------------------------|--------------|
-| timestamp   | Integer| Timestamp in nanoseconds                   |              |
-| priceEp     | Integer| Scaled book level price                    |              |
-| size        | Integer| Scaled book level size                     |              |
-| sequence    | Integer| current message sequence                   |              |
-| symbol      | String | Spot symbol name                       | [Trading symbols](#productinfo) |
-
-* Sample：
-
-```
-GET /v1/md/orderbook?symbol=sBTCUSDT
-```
-
-```json
-{
-  "error": null,
-  "id": 0,
-  "result": {
-    "book": {
-      "asks": [
-        [
-          87705000000,
-          1000000
-        ],
-        [
-          87710000000,
-          200000
-        ]
-      ],
-      "bids": [
-        [
-          877000000000,
-          2000000
-        ],
-        [
-          876950000000,
-          200000
-        ]
-      ]
-    },
-    "depth": 30,
-    "sequence": 455476965,
-    "symbol": "sBTCUSDT",
-    "timestamp": 1583552267253988998,
-    "type": "snapshot"
-  }
-}
-```
-
-<a name="spotTradingApi"/>
-
-### Spot Trading Api List
-
-<a name="spotPutPlaceOrder"/>
-
-* Http Request:
-
-```
-PUT /spot/orders/create?symbol=<symbol>&trigger=<trigger>&clOrdID=<clOrdID>&priceEp=<priceEp>&baseQtyEv=<baseQtyEv>&quoteQtyEv=<quoteQtyEv>&stopPxEp=<stopPxEp>&text=<text>&side=<side>&qtyType=<qtyType>&ordType=<ordType>&timeInForce=<timeInForce>&execInst=<execInst>
-```
-
-| Field       | Type   | Required | Description               | Possible values |
-|----------   |--------|----------|---------------------------|-----------------|
-| symbol      | String | Yes      |                           | [Spot Trading symbols](#spotSymList) |
-| side        | Enum   | Yes      |                           |  Sell, Buy     | 
-| qtyType     | Enum   | Yes      | default ByBase            | ByBase, ByQuote|
-| quoteQtyEv  | Number | --       | Required when qtyType = ByQuote|  |
-| baseQtyEv   | Number | --       |                           | Required when qtyType = ByBase   |
-| priceEp     | Number |          |                           | Scaled price            |
-| stopPxEp    | Number | --       | used in conditional order |   |
-| trigger     | Enum   | --       | Required in conditional order | ByLastPrice |
-| timeInForce    | Enum   | No       | Default GoodTillCancel | GoodTillCancel, PostOnly,ImmediateOrCancel,FillOrKill |
-| ordType    | Enum   | No        | Default to Limit         |Market, Limit, Stop, StopLimit, MarketIfTouched, LimitIfTouched|
-
-* Http Response
-
-```javascript
-{
-  "code": 0,
-  "msg": "",
-  "data": {
-    "orderID": "d1d09454-cabc-4a23-89a7-59d43363f16d",
-    "clOrdID": "309bcd5c-9f6e-4a68-b775-4494542eb5cb",
-    "priceEp": 0,
-    "action": "New",
-    "trigger": "UNSPECIFIED",
-    "pegPriceType": "UNSPECIFIED",
-    "stopDirection": "UNSPECIFIED",
-    "bizError": 0,
-    "symbol": "sBTCUSDT",
-    "side": "Buy",
-    "baseQtyEv": 0,
-    "ordType": "Limit",
-    "timeInForce": "GoodTillCancel",
-    "ordStatus": "Created",
-    "cumFeeEv": 0,
-    "cumBaseQtyEv": 0,
-    "cumQuoteQtyEv": 0,
-    "leavesBaseQtyEv": 0,
-    "leavesQuoteQtyEv": 0,
-    "avgPriceEp": 0,
-    "cumBaseAmountEv": 0,
-    "cumQuoteAmountEv": 0,
-    "quoteQtyEv": 0,
-    "qtyType": "ByBase",
-    "stopPxEp": 0,
-    "pegOffsetValueEp": 0
-  }
-}
-```
-
-<a name="spotPlaceOrder"/>
-
-#### Place order
-
-* Http Request:
-
-```
-POST /spot/orders
-```
-
-```json
-{
-  "symbol": "sBTCUSDT",
-  "clOrdID": "",
-  "side": "Buy/Sell",
-  "qtyType": "ByBase/ByQuote",
-  "quoteQtyEv": 0,
-  "baseQtyEv": 0,
-  "priceEp": 0,
-  "stopPxEp": 0,
-  "trigger": "UNSPECIFIED",
-  "ordType": "Limit",
-  "timeInForce": "GoodTillCancel"
-}
-```
-
-* Fields are the same as [above place-order](#spotPutPlaceOrder)
-
-<a name="spotAmendOrder"/>
-
-#### Amend Order
-
-* Http Request
-
-```
-PUT /spot/orders?symbol=<symbol>&orderID=<orderID>&origClOrdID=<origClOrdID>&clOrdID=<clOrdID>&priceEp=<priceEp>&baseQtyEV=<baseQtyEV>&quoteQtyEv=<quoteQtyEv>&stopPxEp=<stopPxEp> 
-```
-
-* Http Response
-
-    * amended order
-
-<a name="spotCancelOrder"/>
-
-#### Cancel Order
-
-```
-DELETE /spot/orders?symbol=<symbol>&orderID=<orderID>
-DELETE /spot/orders?symbol=<symbol>&clOrdID=<clOrdID>
-```
-
-* Http Response
-    * Canceled order
-
-<a name="spotCancelAll"/>
-
-#### Cancel all order by symbol
-
-```
-DELETE /spot/orders/all?symbol=<symbol>&untriggered=<untriggered>
-```
-
-| Field | Type | Required | Description |
-|---------|--------|-------|-------------|
-| symbol  | Enum   | Yes   | The symbol to cancel |
-| untriggered | Boolean | No | set false to cancel non-conditiaonal order, true to conditional order |
-
-* Http Response
-    * Total orders canceled
-
-<a name="spotQueryOpenOrder"/>
-
-#### Query Open order by clOrdID or orderID
-
-* Http Request
-
-```
-GET /spot/orders/active?symbol=<symbol>&orderID=<orderID>
-GET /spot/orders/active?symbol=<symbol>&clOrDID=<clOrdID>
-```
-
-* Http Response
-
-    * Order object
-
-<a name="spotListAllOpenOrder"/>
-
-#### Query all open orders by symbol
-
-* Http Request
-
-```
-GET /spot/orders?symbol=<symbol>
-```
-
-* Http Response
-    * List of orders
-
-<a name="spotQueryWallet"/>
-
-#### Query wallets
-
-* Query spot wallet by currency
-
-* Http Request
-
-```
-GET /spot/wallets?currency=<currency>
-```
-
-* Http Response
-
-```json
-{
-  "code": 0,
-  "msg": "",
-  "data": [
-    {
-      "currency": "BTC",
-      "balanceEv": 0,
-      "lockedTradingBalanceEv": 0,
-      "lockedWithdrawEv": 0,
-      "lastUpdateTimeNs": 0
-    }
-  ]
-}
-```
-
-<a name="spotQueryClosedOrder"/>
-
-#### Query spot closed orders
-
-    * Query closed orders by symbol
-
-**NOTE:** deprecated, recommend [Query Orders by IDs](#spotDataOrdersByIds)
-
-* Http Request
-
-```
-GET /exchange/spot/order?symbol=<symbol>&ordStatus=<ordStatus1,orderStatus2>ordType=<ordType1,orderType2>&start=<start>&end=<end>&limit=<limit>&offset=<offset>
-```
-
-| Field      | Type | Required | Description |  Possible Values |
-|-----------|------|----------|-------------|------------------|
-| symbol    | String | Yes    | symbol to query | [Trading symbols](#productinfo) |
-| ordStatus | enum   | No     | order status filter |[common constants for order status](#commconsts) |
-| ordType   | enum   | No     | order type filter |[common constants for order type](#commconsts) |
-| start     | integer | No    | Epoch millisecond, start of time range    |  within 3 month        |
-| end       | integer | No    | Epoch millisecond, end of time range      | within 3 months |
-
-* Http Response
-
-    * return a list of spot order model.
-
-```json
-{
-  "code": 0,
-  "msg": "OK",
-  "data": {
-    "total": 2,
-    "rows": [
-      {
-        "orderID": "string",
-        "stopPxEp": 0,
-        "avgPriceEp": 0,
-        "qtyType": "<ByQuote/ByBase>",
-        "leavesBaseQtyEv": 0,
-        "leavesQuoteQtyEv": 0,
-        "baseQtyEv": "0",
-        "feeCurrency": "string",
-        "stopDirection": "UNSPECIFIED",
-        "symbol": "string",
-        "side": "enum",
-        "quoteQtyEv": 0,
-        "priceEp": 0,
-        "ordType": "enum",
-        "timeInForce": "enum",
-        "ordStatus": "enum",
-        "execStatus": "enum",
-        "createTimeNs": 0,
-        "cumFeeEv": 0,
-        "cumBaseValueEv": 0,
-        "cumQuoteValueEv": 0
-      }
-    ]
-  }
-}
-```
-
-* Sample Response
-
-```json
-{
-  "code": 0,
-  "msg": "OK",
-  "data": {
-    "total": 2,
-    "rows": [
-      {
-        "orderID": "b2b7018d-f02f-4c59-b4cf-051b9c2d2e83",
-        "stopPxEp": 0,
-        "avgPriceEp": 970056000000,
-        "qtyType": "ByQuote",
-        "leavesBaseQtyEv": 0,
-        "leavesQuoteQtyEv": 0,
-        "baseQtyEv": "0",
-        "feeCurrency": "1",
-        "stopDirection": "UNSPECIFIED",
-        "symbol": "sBTCUSDT",
-        "side": "Buy",
-        "quoteQtyEv": 1000000000,
-        "priceEp": 970056000000,
-        "ordType": "Limit",
-        "timeInForce": "GoodTillCancel",
-        "ordStatus": "Filled",
-        "execStatus": "MakerFill",
-        "createTimeNs": 1589449348601287000,
-        "cumFeeEv": 0,
-        "cumBaseValueEv": 103000,
-        "cumQuoteValueEv": 999157680
-      }
-    ]
-  }
-}
-```
-
-<a name="spotQueryHistTrade"/>
-
-#### Query spot history trades
-
-* Query spot history trades by symbol
-
-**NOTE:**  Deprecated, recommend [Query Trades](#spotDataTradesHist)
-
-* Http Request
-
-```
-GET /exchange/spot/order/trades?symbol=<symbol>&start=<start>&end=<end>&limit=<limit>&offset=<offset>
-```
-
-| Field | Type | Required | Description | Possible values |
-|-------|------|----------|-------------|-----------------|
-| symbol | string | Yes   | symbol to query | [spot symbol list](#spotSymList) |
-| start | integer | No    | Epoch millisecond, start of time range      |  |
-| end   | integer | No    | Epoch millisecond, end of time range  | | 
-
-* Http Response
-
-```json
-{
-  "code": 0,
-  "msg": "OK",
-  "data": {
-    "total": 1,
-    "rows": [
-      {
-        "qtyType": "ByQuote/ByBase",
-        "transactTimeNs": 0,
-        "clOrdID": "string"
-        "orderID": "string",
-        "symbol": "string",
-        "side": "enum",
-        "priceEP": 0,
-        "baseQtyEv": 0,
-        "quoteQtyEv": 0,
-        "action": "enum",
-        "execStatus": "enum",
-        "ordStatus": "enum",
-        "ordType": "enum",
-        "execInst": "enum",
-        "timeInForce": "enum",
-        "stopDirection": "enum",
-        "tradeType": "enum",
-        "stopPxEp": 0,
-        "execId": "0",
-        "execPriceEp": 0,
-        "execBaseQtyEv": 0,
-        "execQuoteQtyEv": 0,
-        "leavesBaseQtyEv": 0,
-        "leavesQuoteQtyEv": 0,
-        "execFeeEv": 0,
-        "feeRateEr": 0
-      }
-    ]
-  }
-}
-```
-
-* Sample Response
-
-```json
-{
-  "code": 0,
-  "msg": "OK",
-  "data": {
-    "total": 1,
-    "rows": [
-      {
-        "qtyType": "ByQuote",
-        "transactTimeNs": 1589450974800550100,
-        "clOrdID": "8ba59d40-df25-d4b0-14cf-0703f44e9690",
-        "orderID": "b2b7018d-f02f-4c59-b4cf-051b9c2d2e83",
-        "symbol": "sBTCUSDT",
-        "side": "Buy",
-        "priceEP": 970056000000,
-        "baseQtyEv": 0,
-        "quoteQtyEv": 1000000000,
-        "action": "New",
-        "execStatus": "MakerFill",
-        "ordStatus": "Filled",
-        "ordType": "Limit",
-        "execInst": "None",
-        "timeInForce": "GoodTillCancel",
-        "stopDirection": "UNSPECIFIED",
-        "tradeType": "Trade",
-        "stopPxEp": 0,
-        "execId": "c6bd8979-07ba-5946-b07e-f8b65135dbb1",
-        "execPriceEp": 970056000000,
-        "execBaseQtyEv": 103000,
-        "execQuoteQtyEv": 999157680,
-        "leavesBaseQtyEv": 0,
-        "leavesQuoteQtyEv": 0,
-        "execFeeEv": 0,
-        "feeRateEr": 0
-      }
-    ]
-  }
-}
-```
-
-<a name="spotAssetApiList"/>
-
-# Spot Asset API
-
-<a name="depositAddr"/>
-
-#### Query deposit address by currency
-
-* Http Request
-
-```
-GET /exchange/wallets/v2/depositAddress?currency=<currency>&chainName=<chainName>
-```
-
-| Field    | Type   | Required  | Description| Possible Values |
-|----------|--------|-----------|------------|-----------------|
-| currency | String | True      | the currency to query | BTC,ETH, USDT ... |
-| chainName| String | True      | the chain for this currency | BTC, ETH, EOS |
-
-* chainName is provided by below currency settings interface.
-
-```
-GET /exchange/public/cfg/chain-settings?currency=<currency>
-```
-
-* Response
-
-```json
-{
-  "address": "1Cdxxxxxxxxxxxxxx",
-  "tag": null
-}
-```
-
-<a name="depositHist"/>
-
-#### Query recent deposit history within 3 months
-
-* Http Request
-
-```
-GET /exchange/wallets/depositList?currency=<currency>&offset=<offset>&limit=<limit>
-```
-
-| Field    | Type   | Required  | Description| Possible Values |
-|----------|--------|-----------|------------|-----------------|
-| currency | String | True      | the currency to query | BTC,ETH, ... |
-
-* Response
-
-```json
-{
-  "address": "1xxxxxxxxxxxxxxxxxx",
-  "amountEv": 1000000,
-  "confirmations": 1,
-  "createdAt": 1574685871000,
-  "currency": "BTC",
-  "currencyCode": 1,
-  "status": "Success",
-  "txHash": "9e84xxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-  "type": "Deposit"
-}
-```
-
-<a name="withdrawHist"/>
-
-#### Query recent withdraw history within 3 months
-
-* Http Request
-
-```
-GET /exchange/wallets/withdrawList?currency=<currency>&offset=<offset>&limit=<limit>
-```
-
-* Response
-
-```json
-{
-  "address": "1Lxxxxxxxxxxx",
-  "amountEv": 200000,
-  "currency": "BTC",
-  "currencyCode": 1,
-  "expiredTime": 0,
-  "feeEv": 50000,
-  "rejectReason": null,
-  "status": "Succeed",
-  "txHash": "44exxxxxxxxxxxxxxxxxxxxxx",
-  "withdrawStatus": ""
-}
-```
-
-<a name="spotDataApiList"/>
-
-### Spot Data Api List
-
-<a name="spotDataFundsHist"/>
-
-#### Query Funds History
-
-* Http Request
-
-```
-GET /api-data/spots/funds?currency=<currency>
-```
-
-| Field    | Type           | Required | Description               | Possible Values                 |
-|----------|----------------|----------|---------------------------|---------------------------------|
-| currency | String         | True     | the currency to query     | BTC,ETH, USDT ...               |
-| start    | Long           | False    | start time in millisecond | default 2 days ago from the end |
-| end      | Long           | False    | end time in millisecond   | default now                     |
-| offset   | Integer        | False    | page start from 0         | start from 0, default 0         |
-| limit    | Integer        | False    | page size                 | default 20, max 200             |
-
-* Response
-
-```json
-[
-  {
-    "action": "string",
-    "amountEv": 0,
-    "balanceEv": 0,
-    "bizCode": 0,
-    "createTime": 0,
-    "currency": "string",
-    "execId": "string",
-    "execSeq": 0,
-    "feeEv": 0,
-    "id": 0,
-    "side": "string",
-    "text": "string",
-    "transactTimeNs": 0
-  }
-]
-```
-
-<a name="spotDataOrdersHist"/>
-
-#### Query Orders History
-
-* Http Request
-
-```
-GET /api-data/spots/orders?symbol=<symbol>
-```
-
-| Field     | Type    | Required | Description               | Possible Values                 |
-|-----------|---------|----------|---------------------------|---------------------------------|
-| symbol    | String  | True     | the currency to query     | sBTCUSDT ...                    |
-| start     | Long    | False    | start time in millisecond | default 2 days ago from the end |
-| end       | Long    | False    | end time in millisecond   | default now                     |
-| offset    | Integer | False    | page start from 0         | start from 0, default 0         |
-| limit     | Integer | False    | page size                 | default 20, max 200             |
-
-* Response
-
-```json
-[
-  {
-    "avgPriceEp": 0,
-    "avgTransactPriceEp": 0,
-    "baseQtyEv": "string",
-    "createTimeNs": 0,
-    "cumBaseValueEv": 0,
-    "cumFeeEv": 0,
-    "cumQuoteValueEv": 0,
-    "execStatus": "string",
-    "feeCurrency": "string",
-    "leavesBaseQtyEv": 0,
-    "leavesQuoteQtyEv": 0,
-    "ordStatus": "string",
-    "ordType": "string",
-    "orderID": "string",
-    "priceEp": 0,
-    "qtyType": "string",
-    "quoteQtyEv": 0,
-    "side": "string",
-    "stopDirection": "string",
-    "stopPxEp": 0,
-    "symbol": "string",
-    "timeInForce": "string"
-  }
-]
-```
-
-<a name="spotDataOrdersByIds"/>
-
-#### Query Orders By Ids
-
-* Http Request
-
-```
-GET /api-data/spots/orders/by-order-id?symbol=<symbol>&oderId=<orderID>&clOrdID=<clOrdID>
-```
-
-| Field    | Type   | Required | Description           | Possible Values                                                                                                                           |
-|----------|--------|----------|-----------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
-| symbol   | String | True     | the currency to query | sBTCUSDT ...                                                                                                                              |
-| orderID  | String | False    | order id              | orderID and clOrdID can not be both empty. If both IDs are given, it will return orderID if there is any, otherwise will try to find clOrdID |
-| clOrdID  | String | False    | client order id       | refer to orderID                                                                                                                          |
-
-* Response
-
-```json
-[
-  {
-    "avgPriceEp": 0,
-    "avgTransactPriceEp": 0,
-    "baseQtyEv": "string",
-    "createTimeNs": 0,
-    "cumBaseValueEv": 0,
-    "cumFeeEv": 0,
-    "cumQuoteValueEv": 0,
-    "execStatus": "string",
-    "feeCurrency": "string",
-    "leavesBaseQtyEv": 0,
-    "leavesQuoteQtyEv": 0,
-    "ordStatus": "string",
-    "ordType": "string",
-    "orderID": "string",
-    "priceEp": 0,
-    "qtyType": "string",
-    "quoteQtyEv": 0,
-    "side": "string",
-    "stopDirection": "string",
-    "stopPxEp": 0,
-    "symbol": "string",
-    "timeInForce": "string"
-  }
-]
-```
-
-<a name="spotDataPnls"/>
-
-#### Query PNLs
-
-* Http Request
-
-```
-GET /api-data/spots/pnls
-```
-
-| Field    | Type   | Required | Description           | Possible Values                                                                                                                           |
-|----------|--------|----------|-----------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
-| start     | Long    | False    | start time in millisecond | default 2 days ago from the end |
-| end       | Long    | False    | end time in millisecond   | default now                     |
-
-* Response
-
-```json
-[
-  {
-    "collectTime": 0,
-    "cumPnlEv": 0,
-    "dailyPnlEv": 0,
-    "userId": 0
-  }
-]
-```
-
-<a name="spotDataTradesHist"/>
-
-#### Query Trades History
-
-* Http Request
-
-```
-GET /api-data/spots/trades?symbol=<symbol>
-```
-
-| Field     | Type    | Required | Description               | Possible Values                 |
-|-----------|---------|----------|---------------------------|---------------------------------|
-| symbol    | String  | True     | the currency to query     | sBTCUSDT ...                    |
-| start     | Long    | False    | start time in millisecond | default 2 days ago from the end |
-| end       | Long    | False    | end time in millisecond   | default now                     |
-| offset    | Integer | False    | page start from 0         | start from 0, default 0         |
-| limit     | Integer | False    | page size                 | default 20, max 200             |
-
-* Response
-
-```json
-[
-  {
-    "action": "string",
-    "baseCurrency": "string",
-    "baseQtyEv": 0,
-    "clOrdID": "string",
-    "execBaseQtyEv": 0,
-    "execFeeEv": 0,
-    "execId": "string",
-    "execInst": "string",
-    "execPriceEp": 0,
-    "execQuoteQtyEv": 0,
-    "execStatus": "string",
-    "feeCurrency": "string",
-    "feeRateEr": 0,
-    "leavesBaseQtyEv": 0,
-    "leavesQuoteQtyEv": 0,
-    "ordStatus": "string",
-    "ordType": "string",
-    "orderID": "string",
-    "priceEP": 0,
-    "qtyType": "string",
-    "quoteCurrency": "string",
-    "quoteQtyEv": 0,
-    "side": "string",
-    "stopDirection": "string",
-    "stopPxEp": 0,
-    "symbol": "string",
-    "timeInForce": "string",
-    "tradeType": "string",
-    "transactTimeNs": 0
-  }
-]
-```
-
-<a name="spotDataTradesByIds"/>
-
-#### Query Orders By Ids
-
-* Http Request
-
-```
-GET /api-data/spots/trades/by-order-id?symbol=<symbol>&oderId=<orderID>&clOrdID=<clOrdID>
-```
-
-| Field    | Type   | Required | Description           | Possible Values                                                                                                                           |
-|----------|--------|----------|-----------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
-| symbol   | String | True     | the currency to query | sBTCUSDT ...                                                                                                                              |
-| orderID  | String | False    | order id              | orderID and clOrdID can not be both empty. If both IDs are given, it will return orderID if there is any, otherwise will try to find clOrdID |
-| clOrdID  | String | False    | client order id       | refer to orderID                                                                                                                          |
-
-* Response
-
-```json
-[
-  {
-    "action": "string",
-    "baseCurrency": "string",
-    "baseQtyEv": 0,
-    "clOrdID": "string",
-    "execBaseQtyEv": 0,
-    "execFeeEv": 0,
-    "execId": "string",
-    "execInst": "string",
-    "execPriceEp": 0,
-    "execQuoteQtyEv": 0,
-    "execStatus": "string",
-    "feeCurrency": "string",
-    "feeRateEr": 0,
-    "leavesBaseQtyEv": 0,
-    "leavesQuoteQtyEv": 0,
-    "ordStatus": "string",
-    "ordType": "string",
-    "orderID": "string",
-    "priceEP": 0,
-    "qtyType": "string",
-    "quoteCurrency": "string",
-    "quoteQtyEv": 0,
-    "side": "string",
-    "stopDirection": "string",
-    "stopPxEp": 0,
-    "symbol": "string",
-    "timeInForce": "string",
-    "tradeType": "string",
-    "transactTimeNs": 0
-  }
-]
-```
-
-<a name="wsapi"/>
-
-# Websocket API Standards
-
-<a name="sessionmanagement"/>
-
-## Session Management
-
-* Each client is required to actively send heartbeat (ping) message to Phemex data gateway ('DataGW' in short) with
-  interval less than 30 seconds, otherwise DataGW will drop the connection. If a client sends a ping message, DataGW
-  will reply with a pong message.
-* Clients can use WS built-in ping message or the application level ping message to DataGW as heartbeat. The heartbeat
-  interval is recommended to be set as *5 seconds*, and actively reconnect to DataGW if don't receive messages in *3
-  heartbeat intervals*.
-
-<a name="wsapiratelimits"/>
-
-## API Rate Limits
-
-* Each Client has concurrent connection limit to *5* in maximum.
-* Each connection has subscription limit to *20* in maximum.
-* Each connection has throttle limit to *20* request/s.
-
-<a name="wsapilist"/>
-
-## WebSocket API List
-
-<a name="heartbeat"/>
-
-### Heartbeat
-
-* Request：
-
-```javascript
-{
-  "id": <id>,
   "method": "server.ping",
   "params": []
 }
-```
+Response
 
-* Response:
-
-```javascript
 {
   "error": null,
-  "id": <id>,
+  "id": 0,
   "result": "pong"
 }
-```
+Each client is required to actively send heartbeat (ping) message to Phemex data gateway ('DataGW' in short) with interval less than 30 seconds, otherwise DataGW will drop the connection. If a client sends a ping message, DataGW will reply with a pong message.
+Clients can use WS built-in ping message or the application level ping message to DataGW as heartbeat. The heartbeat interval is recommended to be set as 5 seconds, and actively reconnect to DataGW if don't receive messages in 3 heartbeat intervals.
+User authentication
+Request format
 
-* Sample：
-
-```javascript
-> {
-  "id": 1234,
-  "method": "server.ping",
-  "params": []
-}
-
-< {
-  "error": null,
-  "id": 1234,
-  "result": "pong"
-}
-```
-
-<a name="apiuserauth"/>
-
-### API User Authentication
-
-Market trade/orderbook are published publicly without user authentication.
-While for client private account/position/order data, the client should send user.auth message to Data Gateway to
-authenticate the session.
-
-* Request
-
-```javascript
 {
   "method": "user.auth",
   "params": [
@@ -4961,21 +5943,11 @@ authenticate the session.
     "<signature>",
     <expiry>
   ],
-  "id": 1234
+  "id": 0
 }
-```
+Request sample
 
-| Field       | Type   | Description      | Possible values |
-|-------------|--------|------------------|-----------------|
-| type        | String | Token type       | API             |
-| token       | String | API Key     |                 |
-| signature   | String | Signature generated by a funtion as HMacSha256(API Key + expiry) with ***API Secret*** ||
-| expiry      | Integer| A future time after which request will be rejected, in epoch ***second***. Maximum expiry is request time plus 2 minutes ||
-
-* Sample:
-
-```javascript
-> {
+{
   "method": "user.auth",
   "params": [
     "API",
@@ -4983,29 +5955,28 @@ authenticate the session.
     "8c939f7a6e6716ab7c4240384e07c81840dacd371cdcf5051bb6b7084897470e",
     1570091232
   ],
-  "id": 1234
+  "id": 0
 }
 
-< {
+Response sample
+
+{
   "error": null,
-  "id": 1234,
+  "id": 0,
   "result": {
     "status": "success"
   }
 }
-```
+Public channels like trade/orderbook/kline are published publicly without user authentication. While for private channels like account/position/order data, the client should send user.auth message to Data Gateway to authenticate the session.
 
-<a name="booksub"/>
+Field	Type	Description	Possible values
+type	String	Token type	API
+token	String	API Key	
+signature	String	Signature generated by a funtion as HMacSha256(API Key + expiry) with API Secret	
+expiry	Integer	A future time after which request will be rejected, in epoch second. Maximum expiry is request time plus 2 minutes	
+Subscribe orderBook
+Request format
 
-### Subscribe OrderBook
-
-On each successful subscription, DataGW will immediately send the current Order Book snapshot to client and all later
-order book updates will be published.
-Incremental messages are published with **depth=30 and 20ms interval**.
-
-* Request
-
-```javascript
 {
   "id": <id>,
   "method": "orderbook.subscribe",
@@ -5013,51 +5984,22 @@ Incremental messages are published with **depth=30 and 20ms interval**.
     "<symbol>"
   ]
 }
-```
+Subscribe orderbook update messages with depth = 30 and interval = 20ms.
 
-* Response
+On each successful subscription, DataGW will immediately send the current Order Book (with default depth=30) snapshot to client and all later order book updates will be published.
 
-```javascript
+Request sample：
+
 {
-  "error": null,
-  "id": <id>,
-  "result": {
-    "status": "success"
-  }
-}
-```
-
-* Sample：
-
-```javascript
-> {
-  "id": 1234,
+  "id": 0,
   "method": "orderbook.subscribe",
   "params": [
     "sBTCUSDT"
   ]
 }
+Subscribe full orderBook
+Request format
 
-< {
-  "error": null,
-  "id": 1234,
-  "result": {
-    "status": "success"
-  }
-}
-```
-
-<a name="booksub2"/>
-
-### Subscribe Full OrderBook
-
-On each successful subscription, DataGW will immediately send the current Order Book snapshot to client and all later
-order book updates will be published.
-Incremental messages are published with **full depth and 100ms interval**.
-
-* Request
-
-```javascript
 {
   "id": <id>,
   "method": "orderbook.subscribe",
@@ -5066,48 +6008,23 @@ Incremental messages are published with **full depth and 100ms interval**.
     true
   ]
 }
-```
+Subscribe orderbook update messages with full depth and interval = 100ms.
 
-* Response
+On each successful subscription, DataGW will immediately send the current full Order Book snapshot to client and all later order book updates will be published.
 
-```javascript
+Request sample：
+
 {
-  "error": null,
-  "id": <id>,
-  "result": {
-    "status": "success"
-  }
-}
-```
-
-* Sample：
-
-```javascript
-> {
-  "id": 1234,
+  "id": 0,
   "method": "orderbook.subscribe",
   "params": [
     "sBTCUSDT",
     true
   ]
 }
+OrderBook message
+Message format：
 
-< {
-  "error": null,
-  "id": 1234,
-  "result": {
-    "status": "success"
-  }
-}
-```
-
-#### OrderBook Message:
-
-DataGW publishes order book message with types: incremental, snapshot. And snapshot messages are published with 60-second interval for client self-verification.
-
-* Message Format：
-
-```javascript
 {
   "book": {
     "asks": [
@@ -5132,65 +6049,92 @@ DataGW publishes order book message with types: incremental, snapshot. And snaps
   "depth": <depth>,
   "sequence": <sequence>,
   "timestamp": <timestamp>,
-  "symbol": "<symbol>"
-}
-```
+  "symbol": "<symbol>",
 
-| Field       | Type   | Description      | Possible values |
-|-------------|--------|------------------|-----------------|
-| side        | String | Price level side | bid, ask        |
-| priceEp     | Integer| Scaled price     |                 |
-| qty         | Integer| Price level size. Non-zero qty indicates price level insertion or updation, and qty 0 indicates price level deletion. |                 |
-| sequence    | Integer| Latest message sequence |          |
-| depth       | Integer| Market depth     | 30              |
-| type        | String | Message type     | snapshot, incremental |
+DataGW publishes order book message with types: incremental, snapshot. Snapshot messages are published with 60-second interval for client self-verification.
 
-* Sample：
+Field	Type	Description	Possible values
+side	String	Price level side	bid, ask
+priceEp	Integer	Scaled price	
+qty	Integer	Price level size. Non-zero qty indicates price level insertion or updation, and qty 0 indicates price level deletion.	
+sequence	Integer	Latest message sequence	
+depth	Integer	Market depth	30 by default, 0 denotes fullbook
+type	String	Message type	snapshot, incremental
+Message sample: snapshot
 
-```javascript
-< {"book":{"asks":[[892697000000,1781800],[892708000000,7543500],[892718000000,6552500],[892720000000,4714100],[892728000000,8431000],[892735000000,11644800],[892756000000,5909600],[892790000000,9053100],[892798000000,3336400],[892819000000,1689500],[892828000000,1616700],[892855000000,6484000],[892869000000,6873200],[892872000000,1919900],[892875000000,2373200],[892942000000,1875300],[892944000000,3117500],[892962000000,1353500],[892965000000,2589800],[892966000000,11169800],[892973000000,7829700],[892977000000,2697200],[892978000000,2110700],[892985000000,12563700],[892988000000,5374100],[893023000000,3816000],[893031000000,5852700],[893035000000,4990900],[893061000000,3479500],[893083000000,327900]],"bids":[[892376000000,6866500],[892354000000,14209000],[892353000000,5287200],[892348000000,6417800],[892340000000,8074400],[892334000000,3991900],[892303000000,4558000],[892295000000,10154700],[892280000000,16214500],[892277000000,11425300],[892270000000,39156500],[892268000000,13821100],[892260000000,32157500],[892257000000,5466100],[892252000000,11468700],[892241000000,13940300],[892226000000,33832300],[892220000000,3000000],[892171000000,4320400],[892165000000,4454000],[892152000000,5336400],[892144000000,4539200],[892134000000,7472200],[892127000000,5352700],[892087000000,10264400],[892082000000,4908000],[892038000000,1485500],[892031000000,4089200],[892030000000,4895500],[892014000000,3846600]]},"depth":30,"sequence":677996311,"symbol":"sBTCUSDT","timestamp":1590570810187570850,"type":"snapshot"}
-< {"book":{"asks":[[892696000000,1669700],[892697000000,10455500],[892728000000,0],[892735000000,0],[892748000000,1550900],[892790000000,0],[892819000000,19087900],[892860000000,17152500],[892882000000,11546100],[892893000000,10986500],[892973000000,0],[892985000000,0],[893004000000,8306500],[893061000000,0],[893065000000,5446400],[893073000000,0],[893083000000,0],[893073000000,0],[893083000000,0]],"bids":[]},"depth":30,"sequence":677996548,"symbol":"sBTCUSDT","timestamp":1590570810819505422,"type":"incremental"}
-< {"book":{"asks":[],"bids":[[892387000000,4792900],[892354000000,3170700],[892226000000,0],[892187000000,14425000],[892171000000,6366500],[892165000000,0],[892135000000,11511400],[892134000000,0],[892127000000,0],[892090000000,5446000],[892079000000,4687800],[892041000000,8590200],[892030000000,0],[892014000000,0]]},"depth":30,"sequence":677996941,"symbol":"sBTCUSDT","timestamp":1590570811244188841,"type":"incremental"}
-```
-
-<a name="bookunsub"/>
-
-### Unsubscribe OrderBook
-
-It unsubscribes all orderbook related subscriptions.
-
-* Request
-
-```javascript
 {
-  "id": <id>,
+  "book": {
+    "asks": [
+      [
+        892697000000,
+        1781800
+      ],
+      [
+        892708000000,
+        7543500
+      ]
+    ],
+    "bids": [
+      [
+        892376000000,
+        6866500
+      ],
+      [
+        892354000000,
+        14209000
+      ]
+    ]
+  },
+  "depth": 30,
+  "sequence": 677996311,
+  "symbol": "sBTCUSDT",
+  "timestamp": 1590570810187571000,
+  "type": "snapshot"
+}
+Message sample: incremental update
+
+{
+  "book": {
+    "asks": [],
+    "bids": [
+      [
+        892387000000,
+        4792900
+      ],
+      [
+        892226000000,
+        0
+      ]
+    ]
+  },
+  "depth": 30,
+  "sequence": 677996941,
+  "symbol": "sBTCUSDT",
+  "timestamp": 1590570811244189000,
+  "type": "incremental"
+}
+Unsubscribe orderBook
+Request sample
+
+{
+  "id": 0,
   "method": "orderbook.unsubscribe",
   "params": []
 }
-```
+Response sample
 
-* Response:
-
-```javascript
 {
   "error": null,
-  "id": <id>,
+  "id": 0,
   "result": {
     "status": "success"
   }
 }
-```
+It unsubscribes all orderbook related subscriptions.
 
-<a name="tradesub"/>
+Subscribe trade
+Request format
 
-### Subscribe Trade
-
-On each successful subscription, DataGW will send the 200 history trades immediately for the subscribed symbol and all
-the later trades will be published.
-
-* Request
-
-```javascript
 {
   "id": <id>,
   "method": "trade.subscribe",
@@ -5198,46 +6142,20 @@ the later trades will be published.
     "<symbol>"
   ]
 }
-```
+On each successful subscription, DataGW will send the 200 history trades immediately for the subscribed symbol and all the later trades will be published.
 
-* Response:
+Request sample
 
-```javascript
 {
-  "error": null,
-  "id": <id>,
-  "result": {
-    "status": "success"
-  }
-}
-```
-
-* Sample:
-
-```javascript
-> {
-  "id": 1234,
+  "id": 0,
   "method": "trade.subscribe",
   "params": [
     "sBTCUSDT"
   ]
 }
+Trade message
+Message format
 
-< {
-  "error": null,
-  "id": 1234,
-  "result": {
-    "status": "success"
-  }
-}
-```
-
-#### Trade Message Format：
-
-DataGW publishes trade message with types: incremental, snapshot. Incremental messages are published with 20ms interval.
-And snapshot messages are published on connection initial setup for client recovery.
-
-```javascript
 {
   "trades": [
     [
@@ -5254,22 +6172,19 @@ And snapshot messages are published on connection initial setup for client recov
   "symbol": "<symbol>",
   "type": "<type>"
 }
-```
+DataGW publishes trade message with types: incremental, snapshot. Incremental messages are published with 20ms interval. And snapshot messages are published on connection initial setup for client recovery.
 
-| Field       | Type   | Description      | Possible values |
-|-------------|--------|------------------|-----------------|
-| timestamp   | Integer| Timestamp in nanoseconds for each trade ||
-| side        | String | Execution taker side| bid, ask        |
-| priceEp     | Integer| Scaled execution price  |                 |
-| qty         | Integer| Execution size   |                 |
-| sequence    | Integer| Latest message sequence ||
-| symbol      | String | Spot symbol name     ||
-| type        | String | Message type     |snapshot, incremental |
+Field	Type	Description	Possible values
+timestamp	Integer	Timestamp in nanoseconds for each trade	
+side	String	Execution taker side	bid, ask
+priceEp	Integer	Scaled execution price	
+qty	Integer	Execution size	
+sequence	Integer	Latest message sequence	
+symbol	String	Spot symbol name	
+type	String	Message type	snapshot, incremental
+Message sample: snapshot
 
-* Sample
-
-```javascript
-< {
+{
   "sequence": 1167852,
   "symbol": "sBTCUSDT",
   "trades": [
@@ -5300,8 +6215,9 @@ And snapshot messages are published on connection initial setup for client recov
   ],
   "type": "snapshot"
 }
+Message sample: snapshot
 
-< {
+{
   "sequence": 1188273,
   "symbol": "sBTCUSDT",
   "trades": [
@@ -5314,48 +6230,29 @@ And snapshot messages are published on connection initial setup for client recov
   ],
   "type": "incremental"
 }
-```
+Unsubscribe trade
+Request format: unsubscribe all trade subsciptions
 
-<a name="tradeunsub"/>
-
-### Unsubscribe Trade
-
-It unsubscribes all trade subscriptions.
-
-* Request
-
-```javascript
 {
   "id": <id>,
-  "method": "trade.subscribe",
+  "method": "trade.unsubscribe",
+  "params": [
+  ]
+}
+Request format: unsubscribe all trade subsciptions for a symbol
+
+{
+  "id": <id>,
+  "method": "trade.unsubscribe",
   "params": [
     "<symbol>"
   ]
 }
-```
+It unsubscribes all trade subscriptions or for a single symbol.
 
-* Response:
+Subscribe kline
+Request format
 
-```javascript
-{
-  "error": null,
-  "id": <id>,
-  "result": {
-    "status": "success"
-  }
-}
-```
-
-<a name="klinesub"/>
-
-### Subscribe Kline
-
-On each successful subscription, DataGW will send the 1000 history klines immediately for the subscribed symbol and all
-the later kline update will be published in real-time.
-
-* Request
-
-```javascript
 {
   "id": <id>,
   "method": "kline.subscribe",
@@ -5364,48 +6261,21 @@ the later kline update will be published in real-time.
     "<interval>"
   ]
 }
-```
+On each successful subscription, DataGW will send the 1000 history klines immediately for the subscribed symbol and all the later kline update will be published in real-time.
 
-* Response:
+Request sample: subscribe 1-day kline
 
-```javascript
 {
-  "error": null,
-  "id": <id>,
-  "result": {
-    "status": "success"
-  }
-}
-```
-
-* Sample:
-
-```javascript
-# subscribe 1-day kline
-> {
-  "id": 1234,
+  "id": 0,
   "method": "kline.subscribe",
   "params": [
     "sBTCUSDT",
     86400
   ]
 }
+Kline message
+Message format
 
-< {
-  "error": null,
-  "id": 1234,
-  "result": {
-    "status": "success"
-  }
-}
-```
-
-#### Kline Message Format：
-
-DataGW publishes kline message with types: incremental, snapshot. Incremental messages are published with 20ms interval.
-And snapshot messages are published on connection initial setup for client recovery.
-
-```javascript
 {
   "kline": [
     [
@@ -5427,27 +6297,9 @@ And snapshot messages are published on connection initial setup for client recov
   "symbol": "<symbol>",
   "type": "<type>"
 }
-```
+Message sample: snapshot
 
-| Field       | Type   | Description      | Possible values |
-|-------------|--------|------------------|-----------------|
-| timestamp   | Integer| Timestamp in nanoseconds for each trade ||
-| interval    | Integer| Kline interval type      | 60, 300, 900, 1800, 3600, 14400, 86400, 604800, 2592000, 7776000, 31104000 |
-| lastCloseEp | Integer| Scaled last close price  |                 |
-| openEp      | Integer| Scaled open price        |                 |
-| highEp      | Integer| Scaled high price        |                 |
-| lowEp       | Integer| Scaled low price         |                 |
-| closeEp     | Integer| Scaled close price       |                 |
-| volumeEv    | Integer| Scaled trade voulme during the current kline interval ||
-| turnoverEv  | Integer| Scaled turnover value    |                 |
-| sequence    | Integer| Latest message sequence  ||
-| symbol      | String | Contract symbol name     ||
-| type        | String | Message type     |snapshot, incremental |
-
-* Sample
-
-```javascript
-< {
+{
   "kline": [
     [
       1590019200,
@@ -5487,8 +6339,9 @@ And snapshot messages are published on connection initial setup for client recov
   "symbol": "sBTCUSDT",
   "type": "snapshot"
 }
+Message sample: snapshot
 
-< {
+{
   "kline": [
     [
       1590019200,
@@ -5506,25 +6359,31 @@ And snapshot messages are published on connection initial setup for client recov
   "symbol": "sBTCUSDT",
   "type": "incremental"
 }
-```
+DataGW publishes kline message with types: incremental, snapshot. Incremental messages are published with 20ms interval. And snapshot messages are published on connection initial setup for client recovery.
 
-<a name="klineunsub"/>
+Field	Type	Description	Possible values
+timestamp	Integer	Timestamp in nanoseconds for each trade	
+interval	Integer	Kline interval type	60, 300, 900, 1800, 3600, 14400, 86400, 604800, 2592000, 7776000, 31104000
+lastCloseEp	Integer	Scaled last close price	
+openEp	Integer	Scaled open price	
+highEp	Integer	Scaled high price	
+lowEp	Integer	Scaled low price	
+closeEp	Integer	Scaled close price	
+volumeEv	Integer	Scaled trade voulme during the current kline interval	
+turnoverEv	Integer	Scaled turnover value	
+sequence	Integer	Latest message sequence	
+symbol	String	Spot symbol name	
+type	String	Message type	snapshot, incremental
+Unsubscribe kline
+Request format: unsubscribe all kline subscriptions
 
-### Unsubscribe Kline
-
-It unsubscribes all kline subscriptions or for a symbol.
-
-* Request
-
-```javascript
-# unsubscribe all Kline subscriptions
 {
   "id": <id>,
   "method": "kline.unsubscribe",
   "params": []
 }
+Request format: unsubscribe all kline subscriptions of a symbol
 
-# unsubscribe all Kline subscriptions of a symbol
 {
   "id": <id>,
   "method": "kline.unsubscribe",
@@ -5532,166 +6391,245 @@ It unsubscribes all kline subscriptions or for a symbol.
     "<symbol>"
   ]
 }
-```
+It unsubscribes all kline subscriptions or for a single symbol.
 
-* Response:
+Subscribe wallet-order
+Request
 
-```javascript
 {
-  "error": null,
-  "id": <id>,
-  "result": {
-    "status": "success"
-  }
-}
-```
-
-<a name="wosub"/>
-
-### Subscribe Wallet-Order messages
-
-WO subscription requires the session been authorized successfully. DataGW extracts the user information from the given
-token and sends WO messages back to client accordingly. 0 or more latest WO snapshot messages will be sent to client
-immediately on subscription, and incremental messages will be sent for later updates. Each account snapshot contains a
-users' wallets and open / max 100 closed / max 100 filled order event message history.
-
-* Request
-
-```javascript
-{
-  "id": <id>,
-  "method": "wo.subscribe",
-  "params": [
-    "close/fills limits(default 0, means max 100)
-  ]
-}
-```
-
-* Response:
-
-```javascript
-{
-  "error": null,
-  "id": <id>,
-  "result": {
-    "status": "success"
-  }
-}
-```
-
-* Sample
-
-```javascript
-> {
-  "id": 1234,
+  "id": 0,
   "method": "wo.subscribe",
   "params": []
 }
+WO subscription requires the session been authorized successfully. DataGW extracts the user information from the given token and sends WO messages back to client accordingly. 0 or more latest WO snapshot messages will be sent to client immediately on subscription, and incremental messages will be sent for later updates. Each account snapshot contains a users' wallets and open / max 100 closed / max 100 filled order event message history.
 
-< {
-  "error": null,
-  "id": 1234,
-  "result": {
-    "status": "success"
-  }
-}
-```
+Wallet-Order message
+Message format
 
-#### Wallet-Order Message Sample:
-
-```javascript
-{"wallets":[],"orders":[{"userID":60463,...}],"sequence":11450, "timestamp":<timestamp>, "type":"<type>"}
-```
-
-| Field       | Type   | Description      | Possible values |
-|-------------|--------|------------------|-----------------|
-| timestamp   | Integer| Transaction timestamp in nanoseconds | |
-| sequence    | Integer| Latest message sequence |          |
-| type        | String | Message type     | snapshot, incremental |
-
-* Sample:
-
-```javascript
-< {"orders":{"closed":[{"action":"New","avgPriceEp":0,"baseCurrency":"BTC","baseQtyEv":10000,"bizError":0,"clOrdID":"123456","createTimeNs":1587463924959744646,"cumBaseQtyEv":10000,"cumFeeEv":0,"cumQuoteQtyEv":66900000,"curBaseWalletQtyEv":899990000,"curQuoteWalletQtyEv":66900000,"cxlRejReason":0,"feeCurrency":"BTC","leavesBaseQtyEv":0,"leavesQuoteQtyEv":0,"ordStatus":"Filled","ordType":"Limit","orderID":"35217ade-3c6b-48c7-a280-8a1edb88013e","pegOffsetValueEp":0,"priceEp":68000000,"qtyType":"ByBase","quoteCurrency":"USDT","quoteQtyEv":66900000,"side":"Sell","stopPxEp":0,"symbol":"sBTCUSDT","timeInForce":"GoodTillCancel","transactTimeNs":1587463924964876798,"triggerTimeNs":0,"userID":200076}],"fills":[{"avgPriceEp":0,"baseCurrency":"BTC","baseQtyEv":10000,"clOrdID":"123456","execBaseQtyEv":10000,"execFeeEv":0,"execID":"8135ebe3-f767-577b-b70d-1a839d5178e0","execPriceEp":669000000000,"execQuoteQtyEv":66900000,"feeCurrency":"BTC","lastLiquidityInd":"RemovedLiquidity","ordType":"Limit","orderID":"35217ade-3c6b-48c7-a280-8a1edb88013e","priceEp":68000000,"qtyType":"ByBase","quoteCurrency":"USDT","quoteQtyEv":66900000,"side":"Sell","symbol":"sBTCUSDT","transactTimeNs":1587463924964876798,"userID":200076}],"open":[{"action":"New","avgPriceEp":0,"baseCurrency":"BTC","baseQtyEv":100000000,"bizError":0,"clOrdID":"31f793f4-163d-aa3f-5994-0e1164719ba2","createTimeNs":1587547657438535949,"cumBaseQtyEv":0,"cumFeeEv":0,"cumQuoteQtyEv":0,"curBaseWalletQtyEv":630000005401500000,"curQuoteWalletQtyEv":351802500000,"cxlRejReason":0,"feeCurrency":"BTC","leavesBaseQtyEv":100000000,"leavesQuoteQtyEv":0,"ordStatus":"New","ordType":"Limit","orderID":"b98b25c5-6aa4-4158-b9e5-477e37bd46d8","pegOffsetValueEp":0,"priceEp":666500000000,"qtyType":"ByBase","quoteCurrency":"USDT","quoteQtyEv":0,"side":"Sell","stopPxEp":0,"symbol":"sBTCUSDT","timeInForce":"GoodTillCancel","transactTimeNs":1587547657442752950,"triggerTimeNs":0,"userID":200076}]},"sequence":349,"timestamp":1587549121318737606,"type":"snapshot","wallets":[{"balanceEv":0,"currency":"LTC","lastUpdateTimeNs":1587481897840503662,"lockedTradingBalanceEv":0,"lockedWithdrawEv":0,"userID":200076},{"balanceEv":351802500000,"currency":"USDT","lastUpdateTimeNs":1587543489127498121,"lockedTradingBalanceEv":0,"lockedWithdrawEv":0,"userID":200076},{"balanceEv":630000005401500000,"currency":"BTC","lastUpdateTimeNs":1587547210089640382,"lockedTradingBalanceEv":100000000,"lockedWithdrawEv":0,"userID":200076},{"balanceEv":0,"currency":"ETH","lastUpdateTimeNs":1587481897840503662,"lockedTradingBalanceEv":0,"lockedWithdrawEv":0,"userID":200076},{"balanceEv":0,"currency":"XRP","lastUpdateTimeNs":1587481897840503662,"lockedTradingBalanceEv":0,"lockedWithdrawEv":0,"userID":200076},{"balanceEv":0,"currency":"LINK","lastUpdateTimeNs":1587481897840503662,"lockedTradingBalanceEv":0,"lockedWithdrawEv":0,"userID":200076},{"balanceEv":0,"currency":"XTZ","lastUpdateTimeNs":1587481897840503662,"lockedTradingBalanceEv":0,"lockedWithdrawEv":0,"userID":200076}]}
-< {"orders":{"closed":[],"fills":[],"open":[{"action":"New","avgPriceEp":0,"baseCurrency":"BTC","baseQtyEv":100000000,"bizError":0,"clOrdID":"0c1099e5-b900-5351-cf60-edb15ea2539c","createTimeNs":1587549529513521745,"cumBaseQtyEv":0,"cumFeeEv":0,"cumQuoteQtyEv":0,"curBaseWalletQtyEv":630000005401500000,"curQuoteWalletQtyEv":351802500000,"cxlRejReason":0,"feeCurrency":"BTC","leavesBaseQtyEv":100000000,"leavesQuoteQtyEv":0,"ordStatus":"New","ordType":"Limit","orderID":"494a6cbb-32b3-4d6a-b9b7-196ea2506fb5","pegOffsetValueEp":0,"priceEp":666500000000,"qtyType":"ByBase","quoteCurrency":"USDT","quoteQtyEv":0,"side":"Sell","stopPxEp":0,"symbol":"sBTCUSDT","timeInForce":"GoodTillCancel","transactTimeNs":1587549529518394235,"triggerTimeNs":0,"userID":200076}]},"sequence":350,"timestamp":1587549529519959388,"type":"incremental","wallets":[{"balanceEv":630000005401500000,"currency":"BTC","lastUpdateTimeNs":1587547210089640382,"lockedTradingBalanceEv":200000000,"lockedWithdrawEv":0,"userID":200076},{"balanceEv":351802500000,"currency":"USDT","lastUpdateTimeNs":1587543489127498121,"lockedTradingBalanceEv":0,"lockedWithdrawEv":0,"userID":200076}]}
-
-```
-
-<a name="wounsub"/>
-
-### Unsubscribe Wallet-Order
-
-* Request：
-
-```javascript
 {
-  "id": <id>,
+  "wallets": [{"userID":60463,...}, ...],
+  "orders": [{"userID":60463, ...}],
+  "sequence": <sequence>,
+  "timestamp": <timestamp>,
+  "type": "<type>"
+}
+Field	Type	Description	Possible values
+timestamp	Integer	Transaction timestamp in nanoseconds	
+sequence	Integer	Latest message sequence	
+type	String	Message type	snapshot, incremental
+Message sample: snapshot
+
+{
+  "orders": {
+    "closed": [
+      {
+        "action": "New",
+        "avgPriceEp": 0,
+        "baseCurrency": "BTC",
+        "baseQtyEv": 10000,
+        "bizError": 0,
+        "clOrdID": "123456",
+        "createTimeNs": 1587463924959744800,
+        "cumBaseQtyEv": 10000,
+        "cumFeeEv": 0,
+        "cumQuoteQtyEv": 66900000,
+        "curBaseWalletQtyEv": 899990000,
+        "curQuoteWalletQtyEv": 66900000,
+        "cxlRejReason": 0,
+        "feeCurrency": "BTC",
+        "leavesBaseQtyEv": 0,
+        "leavesQuoteQtyEv": 0,
+        "ordStatus": "Filled",
+        "ordType": "Limit",
+        "orderID": "35217ade-3c6b-48c7-a280-8a1edb88013e",
+        "pegOffsetValueEp": 0,
+        "priceEp": 68000000,
+        "qtyType": "ByBase",
+        "quoteCurrency": "USDT",
+        "quoteQtyEv": 66900000,
+        "side": "Sell",
+        "stopPxEp": 0,
+        "symbol": "sBTCUSDT",
+        "timeInForce": "GoodTillCancel",
+        "transactTimeNs": 1587463924964876800,
+        "triggerTimeNs": 0,
+        "userID": 200076
+      }
+    ],
+    "fills": [
+      {
+        "avgPriceEp": 0,
+        "baseCurrency": "BTC",
+        "baseQtyEv": 10000,
+        "clOrdID": "123456",
+        "execBaseQtyEv": 10000,
+        "execFeeEv": 0,
+        "execID": "8135ebe3-f767-577b-b70d-1a839d5178e0",
+        "execPriceEp": 669000000000,
+        "execQuoteQtyEv": 66900000,
+        "feeCurrency": "BTC",
+        "lastLiquidityInd": "RemovedLiquidity",
+        "ordType": "Limit",
+        "orderID": "35217ade-3c6b-48c7-a280-8a1edb88013e",
+        "priceEp": 68000000,
+        "qtyType": "ByBase",
+        "quoteCurrency": "USDT",
+        "quoteQtyEv": 66900000,
+        "side": "Sell",
+        "symbol": "sBTCUSDT",
+        "transactTimeNs": 1587463924964876800,
+        "userID": 200076
+      }
+    ],
+    "open": [
+      {
+        "action": "New",
+        "avgPriceEp": 0,
+        "baseCurrency": "BTC",
+        "baseQtyEv": 100000000,
+        "bizError": 0,
+        "clOrdID": "31f793f4-163d-aa3f-5994-0e1164719ba2",
+        "createTimeNs": 1587547657438536000,
+        "cumBaseQtyEv": 0,
+        "cumFeeEv": 0,
+        "cumQuoteQtyEv": 0,
+        "curBaseWalletQtyEv": 630000005401500000,
+        "curQuoteWalletQtyEv": 351802500000,
+        "cxlRejReason": 0,
+        "feeCurrency": "BTC",
+        "leavesBaseQtyEv": 100000000,
+        "leavesQuoteQtyEv": 0,
+        "ordStatus": "New",
+        "ordType": "Limit",
+        "orderID": "b98b25c5-6aa4-4158-b9e5-477e37bd46d8",
+        "pegOffsetValueEp": 0,
+        "priceEp": 666500000000,
+        "qtyType": "ByBase",
+        "quoteCurrency": "USDT",
+        "quoteQtyEv": 0,
+        "side": "Sell",
+        "stopPxEp": 0,
+        "symbol": "sBTCUSDT",
+        "timeInForce": "GoodTillCancel",
+        "transactTimeNs": 1587547657442753000,
+        "triggerTimeNs": 0,
+        "userID": 200076
+      }
+    ]
+  },
+  "sequence": 349,
+  "timestamp": 1587549121318737700,
+  "type": "snapshot",
+  "wallets": [
+    {
+      "balanceEv": 0,
+      "currency": "LTC",
+      "lastUpdateTimeNs": 1587481897840503600,
+      "lockedTradingBalanceEv": 0,
+      "lockedWithdrawEv": 0,
+      "userID": 200076
+    },
+    {
+      "balanceEv": 351802500000,
+      "currency": "USDT",
+      "lastUpdateTimeNs": 1587543489127498200,
+      "lockedTradingBalanceEv": 0,
+      "lockedWithdrawEv": 0,
+      "userID": 200076
+    },
+    {
+      "balanceEv": 630000005401500000,
+      "currency": "BTC",
+      "lastUpdateTimeNs": 1587547210089640400,
+      "lockedTradingBalanceEv": 100000000,
+      "lockedWithdrawEv": 0,
+      "userID": 200076
+    }
+  ]
+}
+Message sample: incremental
+
+{
+  "orders": {
+    "closed": [],
+    "fills": [],
+    "open": [
+      {
+        "action": "New",
+        "avgPriceEp": 0,
+        "baseCurrency": "BTC",
+        "baseQtyEv": 100000000,
+        "bizError": 0,
+        "clOrdID": "0c1099e5-b900-5351-cf60-edb15ea2539c",
+        "createTimeNs": 1587549529513521700,
+        "cumBaseQtyEv": 0,
+        "cumFeeEv": 0,
+        "cumQuoteQtyEv": 0,
+        "curBaseWalletQtyEv": 630000005401500000,
+        "curQuoteWalletQtyEv": 351802500000,
+        "cxlRejReason": 0,
+        "feeCurrency": "BTC",
+        "leavesBaseQtyEv": 100000000,
+        "leavesQuoteQtyEv": 0,
+        "ordStatus": "New",
+        "ordType": "Limit",
+        "orderID": "494a6cbb-32b3-4d6a-b9b7-196ea2506fb5",
+        "pegOffsetValueEp": 0,
+        "priceEp": 666500000000,
+        "qtyType": "ByBase",
+        "quoteCurrency": "USDT",
+        "quoteQtyEv": 0,
+        "side": "Sell",
+        "stopPxEp": 0,
+        "symbol": "sBTCUSDT",
+        "timeInForce": "GoodTillCancel",
+        "transactTimeNs": 1587549529518394000,
+        "triggerTimeNs": 0,
+        "userID": 200076
+      }
+    ]
+  },
+  "sequence": 350,
+  "timestamp": 1587549529519959300,
+  "type": "incremental",
+  "wallets": [
+    {
+      "balanceEv": 630000005401500000,
+      "currency": "BTC",
+      "lastUpdateTimeNs": 1587547210089640400,
+      "lockedTradingBalanceEv": 200000000,
+      "lockedWithdrawEv": 0,
+      "userID": 200076
+    },
+    {
+      "balanceEv": 351802500000,
+      "currency": "USDT",
+      "lastUpdateTimeNs": 1587543489127498200,
+      "lockedTradingBalanceEv": 0,
+      "lockedWithdrawEv": 0,
+      "userID": 200076
+    }
+  ]
+}
+Unsubscribe wallet-order
+Request
+
+{
+  "id": 0,
   "method": "wo.unsubscribe",
   "params": []
 }
-```
+Subscribe spot 24-hours ticker
+Reuqest sample
 
-* Response:
-
-```javascript
 {
-  "error": null,
-  "id": <id>,
-  "result": {
-    "status": "success"
-  }
-}
-```
-
-<a name="tickersub"/>
-
-### Subscribe 24 Hours Ticker
-
-On each successful subscription, DataGW will publish 24-hour ticker metrics for all symbols every 1 second.
-
-* Request
-
-```javascript
-{
-  "id": <id>,
-  "method": "spot_market24h.subscribe",
-  "params": []
-}
-```
-
-* Response:
-
-```javascript
-{
-  "error": null,
-  "id": <id>,
-  "result": {
-    "status": "success"
-  }
-}
-```
-
-* Sample:
-
-```javascript
-> {
   "method": "spot_market24h.subscribe",
   "params": [],
-  "id": 1234
+  "id": 0
 }
+Spot 24-hours ticker message
+Message format
 
-< {
-  "error": null,
-  "id": 1234,
-  "result": {
-    "status": "success"
-  }
-}
-```
-
-#### Hours Ticker Message Format：
-
-```javascript
 {
   "spot_market24h": {
     "openEp": <open priceEp>,
@@ -5706,25 +6644,9 @@ On each successful subscription, DataGW will publish 24-hour ticker metrics for 
   },
   "timestamp": <timestamp>
 }
-```
+Message sample
 
-| Field         | Type   | Description                                | Possible values |
-|---------------|--------|--------------------------------------------|--------------|
-| open priceEp  | Integer| The scaled open price in last 24 hours     |              |
-| high priceEp  | Integer| The scaled highest price in last 24 hours  |              |
-| low priceEp   | Integer| The scaled lowest price in last 24 hours   |              |
-| last priceEp  | Integer| The scaled last price                      |              |
-| bid priceEp   | Integer| Scaled bid price                           |              |
-| ask priceEp   | Integer| Scaled ask price                           |              |
-| timestamp     | Integer| Timestamp in nanoseconds                   |              |
-| symbol        | String | Spot Symbol name                       | [Trading symbols](#productinfo) |
-| turnoverEv    | Integer| The scaled turnover value in last 24 hours |              |
-| volumeEv      | Integer| The scaled trade volume in last 24 hours   |              |
-
-* Sample:
-
-```javascript
-< {
+{
   "spot_market24h": {
     "askEp": 892100000000,
     "bidEp": 891835000000,
@@ -5739,186 +6661,46 @@ On each successful subscription, DataGW will publish 24-hour ticker metrics for 
   },
   "timestamp": 1576490244024818000
 }
-```
+On each successful subscription, DataGW will publish 24-hour ticker metrics for all symbols every 1 second.
 
-<a name="currencyinfo"/>
+Field	Type	Description	Possible values
+open priceEp	Integer	The scaled open price in last 24 hours	
+high priceEp	Integer	The scaled highest price in last 24 hours	
+low priceEp	Integer	The scaled lowest price in last 24 hours	
+last priceEp	Integer	The scaled last price	
+bid priceEp	Integer	Scaled bid price	
+ask priceEp	Integer	Scaled ask price	
+timestamp	Integer	Timestamp in nanoseconds	
+symbol	String	Spot Symbol name	
+turnoverEv	Integer	The scaled turnover value in last 24 hours	
+volumeEv	Integer	The scaled trade volume in last 24 hours	
+Subscribe investment account
+Request sample
 
-### All Spot trading currencies
-
-| currency | value scale factor | min value  |  max value | need addr arg |
-|--------|---------------|------------|------------|------------|
-|BTC|8|1|5e+18|0|
-|USDT|8|1|5e+18|0|
-|ETH|8|1|5e+18|0|
-|XRP|8|1|5e+18|1|
-|LINK|8|1|5e+18|0|
-|XTZ|8|1|5e+18|0|
-|LTC|8|1|5e+18|0|
-|ADA|8|1|5e+18|0|
-|TRX|8|1|5e+18|0|
-|ONT|8|1|5e+18|0|
-|BCH|8|1|5e+18|0|
-|NEO|8|1|5e+18|0|
-|EOS|8|1|5e+18|1|
-|COMP|8|1|5e+18|0|
-|LEND|8|1|5e+18|0|
-|YFI|8|1|5e+18|0|
-|DOT|8|1|5e+18|0|
-|UNI|8|1|5e+18|0|
-|AAVE|8|1|5e+18|0|
-|DOGE|8|1|5e+18|0|
-|BAT|8|1|5e+18|0|
-|CHZ|8|1|5e+18|0|
-|MANA|8|1|5e+18|0|
-|ENJ|8|1|5e+18|0|
-|SUSHI|8|1|5e+18|0|
-|SNX|8|1|5e+18|0|
-|GRT|8|1|5e+18|0|
-|MKR|8|1|5e+18|0|
-|ALGO|8|1|5e+18|0|
-|VET|8|1|5e+18|0|
-|ZEC|8|1|5e+18|0|
-|FIL|8|1|5e+18|0|
-|KSM|8|1|5e+18|0|
-|XMR|8|1|5e+18|0|
-|QTUM|8|1|5e+18|0|
-|XLM|8|1|5e+18|1|
-|ATOM|8|1|5e+18|1|
-|LUNA|8|1|5e+18|1|
-|SOL|8|1|5e+18|0|
-|AXS|8|1|5e+18|0|
-|MATIC|8|1|5e+18|0|
-|SHIB|2|1|5e+18|0|
-|FTM|8|1|5e+18|0|
-|DYDX|8|1|5e+18|0|
-|VPAD|4|1|5e+18|0|
-
-<a name="productinfo"/>
-
-### All Spot trading products
-
-|  symbol|  type | price scale factor | ratio scale factor |  baseTickSize|  baseTickSizeEv|  quoteTickSize|  quoteTickSizeEv|  baseQtyPrecision|  quoteQtyPrecision|  pricePrecision|  minOrderValue|  minOrderValueEv|  maxBaseOrderSize|  maxBaseOrderSizeEv|  maxOrderValue|  maxOrderValueEv|  defaultTakerFee|  defaultTakerFeeEr|  defaultMakerFee|  defaultMakerFeeEr|
-|---------|---------|---------|---------|-------------|-----------|-----------------|------------|------------|-------------|------|--------|-------|------|--------|-------|------|------|-------|-------|--------|
-|sBTCUSDT|Spot|8|8|0.000001 BTC|100|0.01 USDT|1000000|6|2|2|10 USDT|1000000000|1000 BTC|100000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sETHUSDT|Spot|8|8|0.00001 ETH|1000|0.01 USDT|1000000|5|2|2|10 USDT|1000000000|10000 ETH|1000000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sXRPUSDT|Spot|8|8|0.1 XRP|10000000|0.00001 USDT|1000|1|2|5|10 USDT|1000000000|5000000 XRP|500000000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sLINKUSDT|Spot|8|8|0.01 LINK|1000000|0.0001 USDT|10000|2|2|4|10 USDT|1000000000|5000000 LINK|500000000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sXTZUSDT|Spot|8|8|0.01 XTZ|1000000|0.0001 USDT|10000|2|2|4|10 USDT|1000000000|2000000 XTZ|200000000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sLTCUSDT|Spot|8|8|0.00001 LTC|1000|0.01 USDT|1000000|5|2|2|10 USDT|1000000000|100000 LTC|10000000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sADAUSDT|Spot|8|8|0.1 ADA|10000000|0.00005 USDT|5000|1|2|5|10 USDT|1000000000|5000000 ADA|500000000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sTRXUSDT|Spot|8|8|0.1 TRX|10000000|0.00005 USDT|5000|1|2|5|10 USDT|1000000000|5000000 TRX|500000000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sONTUSDT|Spot|8|8|0.1 ONT|10000000|0.0005 USDT|50000|1|2|4|10 USDT|1000000000|5000000 ONT|500000000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sBCHUSDT|Spot|8|8|0.00001 BCH|1000|0.01 USDT|1000000|5|2|2|10 USDT|1000000000|10000 BCH|1000000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sNEOUSDT|Spot|8|8|0.001 NEO|100000|0.001 USDT|100000|3|2|3|10 USDT|1000000000|5000000 NEO|500000000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sEOSUSDT|Spot|8|8|0.01 EOS|1000000|0.0001 USDT|10000|2|2|4|10 USDT|1000000000|5000000 EOS|500000000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sDOGEUSDT|Spot|8|8|1 DOGE|100000000|0.000001 USDT|100|0|2|6|10 USDT|1000000000|5000000 DOGE|500000000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sBATUSDT|Spot|8|8|0.01 BAT|1000000|0.00001 USDT|1000|2|2|5|10 USDT|1000000000|300000 BAT|30000000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sCHZUSDT|Spot|8|8|0.01 CHZ|1000000|0.00001 USDT|1000|2|2|5|10 USDT|1000000000|700000 CHZ|70000000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sMANAUSDT|Spot|8|8|0.01 MANA|1000000|0.00001 USDT|1000|2|2|5|10 USDT|1000000000|400000 MANA|40000000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sENJUSDT|Spot|8|8|0.01 ENJ|1000000|0.00001 USDT|1000|2|2|5|10 USDT|1000000000|200000 ENJ|20000000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sSUSHIUSDT|Spot|8|8|0.001 SUSHI|100000|0.001 USDT|100000|3|2|3|10 USDT|1000000000|40000 SUSHI|4000000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sSNXUSDT|Spot|8|8|0.001 SNX|100000|0.001 USDT|100000|3|2|3|10 USDT|1000000000|30000 SNX|3000000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sGRTUSDT|Spot|8|8|0.01 GRT|1000000|0.00001 USDT|1000|2|2|5|10 USDT|1000000000|200000 GRT|20000000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sUNIUSDT|Spot|8|8|0.001 UNI|100000|0.001 USDT|100000|3|2|3|10 USDT|1000000000|15000 UNI|1500000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sAAVEUSDT|Spot|8|8|0.0001 AAVE|10000|0.01 USDT|1000000|4|2|2|10 USDT|1000000000|1000 AAVE|100000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sYFIUSDT|Spot|8|8|0.00001 YFI|1000|0.01 USDT|1000000|5|2|2|10 USDT|1000000000|10 YFI|1000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sCOMPUSDT|Spot|8|8|0.0001 COMP|10000|0.01 USDT|1000000|4|2|2|10 USDT|1000000000|1000 COMP|100000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sMKRUSDT|Spot|8|8|0.00001 MKR|1000|0.01 USDT|1000000|5|2|2|10 USDT|1000000000|100 MKR|10000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sDOTUSDT|Spot|8|8|0.001 DOT|100000|0.001 USDT|100000|3|2|3|10 USDT|1000000000|10000 DOT|1000000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sALGOUSDT|Spot|8|8|0.01 ALGO|1000000|0.00001 USDT|1000|2|2|5|10 USDT|1000000000|300000 ALGO|30000000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sVETUSDT|Spot|8|8|0.1 VET|10000000|0.000001 USDT|100|1|2|6|10 USDT|1000000000|2000000 VET|200000000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sZECUSDT|Spot|8|8|0.0001 ZEC|10000|0.01 USDT|1000000|4|2|2|10 USDT|1000000000|2000 ZEC|200000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sFILUSDT|Spot|8|8|0.0001 FIL|10000|0.01 USDT|1000000|4|2|2|10 USDT|1000000000|3000 FIL|300000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sKSMUSDT|Spot|8|8|0.0001 KSM|10000|0.01 USDT|1000000|4|2|2|10 USDT|1000000000|1000 KSM|100000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sXMRUSDT|Spot|8|8|0.0001 XMR|10000|0.01 USDT|1000000|4|2|2|10 USDT|1000000000|1500 XMR|150000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sQTUMUSDT|Spot|8|8|0.001 QTUM|100000|0.001 USDT|100000|3|2|3|10 USDT|1000000000|30000 QTUM|3000000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sXLMUSDT|Spot|8|8|0.01 XLM|1000000|0.00001 USDT|1000|2|2|5|10 USDT|1000000000|1000000 XLM|100000000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sATOMUSDT|Spot|8|8|0.001 ATOM|100000|0.001 USDT|100000|3|2|3|10 USDT|1000000000|20000 ATOM|2000000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sLUNAUSDT|Spot|8|8|0.001 LUNA|100000|0.001 USDT|100000|3|2|3|10 USDT|1000000000|40000 LUNA|4000000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sSOLUSDT|Spot|8|8|0.001 SOL|100000|0.001 USDT|100000|3|2|3|10 USDT|1000000000|10000 SOL|1000000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sAXSUSDT|Spot|8|8|0.001 AXS|100000|0.001 USDT|100000|3|2|3|10 USDT|1000000000|10000 AXS|1000000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sMATICUSDT|Spot|8|8|0.01 MATIC|1000000|0.00001 USDT|1000|2|2|5|10 USDT|1000000000|300000 MATIC|30000000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sSHIBUSDT|Spot|8|8|1 SHIB|100|0.00000001 USDT|1|0|2|8|10 USDT|1000000000|5000000000 SHIB|500000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sFTMUSDT|Spot|8|8|0.01 FTM|1000000|0.00001 USDT|1000|2|2|5|10 USDT|1000000000|200000 FTM|20000000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sDYDXUSDT|Spot|8|8|0.001 DYDX|100000|0.001 USDT|100000|3|2|3|10 USDT|1000000000|30000 DYDX|3000000000000|5000000 USDT|500000000000000|0.001|100000|0.001|100000|
-|sVPADUSDT|Spot|8|8|0.1 VPAD|1000|0.000001 USDT|100|1|2|6|10 USDT|1000000000|15000000 VPAD|150000000000|500000 USDT|50000000000000|0.001|100000|0.001|100000|
-
-<a name="investmentaccount"/>
-
-### Subscribe Investment Account
-
-on subscription to investment account then you will get your investment information of each currency type.
-
-* Request：
-
-```javascript
 {
-  "id": <id>,
+  "id": 0,
   "method": "wm.subscribe",
   "params": []
 }
-```
+On subscription to investment account then you will get your investment information of each currency type.
 
-* Response:
+Investment account message
+Message format
 
-```javascript
-{
-  "error": null,
-  "id": <id>,
-  "result": {
-      "status":"success"
-    }
-}
-```
-
-* Sample：
-
-```javascript
-{
-  "id": 1234,
-  "method": "wm.subscribe",
-  "params": []
-}
-
-{
-  "error": null,
-  "id": 1234,
-  "result": {
-      "status":"success"
-    }
-}
-```
-
-#### Investment Account Message Format：
-
-```javascript
 {
   "investments":[
     {
-      "currency":<currency>,
-      "balanceEv":<balanceEv>,
-      "userId":<userId>,
-      "demandPendingInterestBalanceEv":<demandPendingInterestBalanceEv>,
-      "demandInterestedBalanceEv":<demandInterestedBalanceEv>,
-      "timedDepositBalanceEv":<timedDepositBalanceEv>,
-      "currentTimeMillis":<currentTimeMillis>
+      "currency": <currency>,
+      "balanceEv": <balanceEv>,
+      "userId": <userId>,
+      "demandPendingInterestBalanceEv": <demandPendingInterestBalanceEv>,
+      "demandInterestedBalanceEv": <demandInterestedBalanceEv>,
+      "timedDepositBalanceEv": <timedDepositBalanceEv>,
+      "currentTimeMillis": <currentTimeMillis>
   ]
 }
-```
+Message sample
 
-| Field       | Type   | Description      | Possible values |
-|-------------|--------|------------------|-----------------|
-| currency    | String |invested currency |      BTC,ETH    |
-| balanceEv   | Long   |invested amount   |        0        |
-| userId      | Long   | your user id     | 1234            |
-| demandPendingInterestBalanceEv | Long   | pending interest for flexible product  | 0 |
-| demandInterestedBalanceEv      | Long   | paid interest for flexible product     | 0 |
-| timedDepositBalanceEv          | Long | amount for fixed product                 | 20000000000 |
-| currentTimeMillis              | Long |   time in milli    | 1653972360166 |
-
-* Sample：
-
-```javascript
 {
   "investments":[
     {
@@ -5941,4 +6723,1529 @@ on subscription to investment account then you will get your investment informat
     }
   ]
 }
-```
+Field	Type	Description	Possible values
+currency	String	Invested currency	BTC,ETH
+balanceEv	Integer	Invested amount	0
+userId	Integer	User id	
+demandPendingInterestBalanceEv	Integer	Pending interest for flexible product	0
+demandInterestedBalanceEv	Integer	Paid interest for flexible product	0
+timedDepositBalanceEv	Integer	Amount for fixed product	20000000000
+currentTimeMillis	Integer	Time in milliseconds	165397230166
+Margin Trading API
+Endpoint security type
+Each API call must be signed and pass to server in HTTP header x-phemex-request-signature.
+Endpoints use HMAC SHA256 signatures. The HMAC SHA256 signature is a keyed HMAC SHA256 operation. Use your apiSecret as the key and the string URL Path + QueryString + Expiry + body ) as the value for the HMAC operation.
+The signature is case sensitive.
+
+Query product information
+Request
+
+GET /public/products
+Spot symbols are defined in .products[] with type=Spot.
+Spot currencies are defined in .currencies[].
+Price/Ratio/Value scales
+Fields with post-fix "Rp", "Rr", "Rq" or "Rv" are real value.
+
+Common order fields
+Order type
+Order type	Description
+Limit	--
+Market	--
+Stop	--
+StopLimit	--
+MarketIfTouched	--
+LimitIfTouched	--
+MarketAsLimit	--
+StopAsLimit	--
+MarketIfTouchedAsLimit	--
+Order status
+Order status	Description
+Untriggered	Conditional order waiting to be triggered
+Triggered	Conditional order being triggered
+Rejected	Order rejected
+New	Order placed in cross engine
+PartiallyFilled	Order partially filled
+Filled	Order fully filled
+Canceled	Order canceled
+TimeInForce
+TimeInForce	Description
+GoodTillCancel	--
+PostOnly	--
+ImmediateOrCancel	--
+FillOrKill	--
+Trigger source
+Trigger	Description
+ByLastPrice	Trigger by last price
+Place order (HTTP PUT, prefered)
+Request format
+
+PUT /margin-trade/orders/create?symbol=<symbol>&trigger=<trigger>&clOrdID=<clOrdID>&priceRp=<priceRp>&baseQtyRq=<baseQtyRq>&quoteQtyRq=<quoteQtyRq>&stopPxRp=<stopPxRp>&text=<text>&side=<side>&qtyType=<qtyType>&ordType=<ordType>&timeInForce=<timeInForce>&execInst=<execInst>&autoBorrow=<autoBorrow>&borrowCurrency=<borrowCurrency>&borrowQtyRq=<borrowQtyRq>&autoPayback=<autoPayback>&paybackCurrency=<paybackCurrency>&paybackQtyRq=<paybackQtyRq>
+Response format
+
+{
+  "code": 0,
+  "msg": "",
+  "data": {
+    "orderID": "d1d09454-cabc-4a23-89a7-59d43363f16d",
+    "clOrdID": "309bcd5c-9f6e-4a68-b775-4494542eb5cb",
+    "priceRp": "0",
+    "action": "New",
+    "trigger": "UNSPECIFIED",
+    "pegPriceType": "UNSPECIFIED",
+    "stopDirection": "UNSPECIFIED",
+    "bizError": 0,
+    "symbol": "sBTCUSDT",
+    "side": "Buy",
+    "baseQtyRq": "0",
+    "ordType": "Limit",
+    "timeInForce": "GoodTillCancel",
+    "ordStatus": "Created",
+    "cumFeeRv": "0",
+    "cumBaseQtyRq": "0",
+    "cumQuoteQtyRq": "0",
+    "leavesBaseQtyRq": "0",
+    "leavesQuoteQtyRq": "0",
+    "avgPriceRp": "0",
+    "cumBaseAmountRv": "0",
+    "cumQuoteAmountRv": "0",
+    "quoteQtyRq": "0",
+    "qtyType": "ByBase",
+    "stopPxRp": "0",
+    "pegOffsetValueRp": "0",
+    "autoBorrow": false,
+    "borrowCurrency": 1,
+    "borrowQtyRq": "0",
+    "autoPayback": false,
+    "paybackCurrency": 1,
+    "paybackPrincipalQtyRq": "0",
+    "paybackInterestQtyRq": "0",
+    "hourlyInterestRateRr": "0",
+    "riskLevelRr": "0",
+    "liqFeeRv": "0",
+    "liqFeeRateRr": "0"
+  }
+}
+Field	Type	Required	Description	Possible values
+symbol	String	Yes		Spot Symbols
+side	Enum	Yes		Sell, Buy
+qtyType	Enum	Yes	Set order quantity by base or quote currency	ByBase, ByQuote
+quoteQtyRq	String	--	Required if qtyType = ByQuote	
+baseQtyRq	String	--		Required if qtyType = ByBase
+priceRp	String			real price
+stopPxRp	String	--	used in conditionalorder	
+trigger	Enum	--	Required in conditional order	ByLastPrice
+timeInForce	Enum	No	Default GoodTillCancel	GoodTillCancel, PostOnly,ImmediateOrCancel,FillOrKill
+ordType	Enum	No	Default to Limit	Market, Limit, Stop, StopLimit, MarketIfTouched, LimitIfTouched
+autoBorrow	Boolean	No		false
+borrowCurrency	String	No		BTC,USDT
+borrowQtyRq	String	No		
+autoPayback	Boolean	No		false
+paybackCurrency	String	No		BTC,USDT
+paybackQtyRq	String	No		
+Cancel order
+Request format
+
+DELETE /margin-trade/orders?symbol=<symbol>&orderID=<orderID>
+DELETE /margin-trade/orders?symbol=<symbol>&clOrdID=<clOrdID>
+Cancel all order by symbol
+Request format
+
+DELETE /margin-trade/orders/all?symbol=<symbol>&untriggered=<untriggered>
+Field	Type	Required	Description
+symbol	Enum	Yes	The symbol to cancel
+untriggered	Boolean	No	set false to cancel non-conditiaonal order, true to conditional order
+Query open order by order ID or client order ID
+Request format
+
+GET /margin-trade/orders/active?symbol=<symbol>&orderID=<orderID>
+GET /margin-trade/orders/active?symbol=<symbol>&clOrDID=<clOrdID>
+Query all open orders by symbol
+Request format
+
+GET /margin-trade/orders?symbol=<symbol>
+Query margin orders details
+Request format
+
+GET /margin/orders?symbol=<symbol>&ordStatus=<ordStatus>&ordType=<ordType>&start=<start>&end=<end>&pageNum=<pageNum>&pageSize=<pageSize>
+Request parameters
+Parameter	Type	Required	Description	Case
+symbol	String	NO	spot symbol	sBTCUSDT
+ordStatus	String	NO		Filled
+ordType	String	NO		Market
+start	Long	NO	start order index, default 0	
+end	Long	NO	end order index, default 0	
+pageNum	Long	NO	page number, default 0	
+pageSize	Integer	NO	pageable size, default 20	
+Response Format
+
+{
+  "code": 0,
+  "msg": "OK",
+  "data": {
+    "total": 1,
+    "rows": [
+      {
+        "orderId": "f6256e4f-0f0f-40bd-b26e-2c3e5afd02f5",
+        "clOrdId": "2337fc19-7db0-f0c7-6ff9-404234a78c3c",
+        "stopPxRp": "0",
+        "avgPriceRp": "24747.95059307",
+        "qtyType": "ByBase",
+        "leavesBaseQtyRq": "0",
+        "leavesQuoteQtyRq": "0",
+        "baseQtyRq": "0.349332",
+        "feeCurrency": "USDT",
+        "stopDirection": "UNSPECIFIED",
+        "symbol": "sBTCUSDT",
+        "side": "Sell",
+        "quoteQtyRq": "0",
+        "priceRp": "22211.84",
+        "ordType": "Market",
+        "timeInForce": "ImmediateOrCancel",
+        "ordStatus": "Filled",
+        "execStatus": "TakerFill",
+        "createTimeNs": 1676893028372924849,
+        "cumFeeRv": "8.64525109",
+        "cumBaseValueRv": "0.349332",
+        "cumQuoteValueRv": "8645.25107658",
+        "detailVos": null
+      }
+    ]
+  }
+}
+Query margin order trades details
+Request format
+
+GET /margin/orders/trades?symbol=<symbol>&execType=<execType>&start=<start>&end=<end>&pageNum=<pageNum>&pageSize=<pageSize>
+Request parameters
+Parameter	Type	Required	Description	Case
+symbol	String	NO	spot symbol	sBTCUSDT
+execType	String	NO		Trade
+start	Long	NO	start order index, default 0	
+end	Long	NO	end order index, default 0	
+pageNum	Long	NO	page number, default 0	
+pageSize	Integer	NO	pageable size, default 20	
+Response format
+
+{
+    "code": 0,
+    "msg": "OK",
+    "data": {
+        "total": 1,
+        "rows": [
+            {
+                "transactTimeNs": 1675181154118252379,
+                "execType": "Amend",
+                "qtyType": "ByQuote",
+                "clOrdId": "6bbbf1d2-42a1-70ef-e272-168b524353b4",
+                "orderId": "c111c403-ace7-43ec-a7a6-6c6ef012fdfe",
+                "symbol": "sBTCUSDT",
+                "side": "Buy",
+                "priceRp": "25437.04",
+                "baseQtyRq": "0",
+                "quoteQtyRq": "2443.28",
+                "action": "New",
+                "execStatus": "TakerFill",
+                "ordStatus": "PartiallyFilled",
+                "ordType": "Market",
+                "execInst": "None",
+                "timeInForce": "ImmediateOrCancel",
+                "stopDirection": "UNSPECIFIED",
+                "stopPxRp": "0",
+                "execId": "e7717c8a-5fd2-5360-a7e3-de5c29f24639",
+                "execPriceRp": "23124.59",
+                "execBaseQtyRq": "0.01126",
+                "execQuoteQtyRq": "260.3828834",
+                "leavesBaseQtyRq": "0",
+                "leavesQuoteQtyRq": "2182.8971166",
+                "execFeeRv": "0.00001126",
+                "feeRateRr": "0.001",
+                "baseCurrency": "BTC",
+                "quoteCurrency": "USDT",
+                "feeCurrency": "BTC"
+            }
+        ]
+    }
+}
+Query margin borrow interest history
+Request format
+
+GET /margin/borrow/interests?currency=<currencyList>&start=<start>&end=<end>&pageNum=<pageNum>&pageSize=<pageSize>
+Request parameters
+Parameter	Type	Required	Description	Case
+currency	List	NO	currency list	USDT,BTC
+start	Long	NO	default 0	
+end	Long	NO	default 0	
+pageNum	Long	NO	default 0	
+pageSize	Integer	NO	default 20	
+Response format
+
+{
+    "code": 0,
+    "msg": "OK",
+    "data": {
+        "total": 1,
+        "rows": [
+            {
+                "borrowCurrency": "USDT",
+                "interestCalcTime": 1678975566487,
+                "interestCurrency": "USDT",
+                "hourlyInterestRv": "0.00013254",
+                "hourlyRateRr": "0.00000551",
+                "annualRateRr": "0.0482676"
+            }
+        ]
+    }
+}
+Query margin borrow history records
+Request format
+
+GET /margin/borrow?currency=<currency>&start=<start>&end=<end>&pageNum=<pageNum>&pageSize=<pageSize>
+Request parameters
+Parameter	Type	Required	Description	Case
+Currency	String	NO		USDT
+start	Long	NO	default 0	
+end	Long	NO	default 0	
+pageNum	Long	NO	default 0	
+pageSize	Integer	NO	default 20	
+Response format
+
+{
+  "code": 0,
+  "msg": "OK",
+  "data": {
+    "total": 1,
+    "rows": [
+      {
+        "currency": "USDT",
+        "borrowTime": 1677211672675,
+        "amountRv": "94.05",
+        "type": 1,
+        "status": "Success"
+      }
+    ]
+  }
+}
+Query margin payback history
+Request format
+
+GET /margin/payback?currency=<currency>&start=<start>&end=<end>&pageNum=<pageNum>&pageSize=<pageSize>
+Request parameters
+Parameter	Type	Required	Description	Case
+currency	String	NO		USDT
+start	Long	NO	default 0	
+end	Long	NO	default 0	
+pageNum	Long	NO	default 0	
+pageSize	Integer	NO	default 20	
+Response format
+
+{
+    "code": 0,
+    "msg": "OK",
+    "data": {
+        "total": 1,
+        "rows": [
+            {
+                "currency": "USDT",
+                "repayTime": 1678976978535,
+                "principalAmountRv": "24.05469895",
+                "interestAmountRv": "0.019881",
+                "liqFeeRv": "0",
+                "type": 1,
+                "status": "Success"
+            }
+        ]
+    }
+}
+Post margin borrow request
+Request format
+
+POST /margin/borrow?currency=<currency>&amountRv=<amountRv>
+Request parameters
+Parameter	Type	Required	Description	Case
+currency	String	YES	borrow currency	USDT
+amountRv	String	YES	borrow amount real value	1000.12
+Response format
+
+{
+  "code": 0,
+  "msg": "OK",
+  "data": {
+    "maxBorrowAmountRq": "80000",
+    "borrowedAmountRq": "40",
+    "currency": "USDT"
+  }
+}
+Post margin payback history
+Request format
+
+POST /margin/payback?currency=<currency>&amountRv=<amountRv>
+Request parameters
+Parameter	Type	Required	Description	Case
+currency	String	YES	payback currency	USDT
+amountRv	String	YES	payback amount real value	1000.12
+Response format
+
+{
+  "code": 0,
+  "msg": "OK",
+  "data": {
+    "maxBorrowAmountRq": "80000",
+    "borrowedAmountRq": "40",
+    "currency": "USDT"
+  }
+}
+Query wallets
+Request parameters
+Parameter	Type	Required	Description	Case
+currency	String	No	the currency to query	BTC, USDT...
+NOTE: GET /margin-trade/wallets queries the wallets of all currencies
+
+Request format
+
+GET /margin-trade/wallets?currency=<currency>
+Response format
+
+{
+  "code": 0,
+  "msg": "",
+  "data": [
+    {
+      "currency": "BTC",
+      "balanceRq": "0",
+      "lockedTradingBalanceRq": "0",
+      "lockedWithdrawRq": "0",
+      "borrowedRq": "0",
+      "cumInterestRq": "0",
+      "lastUpdateTimeNs": 0
+    }
+  ]
+}
+Query order book the same as the spot api
+
+Query full order book the same as the spot api
+
+Query recent trades the same as the spot api
+
+Query 24 hours ticker the same as the spot api
+
+Margin Trading Websocket API
+the same as above Spot Websocket API
+
+Subscribe margin account and order
+Request
+
+{
+  "id": 0,
+  "method": "mao.subscribe",
+  "params": []
+}
+Message sample: incremental json { "wallets_mao": [{ "balanceRv": "6300000054.015", "currency": "BTC", "lastUpdateTimeNs": 1587547210089640382, "lockedTradingBalanceRv": "2", "lockedWithdrawRv": "0", "borrowedRv": "12", "cumInterestRv": "0.5", "hourlyInterestRateRr": "0.0012", "maxAmountToBorrowRv": "100", "userID": 200076 }, { "balanceRv": "3518.025", "currency": "USDT", "lastUpdateTimeNs": 1587543489127498121, "lockedTradingBalanceRv": "0", "lockedWithdrawRv": "0", "borrowedRv": "12", "cumInterestRv": "0.5", "hourlyInterestRateRr": "0.0012", "maxAmountToBorrowRv": "100", "userID": 200076 }], "orders_mao": { "closed": [], "fills": [], "open": [{ "action": "New", "avgPriceRp": "0", "baseCurrency": "BTC", "baseQtyRq": "10000", "bizError": 0, "clOrdID": "0c1099e5-b900-5351-cf60-edb15ea2539c", "createTimeNs": 1587549529513521745, "cumBaseQtyRq": "0", "cumFeeRv": "0", "cumQuoteQtyRq": "0", "curBaseWalletQtyRq": "6300000.0540150", "curQuoteWalletQtyRq": "3518.0250", "cxlRejReason": 0, "feeCurrency": "BTC", "leavesBaseQtyRq": "1", "leavesQuoteQtyRq": "0", "ordStatus": "New", "ordType": "Limit", "orderID": "494a6cbb-32b3-4d6a-b9b7-196ea2506fb5", "pegOffsetValueRv": "0", "priceRp": "6665", "qtyType": "ByBase", "quoteCurrency": "USDT", "quoteQtyRq": "0", "side": "Sell", "stopPxRp": "0", "symbol": "sBTCUSDT", "timeInForce": "GoodTillCancel", "transactTimeNs": 1587549529518394235, "triggerTimeNs": 0, "userID": 200076 }] }, "sequence": 350, "timestamp": 1587549529519959388, "type": "incremental" }
+
+Transfer REST API
+Transfer between spot and futures
+Request format
+
+POST /assets/transfer
+{
+  "amountEv": 0,
+  "currency": "string",
+  "moveOp": 0
+}
+Response format
+
+{
+  "amountEv": 0,
+  "currency": "string",
+  "linkKey": "string",
+  "side": 0,
+  "status": 0,
+  "userId": 0
+}
+Field	Type	Required	Description	Possible Values
+amountEv	Long	True	AmountEv to transfer	100000 ...
+moveOp	Integer	True	Direction	1 - futures to spot, 2 - spot to futures
+currency	String	True	Currency to transfer	BTC, ETH, USD ...
+Query transfer history
+Request format
+
+GET /assets/transfer?currency=<currency>
+Response format
+
+[
+  {
+    "amountEv": 0,
+    "bizType": 0,
+    "createTime": 0,
+    "currency": "string",
+    "linkKey": "string",
+    "side": 0,
+    "status": 0,
+    "userId": 0
+  }
+]
+Field	Type	Required	Description	Possible Values
+currency	String	True	The currency to query	BTC,ETH ...
+start	Long	False	Start time in millisecond	Default to 2 days ago from the end
+end	Long	False	End time in millisecond	Default to now
+offset	Integer	False	Page start from 0	Start from 0, default 0
+limit	Integer	False	Page size	Default to 20, max 200
+side	Integer	True	Direction	1 - futures to spot, 2 - spot to futures
+bizType	Integer	True	Business type	11 - futures to spot, 10 - spot to futures
+status	Integer	True	transfer status	0 - PENDING, 10 - DONE, 11 - FAILED
+Spot sub to main transfer (for sub-account only)
+Request format
+
+POST /assets/spots/sub-accounts/transfer
+{
+  "amountEv": 0,
+  "currency": "string",
+  "requestKey": "string"
+}
+Response format
+
+{
+  "amountEv": 0,
+  "currency": "string",
+  "fromUserId": 0,
+  "requestKey": "string",
+  "toUserId": 0
+}
+Field	Type	Required	Description	Possible Values
+amountEv	Long	True	AmountEv to transfer	100000 ...
+currency	String	True	Currency to transfer	BTC, ETH, USD ...
+requestKey	String	False	Unique request key	Unique request Key, system will generate if its empty
+Query transfer history of spot accounts between main and sub
+Request format
+
+GET /assets/spots/sub-accounts/transfer?currency=<currency>
+Response format
+
+[
+  {
+    "amountEv": 0,
+    "createAt": 0,
+    "currency": "string",
+    "fromUserId": 0,
+    "id": 0,
+    "requestKey": "string",
+    "status": 0,
+    "toUserId": 0
+  }
+]
+Request parameters
+Field	Type	Required	Description	Possible Values
+currency	String	True	The currency to query	BTC,ETH ...
+start	Long	False	Start time in millisecond	Default to 2 days ago from the end
+end	Long	False	End time in millisecond	Default to now
+offset	Integer	False	Page start from 0	Start from 0, default 0
+limit	Integer	False	Page size	Default to 20, max 200
+Response Fields
+Field	Type	Description
+status	Integer	PENDING(0), DONE(10), FAILED(11)
+Futures sub to main transfer (for sub-account only)
+Request format
+
+POST /assets/futures/sub-accounts/transfer
+{
+  "amountEv": 0,
+  "currency": "string",
+  "requestKey": "string"
+}
+Response format
+
+{
+  "amountEv": 0,
+  "bizCode": 0,
+  "currency": "string",
+  "fromUserId": 0,
+  "requestKey": "string",
+  "toUserId": 0
+}
+Field	Type	Required	Description	Possible Values
+amountEv	Long	True	AmountEv to transfer	100000 ...
+currency	String	True	Currency to transfer	BTC, ETH, USD ...
+requestKey	String	False	Unique request key	Unique request Key, system will generate if its empty
+Query transfer history of contract accounts between main and sub
+Request format
+
+GET /assets/futures/sub-accounts/transfer?currency=<currency>
+Response format
+
+[
+  {
+    "fromUserId": 0,
+    "toUserId": 0,
+    "currency": "string",
+    "amountEv": 0,
+    "bizCode": 0,
+    "requestKey": "string",
+    "createAt": 0
+  }
+]
+Request parameters
+Field	Type	Required	Description	Possible Values
+currency	String	True	The currency to query	BTC,ETH ...
+start	Long	False	Start time in millisecond	Default to 2 days ago from the end
+end	Long	False	End time in millisecond	Default to now
+offset	Integer	False	Page start from 0	Start from 0, default 0
+limit	Integer	False	Page size	Default to 20, max 200
+Response Fields
+Field	Type	Description
+bizCode	Integer	PARENT_TO_SUB_TRANSFER(3), SUB_TO_PARENT_TRANSFER(4)
+Universal transfer (main account only) - transfer between sub to main, main to sub or sub to sub
+Request format
+
+POST /assets/universal-transfer
+{
+  "amountEv": 0,
+  "bizType": "string",
+  "currency": "string",
+  "fromUserId": 0,
+  "toUserId": 0
+}
+Response format
+
+{
+  "requestKey": "string"
+}
+Field	Type	Required	Description	Possible Values
+fromUserId	Long	True	From user id	Will set as main account if not given or 0
+toUserId	Long	True	To user id	Will set as main account if not given or 0
+currency	String	True	The currency to query	BTC,ETH ...
+amountEv	Long	True	AmountEv to transfer	100000 ...
+bizType	String	True	Transfer for which biz type	SPOT, PERPETUAL
+requestKey	String	False	Unique request key	Unique request Key, system will generate if its empty
+Convert REST API
+RFQ quote
+Request format
+
+GET /assets/quote
+Response format
+
+{
+  "code": "string",
+  "quoteArgs": {
+    "expireAt": 0,
+    "origin": 0,
+    "price": "string",
+    "proceeds": "string",
+    "quoteAt": 0,
+    "requestAt": 0,
+    "ttlMs": 0
+  }
+}
+Field	Type	Required	Description	Possible Values
+fromCurrency	String	True	From currency	BTC,USD ...
+toCurrency	String	True	To currency	BTC,USD ...
+fromAmountEv	Long	True	AmountEv to transfer	100000 ...
+Convert
+Request format
+
+POST /assets/convert
+{
+  "code": "string",
+  "fromAmountEv": 0,
+  "fromCurrency": "string",
+  "toCurrency": "string"
+}
+Response format
+
+{
+  "fromAmountEv": 0,
+  "fromCurrency": "string",
+  "linkKey": "string",
+  "moveOp": 0,
+  "status": 0,
+  "toAmountEv": 0,
+  "toCurrency": "string"
+}
+Field	Type	Required	Description	Possible Values
+toCurrency	String	True	To currency	BTC,USD ...
+fromCurrency	String	True	From currency	BTC,USD ...
+fromAmountEv	Long	False	AmountEv to convert	100000 ...
+code	String	True	Encrypted convert args	xxxxxxxx ...
+Query convert history
+Request format
+
+GET /assets/convert
+Response format
+
+[
+  {
+    "conversionRate": 0,
+    "createTime": 0,
+    "errorCode": 0,
+    "fromAmountEv": 0,
+    "fromCurrency": "string",
+    "linkKey": "string",
+    "status": 0,
+    "toAmountEv": 0,
+    "toCurrency": "string"
+  }
+]
+Field	Type	Required	Description	Possible Values
+fromCurrency	String	False	From currency	BTC,USD ...
+toCurrency	String	False	To currency	BTC,USD ...
+startTime	Long	False	Start time in millisecond	Default to 2 days ago from the end time
+endTime	Long	False	End time in millisecond	Default to now
+offset	Integer	False	Page start from 0	Start from 0, default 0
+limit	Integer	False	Page size	Default to 20, max 200
+New Transfer REST API (Universal Transfer REST API)
+Transfer between wallets within an account
+Request format
+
+POST /wallets/account/transfer
+{
+  "fromAccType": "SPOT",
+  "toAccType": "CONTRACT",
+  "amountEv": 100000000,
+  "amount": "1",
+  "currency": "USDT"
+}
+Response format
+
+{
+  "code": 0,
+  "msg": null,
+  "data": {
+    "amountEv": 10000000,
+    "currency": "USDT",
+    "status": 10,
+    "bizCode": 10,
+    "createTime": 1706601733000
+  }
+}
+During the transfer, the fromAccType and toAccType cannot be the same value.
+The amountEv is the scaled-up value of the original amount amount. Both values are required and are used to verify the correctness of the amount.
+Field	Type	Required	Description	Possible Values
+fromAccType	String	True	Transfer out wallet type	SPOT, CONTRACT, MARGIN, COPY_TRADE
+toAccType	String	True	Transfer in wallet type	SPOT, CONTRACT, MARGIN, COPY_TRADE
+amountEv	Long	True	AmountEv to transfer	100000000
+amount	String	True	Origin amount to transfer	1
+currency	String	True	Currency to transfer	BTC,ETH,USDT ...
+Transfer between main and sub-accounts
+Under main account login, transfers between sub-accounts and the main account or between sub-accounts are supported
+When logged in under a non-main account: Only transfers from the current account to the main account are allowed
+Request format
+
+POST /wallets/account/main-sub-transfer
+{
+  "fromUid": 99900001,
+  "fromAccType": "SPOT",
+  "toUid": 99900002,
+  "toAccType": "SPOT",
+  "amountEv": 100000000,
+  "amount": "1",
+  "currency": "USDT"
+}
+Response format
+
+{
+  "code": 0,
+  "msg": null,
+  "data": {
+    "amountEv": 10000000,
+    "currency": "USDT",
+    "status": 10,
+    "bizCode": 3,
+    "createTime": 1706601733000
+  }
+}
+Field	Type	Required	Description	Possible Values
+fromUid	Long	True	Uid for transfer out	
+fromAccType	String	True	Transfer out wallet type	SPOT, CONTRACT, MARGIN
+toUid	Long	True	Uid for transfer in	
+toAccType	String	True	Transfer in wallet type	SPOT, CONTRACT, MARGIN
+amountEv	Long	True	AmountEv to transfer	100000000
+amount	String	True	Origin amount to transfer	1
+currency	String	True	Currency to transfer	BTC,ETH,USDT ...
+Query account wallet transfer history
+Currently, only transfer records from the past 3 months is supported for queries.
+
+GET /wallets/account/transfer
+Request parameters
+Supports multiple bizTypes parameters separated by ',' for example: bizTypes=3,4
+
+Field	Type	Required	Description	Possible Values
+currency	String	False	The currency to query	BTC,ETH ...
+bizTypes	Array	False	Business type for transfer	3: transfer to sub-accounts
+4: transfer to main account
+10: Spot transfer to Contract wallet
+11: Contract transfer to Spot wallet
+90: Copy trade transfer
+213: Margin wallet transfer
+start	Long	False	Start time in millisecond	Default to 3 months ago from the end
+end	Long	False	End time in millisecond	Default to now
+pageNum	Integer	False	Page start from 0	Start from 1, default 1
+pageSize	Integer	False	Page size	Default to 20, max 20
+Response format
+
+{
+  "code": 0,
+  "data": {
+    "total": 1,
+    "rows": [
+      {
+        "formUserId": 99900001,
+        "toUserId": 99900001,
+        "fromAccType": "SPOT",
+        "toAccType": "CONTRACT",
+        "currency": "USDT",
+        "amountEv": 100000000,
+        "amount": 1,
+        "status": 10,
+        "bizCode": 3,
+        "requestKey": "13adf",
+        "requestTime": 1706601733000
+      }
+    ]
+  }
+}
+Deposit And Withdraw REST API
+Endpoint Security Type
+Please raise API Key via web, choose Read & Trade & Withdraw permission, and IP Address is mandatory.
+Only main account can request withdrawal.
+Only withdrawal address already added in the "withdrawal address list" on web would be allowed. No 2FA or email verificaiton via API withdrawal.
+Each API call must be signed and pass to server in HTTP header x-phemex-request-signature.
+Endpoints use HMAC SHA256 signatures. The HMAC SHA256 signature is a keyed HMAC SHA256 operation. Use your apiSecret as the key and the string URL Path + QueryString + Expiry + body ) as the value for the HMAC operation.
+The signature is case-sensitive.
+Price/Ratio/Value
+Fields with post-fix "Rv" means real value without being scaled
+Query deposit address information
+Request Format
+
+GET /phemex-deposit/wallets/api/depositAddress?currency=<currency>&chainName=<chainName>
+Request parameters
+Parameter	Type	Required	Description	Case
+currency	String	YES	coin name	USDT
+chainName	String	YES	chain name	ETH
+Response Format
+
+{
+  "code": 0,
+  "msg": "OK",
+  "data": {
+    "address": "44exxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "tag": ""
+  }
+}
+Response Fields
+Field	Type	Description
+address	String	deposit address
+tag	String	chain address tag
+Query deposit history records
+Request format
+
+GET /phemex-deposit/wallets/api/depositHist?currency=<currency>&offset=<offset>&limit=<limit>&withCount=<withCount>
+Request parameters
+Parameter	Type	Required	Description	Case
+currency	List	NO	batch coin name list	ETH,BTC
+offset	String	NO	query rows offset ,default 0	
+limit	Integer	NO	limit rows return, default 20	
+withCount	Boolean	NO	return total rows or not	True
+Response Format
+
+{
+    "code": 0,
+    "msg": "OK",
+    "data": [
+        {
+            "accountType": 1,
+            "address": "44exxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "amountEv": 50000000,
+            "chainCode": 1,
+            "chainName": "BTC",
+            "confirmations": 1,
+            "confirmedHeight": null,
+            "createdAt": 1670000000000,
+            "currency": "BTC",
+            "currencyCode": 1,
+            "email": "abcdefg@gmail.com",
+            "errorCode": null,
+            "errMsg": null,
+            "id": 1,
+            "needConfirmHeight": null,
+            "status": "Success",
+            "transferStatus": null,
+            "txHash": "567exxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "type": "Deposit",
+            "userId": 10000001
+        }
+    ]
+}
+Response fields
+Field	Type	Required	Description	Possible Values
+depositTo	String	YES	deposit account type	SPOT, Contract
+address	String	Yes	deposit Address	
+amount	Long	Yes	deposit Amount	
+chainCode	Integer	Yes		
+chainName	String	Yes		
+confirmations	Long		chain confirmed block	
+confirmedHeight	Long		chain block height	
+createdAt	Long	YES	created time	
+currency	String	YES		
+currencyCode	Integer	YES		
+email	String		email Address	
+errorCode	Integer			
+errMsg	String			
+id	String	YES	record unique id	
+needConfirmHeight	Long		chain confirmed total height	
+status	String	YES		please refer to deposit status
+txHash	String			
+type	Enum	Yes	Deposit Type	Deposit & CompensateDeposit
+userId	Long	Yes		
+Deposit status
+Status	Description
+Success	Succeed deposit to Phemex account
+Rejected	Possible deposit address not supported
+SecurityChecking	Risk control center is processing incoming withdraw request
+SecurityCheckFailed	Failure to pass Risk control center security rules
+AmlCsApporve	AML rule broken, Phemex support team manually approve
+Confirmed	Deposit confirmed
+New	Newly submitted deposit
+Query deposit chain settings
+Request format
+
+GET /phemex-deposit/wallets/api/chainCfg?currency=<currency>
+Request parameters
+Parameter	Type	Required	Description	Case
+currency	String	YES	coin name	ETH
+Response Format
+
+{
+    "code": 0,
+    "msg": "OK",
+    "data": [
+        {
+            "currency": "TRX",
+            "currencyCode": 11,
+            "minAmountRv": "0",
+            "confirmations": 1,
+            "chainCode": 11,
+            "chainName": "TRX",
+            "status": "Active",
+            "contractAddress": "Ta7NHqjeKQxPTCi8q8ZY5pL8otSzgjLj6t"
+        }
+    ]
+}
+Response fields
+Field	Type	Required	Description	Case
+currency	String	YES	coin name	TRX
+currencyCode	Integer	YES	coin code	11
+minAmountRv	String		minimal deposit amount	
+confirmations	Long		chain confirmation height	
+chainCode	Integer	YES	chain code	
+chainName	String	YES	chain name	
+status	String	YES	Active or Suspend.Active mean available for deposit,Suspend mean not available for deposit	
+contractAddress	String		contract address	
+Query withdraw history records
+Request format
+
+GET /phemex-withdraw/wallets/api/withdrawHist?currency=<currency>&chainName=<chainNameList>&offset=<offset>&limit=<limit>&withCount=<withCount>
+Request Parameter
+Parameter	Type	Required	Description	Case
+currency	List	NO	currency name list	USDT, ETH
+chainName	List	NO	chain name list	ETH,TRX
+offset	Long	NO	default 0	
+limit	Integer	NO	default 20	
+withCount	Boolean	NO	Total conditional rows found, default False	True
+Response Format
+
+{
+    "code": 0,
+    "msg": "OK",
+    "data": [
+        {
+            "id": 100,
+            "address": "44exxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "amountEv": 220000000,
+            "chainCode": 11,
+            "chainName": "TRX",
+            "currency": "TRX",
+            "currencyCode": 11,
+            "email": "1234qwer@gmail.com",
+            "expiredAt": 1657000000000,
+            "feeEv": 100000000,
+            "nickName": null,
+            "phone": null,
+            "rejectReason": "",
+            "submitedAt": 1657000000000,
+            "txHash": "44exxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "userId": 100000001,
+            "status": "Succeed"
+        }
+    ]
+}
+Response Fields
+Field	Type	Required	Description	Possible Values
+id	Long	YES	unique identifier	
+address	String	YES	chain address	
+amountEv	Long	YES	received amount	
+chainCode	Integer	YES	chain code	
+chainName	String	YES	chain name	
+email	String			
+expiredAt	Long	YES	expired time	
+feeEv	Long	YES	withdraw real fee	
+nickName	String			
+phone	String			
+rejectReason	String			
+submitedAt	Long	YES		
+txHash	String		chain transfer hash key	
+userId	Long	YES		
+status	String	YES	withdraw status	please refer to withdraw status
+Withdraw status
+Status	Description
+Success	Done
+Rejected	Possible withdraw address mismatch
+Security Checking	Risk control center is processing incoming withdraw request
+Security check failed	Failure to pass Risk control center security rules
+Pending Review	Risk rule exposure
+Address Risk	Dangerous address detected
+Expired	Withdraw request timeout,normally 30 minutes
+Cancelled	Manually cancelled by client
+Pending Transfer	Security checking rules passed, prepare to transfer assets to target address
+Create withdraw request
+Request Format
+
+POST /phemex-withdraw/wallets/api/createWithdraw?currency=<currency>&address=<address>&amount=<amount>&addressTag=<addressTag>&chainName=<chainName>
+Request parameters
+Parameter	Type	Required	Description	Case
+currency	String	YES	currency name	"ETH"
+address	String	YES	withdraw address	"11xxxxxxxxxxxxxxxxxxxxx"
+amount	String	YES	withdraw amount	"1.234"
+addressTag	String	NO	Address tag	
+chainName	String	YES	chain Name	"TRX"
+Response Format
+
+{
+    "code": 0,
+    "msg": "OK",
+    "data": {
+        "id": 10000001,
+        "address": "44exxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "amountRv": "100",
+        "chainCode": 11,
+        "chainName": "TRX",
+        "currency": "USDT",
+        "currencyCode": 3,
+        "email": "abc@gmail.com",
+        "expiredAt": 1670000000000,
+        "feeRv": "1",
+        "nickName": null,
+        "phone": null,
+        "rejectReason": "",
+        "submitedAt": 1670000000000,
+        "txHash": null,
+        "userId": 10000001,
+        "status": "Success"
+    }
+}
+Response Fields
+Field	Type	Required	Description	Possible Values
+id	Long	YES	withdraw request unique identifier	
+address	String	YES	chain address	
+amountRv	String	YES	receive amount	
+chainCode	Integer	YES	chain code	4
+chainName	String	YES	chain name	ETH
+currency	String	YES	coin name	
+currencyCode	Integer	YES	coin code	
+email	String		user email address	
+expiredAt	Timestamp	YES	withdraw request expired time	
+feeRv	String	YES	withdraw fee	
+nickName	String			
+phone	String			
+rejectReason	String			
+submitedAt	Timestamp	YES		
+txHash	String		chain transfer hash	
+userId	Long	YES		
+status	String	YES		please refer to withdraw status
+Cancel withdraw request
+Request format
+
+POST /phemex-withdraw/wallets/api/cancelWithdraw?id=<id>
+Request parameters
+Parameter	Type	Required	Description	Case
+id	Long	YES	withdraw request unique identifier	10001
+Response Format
+
+{
+    "code": 0,
+    "msg": "OK",
+    "data": "OK"
+}
+Query withdraw chain settings
+Request format
+
+GET /phemex-withdraw/wallets/api/asset/info?currency=<currency>&amount=<amount>
+Request parameters
+Parameter	Type	Required	Description	Case
+currency	String	NO	coin name	"ETH"
+amount	String	NO	withdraw amount with fee	"0.1234"
+Response format
+
+{
+  "code": 0,
+  "msg": "ok",
+  "data": {
+    "currency": "USDT",
+    "currencyCode": 3,
+    "balanceRv": "100.000001",
+    "confirmAmountRv": "0",
+    "allAvailableBalanceRv": "1.000001",
+    "chainInfos": [
+      {
+        "chainCode": 4,
+        "chainName": "ETH",
+        "status": "Suspend",
+        "contractAddress": null,
+        "minWithdrawAmountRv": "2",
+        "minWithdrawAmountWithFeeRv": "6",
+        "withdrawFeeRv": "4",
+        "receiveAmountRv": "0"
+      },
+      {
+        "chainCode": 11,
+        "chainName": "TRX",
+        "status": "Active",
+        "contractAddress": "TX7NHqjeKQxPTCi8q8ZY5pL8otSzgjLj6t",
+        "minWithdrawAmountRv": "2",
+        "minWithdrawAmountWithFeeRv": "3",
+        "withdrawFeeRv": "1",
+        "receiveAmountRv": "0"
+      }
+    ]
+  }
+}
+Response fields
+Field	Type	Required	Description	Possible Value
+currency	String	YES	coin name	ETH
+currencyCode	Integer	YES	coin code	4
+balanceRv	String	YES	total balance	
+confirmAmountRv	String		apply for non kyc user only, lifetime remaining amount left	
+allAvailableBalanceRv	String	YES	total balance minus locked trading balance, locked withdraw balance and frozen balance	
+chainCode	Integer	YES	chain code	
+chainName	String	YES	chain name	
+status	String	YES	Active or Suspend.Active mean Withdrawable, Suspend mean Non-withdrawable	
+contractAddress	String		contract address	
+minWithdrawAmountRv	String		minimal withdraw amount	
+minWithdrawAmountWithFeeRv	String		minimal withdraw amount with fee	
+withdrawFeeRv	String		withdraw fee required for user input withdraw amount	
+receiveAmountRv	String		received withdraw amount for user input withdraw amount	
+Copy Trade REST API
+Endpoint Security Type
+Please raise API Key via web using Default API entry type, choose Read & Trade Permission, and IP Address is Don't Bind.
+Each API call must be signed and pass to server in HTTP header x-phemex-request-signature.
+Endpoints use HMAC SHA256 signatures. The HMAC SHA256 signature is a keyed HMAC SHA256 operation. Use your apiSecret as the key and the string URL Path + QueryString + Expiry + body ) as the value for the HMAC operation.
+The signature is case-sensitive.
+Query performance information of traders
+Request Format
+
+GET /phemex-lb/public/api/trader/performance-info?strategyIds=<strategyIds>&pageNum=<pageNum>&pageSize=<pageSize>
+Request parameters
+Parameter	Type	Required	Description	Case
+strategyIds	List	YES	one or more traders UID, separated by ,	113762135,600285,1106201
+pageNum	Integer	NO	page number, default 1	1
+pageSize	Integer	NO	page size, default 100	100
+Response Format
+
+{
+  "code": 0,
+  "msg": "OK",
+  "data": [
+    {
+      "updateTime": "2025-08-11T22:27:06.000Z",
+      "strategyId": 113762135,
+      "totalRoi": "-1.0005",
+      "totalPnL": "25.46",
+      "latestAum": "43.32"
+    },
+    {
+      "updateTime": "2025-08-11T00:09:25.000Z",
+      "strategyId": 600285,
+      "totalRoi": "0",
+      "totalPnL": "0",
+      "latestAum": "0"
+    },
+    {
+      "updateTime": "2025-08-11T00:09:25.000Z",
+      "strategyId": 1106201,
+      "totalRoi": "0",
+      "totalPnL": "0",
+      "latestAum": "0"
+    }
+  ]
+}
+Response Fields
+Field	Type	Description
+updateTime	String	update timestamp of data
+strategyId	Long	trader UID
+totalRoi	BigDecimal	total roi(summarized in USD) of trader, round to 4 decimal places
+totalPnL	BigDecimal	total pnl(summarized in USD) of trader, round to 2 decimal places
+latestAum	BigDecimal	lastest aum(summarized in USD) of trader, round to 2 decimal places
+Unified Trading Account REST API
+Query collateral info
+Request Format
+
+GET public/products-plus
+Response Format
+
+{
+  "code": 0,
+  "msg": "OK",
+  "data": {
+    "collaterals": [
+      {
+        "currency": "BTC",
+        "coefficient": "0.98",
+        "defaultHourlyInterestRate": "0.00000210",
+        "liquidityInDescendingOrder": 2,
+        "perpCollateral": true,
+        "perpLoan": false,
+        "convertRate": "0.999",
+        "debtLimit": "1"
+      }
+    ]
+  }
+}
+Response Fields
+Field	Type	Description
+currency	String	The currency name of the collateral configuration
+coefficient	String	The collateral coefficient used to calculate the collateral’s value in USDT. For example, if the BTC collateral coefficient is 0.9, then its value in USDT will be 0.9 × btcQty
+defaultHourlyInterestRate	String	The default hourly interest rate applied when incurring debt in this currency
+liquidityInDescendingOrder	Integer	The liquidity ranking of the currency when selecting assets to convert for repayment. For example, if both BTC and BNB are collaterals, BTC will be converted before BNB
+perpCollateral	Integer	Indicates whether this currency can be used as collateral for perpetual trading
+perpLoan	Boolean	Indicates whether this currency can be borrowed when a trade is settled. Currently, only USDT is supported
+convertRate	String	The exchange rate applied when converting this collateral to another currency
+debtLimit	String	The maximum debt limit for this currency. When the debt reaches this limit, automatic conversion for repayment will be triggered
+Query risk mode
+Request Format
+
+GET /uta-api/risk/risk-mode
+Response Format
+
+{
+  "code": 0,
+  "msg": "OK",
+  "data": {
+    "riskMode": "MultiAsset",
+    "lastUpdateTimeNs": 1701414861472716784
+  }
+}
+Response Fields
+Field	Type	Description
+riskMode	String	current risk mode: Classic (i.e., the traditional SingleAsset trading mode), MultiAsset
+lastUpdateTimeNs	Long	uta account update time in nanosecond
+Switch risk mode
+Request Format
+
+POST /uta-account/switch-mode?riskMode=<riskMode>
+Request parameters
+Parameter	Type	Required	Description	Possible values
+riskMode	String	YES	target risk mode	SINGLE_ASSET, MULTI_ASSETS
+Response Format
+
+{
+  "code": 0,
+  "msg": "OK",
+  "data": {
+    "userId": 10002222,
+    "switchModeSuccess": true,
+    "switchModeCheckPassed": true,
+    "switchModeCheckDetail": {
+      "contractOrderPositionCheckPassed": true
+    }
+  }
+}
+Response Fields
+Field	Type	Description
+userId	Long	user ID
+switchModeSuccess	Boolean	Whether the switch action is successful
+switchModeCheckPassed	Boolean	Whether the conditions are met for switching riskMode
+switchModeCheckDetail	Object	Detailed information on switch mode check: contractOrderPositionCheckPassed(check no active orders), contractDebtCheckPassed(check no unpaid debt)
+Query asset
+Request Format
+
+GET /uta-biz/assets?currency=<currency>
+Request parameters
+Parameter	Type	Required	Description	Possible values
+currency	String	YES	Asset to query	BTC, USDT, ETH ...
+Response Format
+
+{
+  "code": 0,
+  "msg": "OK",
+  "data": {
+    "userId": 10002222,
+    "currency": "USDT",
+    "balanceRv": "988.6059477872",
+    "totalBonusRv": "0",
+    "borrowedRv": "0",
+    "interestRv": "0",
+    "frozenBalanceAsCollateralRv": "0"
+  }
+}
+Response Fields
+Field	Type	Description
+userId	Long	User ID
+currency	String	Asset currency name
+balanceRv	String	Total balance of this currency
+totalBonusRv	String	Total bonus of this currency
+borrowedRv	String	Total borrowed balance of this currency wallet
+interestRv	String	Total unpaid interest of this currency wallet
+frozenBalanceAsCollateralRv	String	The frozen balance used as collateral for trading
+Payback debts
+Request Format
+
+POST /uta-funds/contract/payback
+Request Format json { "currency": "USDT", "amountRv": "40" } * Request parameters
+
+Parameter	Type	Required	Description	Possible values
+currency	String	YES	Currency to payback	USDT
+amountRv	String	YES	Payback amount real value	1000.12
+Response Format
+
+{
+  "code": 0,
+  "msg": "OK",
+  "data": {
+    "borrowedAmountRq": "60",
+    "currency": "USDT"
+  }
+}
+Example Explanation: - If the user originally owed 100 USDT and pays back 40 USDT, the remaining debt (borrowedAmountRq) will be 60 USDT in the response.
+
+Response Fields
+Field	Type	Description
+currency	String	currency to payback
+borrowedAmountRq	String	Current borrowed amount after the payback
+Query risk unit
+Request Format
+
+GET /uta-api/risk/risk-units?currency=<currency>&riskType=<riskType>
+Request parameters
+Parameter	Type	Required	Description	Possible values
+currency	String	No	Valuation currency of the risk unit to query	BTC, USDT, ETH ...
+riskType	String	No	Type of the risk unit	MultiAssetContractCross, SingleAssetContractCross, Isolated
+Response Format
+
+{
+  "code": 0,
+  "msg": "OK",
+  "data": [
+    {
+      "userId": 10002222,
+      "riskMode": "Classic",
+      "currency": "BTC",
+      "symbol": "BTCUSD",
+      "posSide": "",
+      "userStatus": "Normal",
+      "marginRatioRr": "0.001",
+      "totalBalanceRv": "0.00108802",
+      "totalEquityRv": "0.00108802",
+      "totalPosUnpnlRv": "0",
+      "totalDebtRv": "0",
+      "totalPosCostRv": "0",
+      "totalPosMMRv": "0",
+      "totalOrdUsedBalanceRv": "0",
+      "fixedUsedRv": "0",
+      "riskType": "SingleAssetContractCross"
+    },
+    {
+      "userId": 10002222,
+      "riskMode": "Classic",
+      "currency": "USDT",
+      "symbol": "BTCUSDT",
+      "posSide": "",
+      "userStatus": "Normal",
+      "marginRatioRr": "0.001",
+      "totalBalanceRv": "5523.514992992124",
+      "totalEquityRv": "5538.429112992124",
+      "totalPosUnpnlRv": "14.91412",
+      "totalDebtRv": "0",
+      "totalPosCostRv": "14.975552230788",
+      "totalPosMMRv": "5.63402034904",
+      "totalOrdUsedBalanceRv": "0",
+      "fixedUsedRv": "0",
+      "riskType": "SingleAssetContractCross"
+    }
+  ]
+}
+Response Fields
+Field	Type	Description	Possible Values
+userId	Long	User ID	
+riskType	String	Type of the risk unit	MultiAssetContractCross, SingleAssetContractCross, Isolated
+riskMode	String	Current risk mode	Classic(i.e., the traditional SingleAsset trading mode), MultiAsset, Isolated
+currency	String	Valuation currency of the risk unit	
+symbol	String	Position symbol if the risk unit is Isolated; Major symbol of this currency contract if Cross	
+posSide	String	Position side	Long/Short/Merge, only used when risk mode is Isolated
+userStatus	String	User current status	Banned, Normal
+marginRatioRr	String	To evaluate the risk of this user. If >= 1, the the positions under this risk unit scope will be liquidated.
+margin ratio = totalMaintenanceMargin / totalEquity	
+totalBalanceRv	String	Total balance under this risk unit scope	
+totalEquityRv	String	Total equity under this risk unit scope	
+totalPosUnpnlRv	String	Total unreleased pnl under this risk unit unit scope	
+totalDebtRv	String	Total borrowed under this risk unit unit scope + total interest	
+totalPosCostRv	String	Total position cost under this risk unit unit scope	
+totalPosMMRv	String	Total maintenance margin under this risk unit unit scope	
+totalOrdUsedBalanceRv	String	Total order used under this risk unit unit scope	
+fixUsedRv	String	Total fixed used under this risk unit unit scope	
+Query borrow history
+Request Format
+
+GET /uta-funds/contract/borrow?currency=<currency>&start=<start>&end=<end>&pageNum=<pageNum>&pageSize=<pageSize>
+Request parameters
+Parameter	Type	Required	Description	Possible values
+currency	String	NO	currency	USDT,BTC
+start	Long	NO	Epoch milliseconds timestamp, default 0	
+end	Long	NO	Epoch milliseconds timestamp, default 0	
+pageNum	Long	NO	default 0	
+pageSize	Integer	NO	default 20	
+Response Format
+
+{
+  "code": 0,
+  "msg": "OK",
+  "data": {
+    "total": 1,
+    "rows": [
+      {
+        "currency": "USDT",
+        "borrowTime": 1677211672675,
+        "amountRv": "94.05"
+      }
+    ]
+  }
+}
+Response Fields
+Field	Type	Description
+currency	String	Borrow currency name
+borrowTime	String	Borrow timestamp
+amountRv	String	Amount borrowed
+Query payback history
+Request Format
+
+GET /uta-funds/contract/payback?currency=<currency>&start=<start>&end=<end>&pageNum=<pageNum>&pageSize=<pageSize>
+Request parameters
+Parameter	Type	Required	Description	Possible values
+currency	String	NO	The currency used for the repayment	USDT,BTC
+start	Long	NO	Epoch milliseconds timestamp, default 0	
+end	Long	NO	Epoch milliseconds timestamp, default 0	
+pageNum	Long	NO	default 0	
+pageSize	Integer	NO	default 20	
+Response Format
+
+{
+  "code": 0,
+  "msg": "OK",
+  "data": {
+    "total": 1,
+    "rows": [
+      {
+        "currency": "USDT",
+        "repayTime": 1678976978535,
+        "principalAmountRv": "24.05469895",
+        "interestAmountRv": "0.019881",
+        "liqFeeRv": "0"
+      }
+    ]
+  }
+}
+Response Fields
+Field	Type	Description
+currency	String	The currency used for the repayment
+repayTime	String	The timestamp (in milliseconds) when the repayment was made
+principalAmountRv	String	The principal amount repaid in this transaction
+interestAmountRv	String	The interest amount repaid in this transaction
+liqFeeRv	String	The liquidation fee paid during the repayment (applicable only when auto-repayment occurs during liquidation)
+Query interest history
+Request Format
+
+GET /uta-funds/contract/borrow/interests?currency=<currencyList>&start=<start>&end=<end>&pageNum=<pageNum>&pageSize=<pageSize>
+Request parameters
+Parameter	Type	Required	Description	Possible values
+currency	String	NO	currency	USDT,BTC
+start	Long	NO	Epoch milliseconds timestamp, default 0	
+end	Long	NO	Epoch milliseconds timestamp, default 0	
+pageNum	Long	NO	default 0	
+pageSize	Integer	NO	default 20	
+Response Format
+
+{
+  "code": 0,
+  "msg": "OK",
+  "data": {
+    "total": 1,
+    "rows": [
+      {
+        "borrowCurrency": "USDT",
+        "interestCalcTime": 1678975566487,
+        "interestCurrency": "USDT",
+        "hourlyInterestRv": "0.00013254",
+        "hourlyRateRr": "0.00000551",
+        "annualRateRr": "0.0482676"
+      }
+    ]
+  }
+}
+Response Fields
+Field	Type	Description
+borrowCurrency	String	The currency in which the funds were borrowed
+interestCalcTime	Long	The timestamp (in milliseconds) when the interest was calculated
+interestCurrency	String	The currency in which the interest amount is denominated
+hourlyInterestRv	String	The amount of interest accrued during the specified hour
+hourlyRateRr	String	The hourly interest rate applied during the calculation period
+annualRateRr	String	The equivalent annualized interest rate based on the hourly rate
+Query convert history
+Request Format
+
+GET /uta-exchanger/assets/convert?fromCurrency=<currency>&toCurrency=<toCurrency>
+Request parameters
+Parameter	Type	Required	Description	Possible values
+fromCurrency	String	NO	From currency in the conversion	USDT,BTC
+toCurrency	String	NO	Target currency in the conversion	USDT,BTC
+start	Long	NO	Epoch milliseconds timestamp, default 0	
+end	Long	NO	Epoch milliseconds timestamp, default 0	
+offset	Integer	NO	Start from 0, default 0	
+limit	Integer	NO	Page size, default to 20, max 200	
+Response Format
+
+{
+  "code": 0,
+  "msg": "OK",
+  "data": {
+    "total": 2,
+    "rows": [
+      {
+        "linkKey": "c5c1c6be-1cfc-41be-aa8d-f4e2429356b9",
+        "createTime": 1760603394000,
+        "fromCurrency": "USDT",
+        "toCurrency": "BTC",
+        "fromAmountEv": 1000000000000,
+        "toAmountEv": 9009468,
+        "conversionRate": 900
+      },
+      {
+        "linkKey": "789def56-305e-4f78-a18b-2c0b0108484d",
+        "createTime": 1760448181000,
+        "fromCurrency": "USDT",
+        "toCurrency": "BTC",
+        "fromAmountEv": 1000000000,
+        "toAmountEv": 8970,
+        "conversionRate": 897
+      }
+    ]
+  }
+}
+Response Fields
+Field	Type	Description
+linkKey	String	The unique identifier for the conversion record
+createTime	Long	The timestamp (in milliseconds) of the conversion
+fromCurrency	String	The source currency used in the conversion
+toCurrency	String	The target currency received from the conversion
+fromAmountEv	String	The converted amount of the source currency, represented as an enlarged value
+toAmountEv	String	The converted amount of the target currency, represented as an enlarged value
+conversionRate	String	The exchange rate applied during the conversion
+Other API
+Other APIs listed below are not changed and should be same as before * Transfer API * CreateOrder API * ReplaceOrder API * AssignIsolatedBalance API * WebSocket Related API
+
+The data and interface of websocket are same as before. But in SingleAsset mode, users may subscribe to AOPS (see https://phemex-docs.github.io/#subscribe-account-order-position-aop-2) to get the latest balance and positions. In MultiAsset mode, users need to subscribe to RAS (see https://phemex-docs.github.io/#subscribe-account-margin-rasO) to get the latest asset info in different currencies, while positions still need to get from AOPS
