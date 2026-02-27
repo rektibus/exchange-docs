@@ -64,11 +64,11 @@ https://sandbox.tothemoon.com
 Production
 Production URLs: For production use the following URLs.
 
-HTTPS API: https://api.tothemoon.com
+HTTPS API: https://api.tothemoon.com (Active)
 
-Contracts API: wss://contracts-api.tothemoon.com/v1/trading
+Contracts API: wss://octopus.cryptology.com/v1/connect (Bridge URL - docs.tothemoon.com listed subdomains are NXDOMAIN)
 
-Octopus API: wss://octopus.tothemoon.com/v1/connect
+Octopus API: wss://octopus.cryptology.com/v1/connect (Active Bridge URL)
 
 Website:
 

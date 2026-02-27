@@ -127,11 +127,33 @@ wss://bitnomial.com/exchange/ws
 All messages have a `type` field for classification.
 
 ### Subscribe Format
-Send JSON with `type: "subscribe"` and product codes:
-```json
-{"type": "subscribe", "channel": "trade", "product_codes": ["BUS"]}
-{"type": "subscribe", "channel": "book", "product_codes": ["BUS"]}
+Must send within 10 seconds of connecting or server disconnects.
+Send JSON with `type: "subscribe"`, top-level `product_codes` for all channels, and `channels` array for per-channel overrides:
+
+```typescript
+interface SubscribeMessage {
+  type: "subscribe";
+  product_codes: string[];
+  channels: ChannelSubscription[];
+}
+interface ChannelSubscription {
+  name: string;
+  product_codes: string[];
+}
 ```
+
+```json
+{
+  "type": "subscribe",
+  "product_codes": ["BUS"],
+  "channels": [
+    {"name": "trade", "product_codes": ["BUS"]},
+    {"name": "book", "product_codes": ["BUS"]}
+  ]
+}
+```
+
+> **IMPORTANT**: The old format `{"type":"subscribe","channel":"trade","product_codes":["BUS"]}` (singular `channel`) is REJECTED with `WebSocketMessage parse error`. Must use `channels` array of objects.
 
 Product codes can be:
 1. **Exact symbol**: `BUSH26` → only that product
