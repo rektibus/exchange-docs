@@ -1,535 +1,1882 @@
-# Bithumb API Documentation (v1 — Upbit-compatible)
+catalog
 
-> **Base URL**: `https://api.bithumb.com`
-> **Market format**: `KRW-BTC` (quote-base)
-> **Note**: Bithumb migrated from old API (`/public/`) to new Upbit-compatible v1 API. Old endpoints still work but new ones are canonical.
+[TOC]
 
----
+## [General Rest Api Information]
 
-## REST API
+- The base-endpoint is: **https://global-openapi.bithumb.pro/openapi/v1**
 
-### Market Code Inquiry (Products)
+- All endpoints return either a JSON object or array.
 
-```
-GET /v1/market/all?isDetails=false
-```
+- For `GET` endpoints, parameters must be sent as a `query string`.
 
-**Public**. Returns list of all tradable markets.
+- For POST endpoints, parameters must be send in the request body, with content-type(application/json) in headers.
 
-**Response** (array):
+- Some restfull api client demos: 
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `market` | String | Market code, e.g. `KRW-BTC` |
-| `korean_name` | String | Korean name |
-| `english_name` | String | English name |
-| `market_warning` | String | `NONE` or `CAUTION` |
+  Java : https://github.com/bithumb-pro/java-api-client 
 
-```json
-[
-  {
-    "market": "KRW-BTC",
-    "korean_name": "비트코인",
-    "english_name": "Bitcoin"
-  }
-]
-```
+  Python: https://github.com/bithumb-pro/python-api-client 
 
----
+  C++: https://github.com/bithumb-pro/bthmcpp 
 
-### Ticker (Current Price)
+  Go: https://github.com/bithumb-pro/go-api-client
 
-```
-GET /v1/ticker?markets=KRW-BTC
-```
+  Php: https://github.com/bithumb-pro/php-api-client
+  
+- Api request rate limit: 10 time/s for create/cancel order
 
-**Public**. Snapshot at request time. `markets` param: comma-separated market codes.
+| Version | Description                                                  | Time    | Mark   |
+| ------- | ------------------------------------------------------------ | ------- | ------ |
+| V1.0.0  | include some rest api(virtual coin,contracts) and error code list. | 2019-03 | usable |
+|         |                                                              |         |        |
 
-**Response** (array):
+## [Request Parameter Infomation] (Important)
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `market` | String | Market code |
-| `trade_date` | String | Last trade date UTC `yyyyMMdd` |
-| `trade_time` | String | Last trade time UTC `HHmmss` |
-| `trade_timestamp` | Long | Last trade timestamp (ms) |
-| `opening_price` | Double | Open price |
-| `high_price` | Double | High price |
-| `low_price` | Double | Low price |
-| `trade_price` | Double | Last trade price (close) |
-| `prev_closing_price` | Double | Previous day close (00:00 KST) |
-| `change` | String | `EVEN` / `RISE` / `FALL` |
-| `change_price` | Double | Absolute change |
-| `change_rate` | Double | Absolute change rate |
-| `signed_change_price` | Double | Signed change |
-| `signed_change_rate` | Double | Signed change rate |
-| `trade_volume` | Double | Most recent trade volume |
-| `acc_trade_price` | Double | Cumulative trade amount (00:00 KST) |
-| `acc_trade_price_24h` | Double | 24h cumulative trade amount |
-| `acc_trade_volume` | Double | Cumulative trade volume (00:00 KST) |
-| `acc_trade_volume_24h` | Double | 24h cumulative trade volume |
-| `highest_52_week_price` | Double | 52-week high |
-| `highest_52_week_date` | String | `yyyy-MM-dd` |
-| `lowest_52_week_price` | Double | 52-week low |
-| `lowest_52_week_date` | String | `yyyy-MM-dd` |
-| `timestamp` | Long | Timestamp (ms) |
+### Public request params
 
-```json
-[
-  {
-    "market": "KRW-BTC",
-    "trade_date": "20180418",
-    "trade_time": "102340",
-    "trade_timestamp": 1524047020000,
-    "opening_price": 8450000,
-    "high_price": 8679000,
-    "low_price": 8445000,
-    "trade_price": 8621000,
-    "prev_closing_price": 8450000,
-    "change": "RISE",
-    "change_price": 171000,
-    "change_rate": 0.0202366864,
-    "signed_change_price": 171000,
-    "signed_change_rate": 0.0202366864,
-    "trade_volume": 0.02467802,
-    "acc_trade_price": 108024804862.58253,
-    "acc_trade_price_24h": 232702901371.09308,
-    "acc_trade_volume": 12603.53386105,
-    "acc_trade_volume_24h": 27181.31137002,
-    "highest_52_week_price": 28885000,
-    "highest_52_week_date": "2018-01-06",
-    "lowest_52_week_price": 4175000,
-    "lowest_52_week_date": "2017-09-25",
-    "timestamp": 1524047026072
-  }
-]
-```
+| Field     | Description         | Required(Y or N) | Mark                                                         | Type   |
+| --------- | ------------------- | ---------------- | ------------------------------------------------------------ | ------ |
+| apiKey    | unique tag for user | N                | required by authentication of request，apply for the key in website.                        | String |
+| timestamp | request timestamp   | N                | the paramter will be need in request which need to authenticate, if space of time too long between current and request will be reject. | Long  |
+| signature | signature data      | N                | required by authentication of request.                       | String |
+| msgNo     | request id          | N                | just for some api(place order),max length is 50 chars        | String |
 
----
+### Response Information
 
-### Minute Candles
+Base style :
+
+	{
+		"info": {},
+		"success": true,
+		"msg": "",
+		"code": "0",
+		"params": []
+	}
+
+if need page, like:
 
 ```
-GET /v1/candles/minutes/{unit}?market=KRW-BTC&count=1
+{
+	"info": {
+        "num":xx, // total counts
+        "list":[] // data collection 
+	},
+	"success": true,
+	"msg": "",
+	"code": "0",
+	"params": []
+}
 ```
 
-**Public**. `unit`: 1, 3, 5, 10, 15, 30, 60, 240.
+## [Data of Signature] (Important)
 
-**Params**:
+- The part just for authentication of request, the pair of apiKey and secretKey can be apply in website (https://bithumb.pro)
 
-| Param | Type | Required | Description |
-|-------|------|----------|-------------|
-| `unit` | int | Yes (path) | Minute interval |
-| `market` | String | Yes | Market code |
-| `to` | String | No | Last candle time (exclusive), ISO8601. Default: most recent |
-| `count` | int | No | Number of candles (max 200, default 1) |
+- For authentication of request, the request paramters need to be sign  by HmacSHA256
 
-**Response** (array):
+- The prepared signature data is a string which make up of  all request parameters which in alphabetic order and join with '&'
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `market` | String | Market code |
-| `candle_date_time_utc` | String | Candle time UTC `yyyy-MM-dd'T'HH:mm:ss` |
-| `candle_date_time_kst` | String | Candle time KST |
-| `opening_price` | Double | Open |
-| `high_price` | Double | High |
-| `low_price` | Double | Low |
-| `trade_price` | Double | Close |
-| `timestamp` | Long | Candle close timestamp (ms) |
-| `candle_acc_trade_price` | Double | Cumulative trade amount |
-| `candle_acc_trade_volume` | Double | Cumulative trade volume |
-| `unit` | int | Minutes unit |
+- The signature needs to be in lowercase
 
-```json
-[
-  {
-    "market": "KRW-BTC",
-    "candle_date_time_utc": "2018-04-18T10:16:00",
-    "candle_date_time_kst": "2018-04-18T19:16:00",
-    "opening_price": 8615000,
-    "high_price": 8618000,
-    "low_price": 8611000,
-    "trade_price": 8616000,
-    "timestamp": 1524046594584,
-    "candle_acc_trade_price": 60018891.90054,
-    "candle_acc_trade_volume": 6.96780929,
-    "unit": 1
-  }
-]
-```
+  signature example:
 
----
+  request parameters like:
 
-### Recent Trades
+    	{
+   		"apiKey" : "XXX",
+   		"msgNo":"1234567890",
+   		"timestamp":1534892332334,
+   		"version":"V1.0.0" //this parameter are optional.
+  	}  
 
-```
-GET /v1/trades/ticks?market=KRW-BTC&count=3
-```
+  String json = “apiKey=XXX&msgNo=1234567890&timestamp=1534892332334&version=V1.0.0”；
 
-**Public**. Returns recent trade ticks.
+  String signature = HmacSHA256.encode (json , secretKey );
 
-**Params**:
+  last,the request parameters like:
 
-| Param | Type | Required | Description |
-|-------|------|----------|-------------|
-| `market` | String | Yes | Market code |
-| `to` | String | No | Last trade time (exclusive), `HH:mm:ss` or `HHmmss` |
-| `count` | int | No | Number of trades (max 500, default 1) |
-| `cursor` | String | No | Pagination cursor (`sequential_id`) |
-| `daysAgo` | int | No | Days ago (1-7, default 0 = today) |
+    	{
+   		"apiKey" : "XXX",
+   		"msgNo":"1234567890",
+   		"timestamp":1534892332334,
+   		"version":"V1.0.0",
+  	        "signature": signature
+        }  
 
-**Response** (array):
+## [Api Detail]
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `market` | String | Market code |
-| `trade_date_utc` | String | Trade date UTC `yyyy-MM-dd` |
-| `trade_time_utc` | String | Trade time UTC `HH:mm:ss` |
-| `timestamp` | Long | Timestamp (ms) |
-| `trade_price` | Double | Trade price |
-| `trade_volume` | Double | Trade volume |
-| `prev_closing_price` | Double | Previous day close |
-| `change_price` | Double | Price change |
-| `ask_bid` | String | `ASK` = sell, `BID` = buy |
-| `sequential_id` | Long | Unique sequential ID |
+### [Normal]
 
-```json
-[
-  {
-    "market": "KRW-BTC",
-    "trade_date_utc": "2026-02-17",
-    "trade_time_utc": "23:25:27",
-    "timestamp": 1771370727772,
-    "trade_price": 99990000,
-    "trade_volume": 0.00059798,
-    "prev_closing_price": 99391000,
-    "change_price": 599000,
-    "ask_bid": "ASK",
-    "sequential_id": 17713707277720000
-  }
-]
-```
+#### 1. query server time
 
-> **REST → Canonical field mapping** (for `rest_field_map`):
-> - `trade_price` → `price`
-> - `trade_volume` → `quantity`
-> - `ask_bid` → `side` (side_map: `ASK`=sell, `BID`=buy)
-> - `timestamp` → `timestamp`
-> - `sequential_id` → `trade_id`
+request url: {base-endpoint}/serverTime
 
----
+request method: GET
 
-### Orderbook
+request parameter infomation: none
+
+response example: 
 
 ```
-GET /v1/orderbook?markets=KRW-BTC
+{
+"data": 1557134972000,
+"success": true,
+"msg": "",
+"code": "0"
+}
 ```
 
-**Public**. `markets` param: comma-separated market codes.
+#### 2. config detail
 
-Single market → 30 levels. Multiple markets → 15 levels each.
+request url: {base-endpoint}/spot/config
 
-**Response** (array):
+request method: GET
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `market` | String | Market code |
-| `timestamp` | Long | Orderbook generation time (ms) |
-| `total_ask_size` | Double | Total remaining ask quantity |
-| `total_bid_size` | Double | Total remaining bid quantity |
-| `orderbook_units` | List | Orderbook levels (see below) |
+request parameter infomation: null
 
-**orderbook_units** (ordered best→worst):
+response description: 
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `ask_price` | Double | Ask price |
-| `bid_price` | Double | Bid price |
-| `ask_size` | Double | Ask size |
-| `bid_size` | Double | Bid size |
+| Field          | Description     | Mark | Type   |
+| -------------- | --------------- | ---- | ------ |
+| spotConfig     | spot config     |      | Object |
+| coinConfig     | coin config     |      | Object |
+| contractConfig | contract config |      | Object |
 
-```json
-[
-  {
-    "market": "KRW-BTC",
-    "timestamp": 1529910247984,
-    "total_ask_size": 8.83621228,
-    "total_bid_size": 2.43976741,
-    "orderbook_units": [
-      {"ask_price": 6956000, "bid_price": 6954000, "ask_size": 0.24078656, "bid_size": 0.00718341},
-      {"ask_price": 6958000, "bid_price": 6953000, "ask_size": 1.12919, "bid_size": 0.11500074},
-      {"ask_price": 6960000, "bid_price": 6952000, "ask_size": 0.08614137, "bid_size": 0.19019028}
+coinConfig: 
+
+| Field          | Description           | Mark | Type   |
+| -------------- | --------------------- | ---- | ------ |
+| name           | coin name             |      | String |
+| fullName       | full name             |      | String |
+| depositStatus  | can deposit           |      | String |
+| withdrawStatus | can withdraw          |      | String |
+| minWithdraw    | min withdraw amount   |      | String |
+| withdrawFee    | withdraw fee          |      | String |
+| makerFeeRate   | maker transaction fee |      | String |
+| takerFeeRate   | taker transaction fee |      | String |
+| minTxAmt       | min transaction amount|      | String |
+
+contractConfig: 
+
+| Field        | Description           | Mark | Type   |
+| ------------ | --------------------- | ---- | ------ |
+| symbol       |                       |      | String |
+| makerFeeRate | maker transaction fee |      | String |
+| takerFeeRate | taker transaction fee |      | String |
+
+spotConfig: 
+
+| Field    | Description | Mark | Type     |
+| -------- | ----------- | ---- | -------- |
+| symbol   |             |      | String   |
+| accuracy |             |      | String[] |
+| percentPrice |     price range(multiplierDown and multiplierUp), lastPrice\*multiplierDown < price < lastPrice\*multiplierUp       |      | Object |
+
+response example: 
+
+```
+{
+    "data": {
+        "coinConfig": [
+            {
+                "makerFeeRate": "0.001",
+                "minWithdraw": "10",
+                "withdrawFee": "0.1",
+                "name": "BXA",
+                "depositStatus": "0",
+                "fullName": "Exchange Alliance",
+                "takerFeeRate": "0.001",
+                "withdrawStatus": "0"
+            },
+            ...
+        ],
+        "contractConfig": [
+            {
+                "symbol": "TBTCUSD",
+                "makerFeeRate": "-0.00025",
+                "takerFeeRate": "0.00075"
+            }
+        ],
+        "spotConfig": [
+            {
+                "symbol": "BTC-USDT",
+                "accuracy": [
+                    "2",
+                    "6"
+                ],
+		"percentPrice":
+			{
+				"multiplierDown":"0.2",
+				"multiplierUp":"3"
+			}
+            },
+            ...
     ]
-  }
-]
-```
-
-> **Note**: Bids and asks are interleaved in `orderbook_units` — each entry has BOTH a bid and ask level at that depth position. This is different from the typical separate `bids[]`/`asks[]` format.
-
----
-
-### Market Alert System
-
-```
-GET /v1/market/virtual_asset_warning
-```
-
-**Public**. Returns list of markets under alert designation.
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `market` | String | Market code |
-| `warning_type` | String | `PRICE_SUDDEN_FLUCTUATION`, `PRICE_DIFFERENCE_HIGH`, `SPECIFIC_ACCOUNT_HIGH_TRANSACTION`, `TRADING_VOLUME_SUDDEN_FLUCTUATION`, `DEPOSIT_AMOUNT_SUDDEN_FLUCTUATION` |
-| `warning_step` | String | `CAUTION`, `WARNING`, `DANGER` |
-| `end_date` | String | Alert end date KST `yyyy-MM-dd HH:mm:ss` |
-
----
-
-## WebSocket API
-
-### Connection
-
-```
-Public:  wss://ws-api.bithumb.com/websocket/v1
-Private: wss://ws-api.bithumb.com/websocket/v1/private
-```
-
-**Rate limit**: 10 connections/sec per IP. Data received after connection is not rate-limited.
-
-**Data types**: `snapshot` (state at request time) and `realtime` (continuous stream). Can request both or one.
-
-**Public channels**: `ticker`, `trade`, `orderbook`
-**Private channels**: `myOrder`, `myAsset` (require JWT auth in header)
-
-### Request Format
-
-Requests are JSON arrays with ticket, type, and optional format fields:
-
-```json
-[
-  {"ticket": "unique-id"},
-  {"type": "ticker", "codes": ["KRW-BTC", "BTC-ETH"]},
-  {"type": "trade", "codes": ["KRW-BTC"]},
-  {"format": "SIMPLE"}
-]
-```
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `ticket` | String | Yes | Unique requester ID (use UUID) |
-| `type` | String | Yes | Channel: `ticker`, `trade`, `orderbook` |
-| `codes` | String[] | Yes | Market codes |
-| `is_only_snapshot` | Boolean | No | Only receive snapshot |
-| `is_only_realtime` | Boolean | No | Only receive realtime |
-| `format` | String | No | `DEFAULT` or `SIMPLE` (abbreviated field names) |
-
-Multiple `type` fields can be specified in one request.
-
----
-
-### WS Ticker
-
-**DEFAULT format** — discriminator: `"type": "ticker"`
-
-```json
-{
-  "type": "ticker",
-  "code": "KRW-BTC",
-  "opening_price": 484500,
-  "high_price": 493100,
-  "low_price": 472500,
-  "trade_price": 493100,
-  "prev_closing_price": 484500,
-  "change": "RISE",
-  "change_price": 8600,
-  "signed_change_price": 8600,
-  "change_rate": 0.01775026,
-  "signed_change_rate": 0.01775026,
-  "trade_volume": 3.2529,
-  "acc_trade_volume": 220.0447,
-  "acc_trade_volume_24h": 13380.57687512,
-  "acc_trade_price": 105917424.208256,
-  "acc_trade_price_24h": 8227950466.316009,
-  "trade_date": "20240910",
-  "trade_time": "091617",
-  "trade_timestamp": 1725927377174,
-  "ask_bid": "BID",
-  "highest_52_week_price": 999999000,
-  "highest_52_week_date": "2024-06-18",
-  "lowest_52_week_price": 1000,
-  "lowest_52_week_date": "2024-06-18",
-  "market_state": "ACTIVE",
-  "is_trading_suspended": false,
-  "market_warning": "NONE",
-  "timestamp": 1725927377287,
-  "stream_type": "SNAPSHOT"
+},
+"code": "0",
+"msg": "success",
+"timestamp": 1557200664263
 }
 ```
 
-**SIMPLE format** — discriminator: `"ty": "ticker"`
+### [Normal Authentication api]
 
-| DEFAULT | SIMPLE | Description |
-|---------|--------|-------------|
-| `type` | `ty` | Channel type |
-| `code` | `cd` | Market code |
-| `opening_price` | `op` | Open |
-| `high_price` | `hp` | High |
-| `low_price` | `lp` | Low |
-| `trade_price` | `tp` | Last trade price |
-| `trade_volume` | `tv` | Last trade volume |
-| `trade_timestamp` | `ttms` | Trade timestamp (ms) |
-| `acc_trade_volume` | `atv` | Cumulative volume |
-| `acc_trade_volume_24h` | `atv24h` | 24h volume |
-| `acc_trade_price` | `atp` | Cumulative amount |
-| `acc_trade_price_24h` | `atp24h` | 24h amount |
-| `ask_bid` | `ab` | `ASK` or `BID` |
-| `timestamp` | `tms` | Message timestamp (ms) |
-| `stream_type` | `st` | `SNAPSHOT` or `REALTIME` |
+#### 1. withdraw   (**need withdraw authentication**)
 
----
+request url: {base-endpoint}/withdraw
 
-### WS Trade
+request method: POST
 
-**Request**: `{"type": "trade", "codes": ["KRW-BTC"]}`
+request parameter infomation: 
 
-**DEFAULT format** — discriminator: `"type": "trade"`
+| Filed       | Description           | Required(Y or N) | Mark                     | Type   |
+| ----------- | --------------------- | ---------------- | ------------------------ | ------ |
+| coinType    |                       | Y                | e.g BTC,USDT(USDT-ERC20,USDT-OMNI)                  | String |
+| address     | target wallet address | Y                |                          | String |
+| extendParam | memo or tag           | N                |                          | String |
+| quantity    |                       | Y                |                          | String |
+| mark        |                       | Y                | max support for 250 char | String |
 
-| DEFAULT | SIMPLE | Type | Description |
-|---------|--------|------|-------------|
-| `type` | `ty` | String | `trade` |
-| `code` | `cd` | String | Market code (e.g. `KRW-BTC`) |
-| `trade_price` | `tp` | Double | Trade price |
-| `trade_volume` | `tv` | Double | Trade volume |
-| `ask_bid` | `ab` | String | `ASK` = sell, `BID` = buy |
-| `prev_closing_price` | `pcp` | Double | Previous day close |
-| `change` | `c` | String | `RISE`/`EVEN`/`FALL` |
-| `change_price` | `cp` | Double | Absolute change |
-| `trade_date` | `tdt` | String | Trade date KST `yyyy-MM-dd` |
-| `trade_time` | `ttm` | String | Trade time KST `HH:mm:ss` |
-| `trade_timestamp` | `ttms` | Long | Trade timestamp (ms) |
-| `sequential_id` | `sid` | Long | Unique trade ID (not ordered) |
-| `timestamp` | `tms` | Long | Message timestamp (ms) |
-| `stream_type` | `st` | String | `SNAPSHOT`/`REALTIME` |
+#### 2. transfer asset for inner account   (**need withdraw authentication**) (Deprecated)
 
-```json
-{
-  "type": "trade",
-  "code": "KRW-BTC",
-  "trade_price": 489700,
-  "trade_volume": 1.4825,
-  "ask_bid": "BID",
-  "prev_closing_price": 484500,
-  "change": "RISE",
-  "change_price": 5200,
-  "trade_date": "2024-09-10",
-  "trade_time": "09:58:54",
-  "trade_timestamp": 1725929934373,
-  "sequential_id": 17259299343730000,
-  "timestamp": 1725929934483,
-  "stream_type": "REALTIME"
-}
-```
+request url: {base-endpoint}/transfer
 
-> **Note**: `sequential_id` guarantees uniqueness but NOT order. `ask_bid` = `BID` means buyer-initiated (taker bought), `ASK` = seller-initiated (taker sold).
+request method: POST
 
----
+request parameter infomation: 
 
-### WS Orderbook
+| Field    | Description                                 | Required(Y or N) | Mark    | Type   |
+| -------- | ------------------------------------------- | ---------------- | ------- | ------ |
+| coinType |                                             | Y                | e.g BTC | String |
+| quantity |                                             | Y                |         | String |
+| from     | from account type（WALLET,SPOT,CONTRACT）   | Y                |         | String |
+| to       | target account type（WALLET,SPOT,CONTRACT） | Y                |         | String |
 
-**Request**: `{"type": "orderbook", "codes": ["KRW-BTC"], "level": 1}`
+#### 3. query depository history
 
-`level` = price grouping unit (default `1` = tick-level). Per-market level via suffix: `"KRW-ETH.3"`.
+request url: {base-endpoint}/wallet/depositHistory
 
-**DEFAULT format** — discriminator: `"type": "orderbook"`
+request method:POST
 
-| DEFAULT | SIMPLE | Type | Description |
-|---------|--------|------|-------------|
-| `type` | `ty` | String | `orderbook` |
-| `code` | `cd` | String | Market code |
-| `total_ask_size` | `tas` | Double | Total ask quantity |
-| `total_bid_size` | `tbs` | Double | Total bid quantity |
-| `orderbook_units` | `obu` | List | Levels (see below) |
-| `timestamp` | `tms` | Long | Timestamp (ms) |
-| `level` | `lv` | Double | Price grouping unit |
+request parameter infomation:
 
-**orderbook_units** (interleaved — each entry has BOTH bid and ask at that depth):
+| Field | Description           | Required(Y or N) | Mark                                         | Type    |
+| ----- | --------------------- | ---------------- | -------------------------------------------- | ------- |
+| coin  | coin type             | N                | eg. BTC                                      | String  |
+| start | query start time      | Y                |                                              | Long    |
+| end   | query end time        | N                | end - start should less than or equal 90 day | Long    |
+| limit | response record limit | N                | Default：50，max record size: 50             | Integer |
 
-| DEFAULT | SIMPLE | Type | Description |
-|---------|--------|------|-------------|
-| `ask_price` | `ap` | Double | Ask price |
-| `bid_price` | `bp` | Double | Bid price |
-| `ask_size` | `as` | Double | Ask size |
-| `bid_size` | `bs` | Double | Bid size |
+response:
+
+| Field      | Description    | Mark                                                         | Type   |
+| ---------- | -------------- | ------------------------------------------------------------ | ------ |
+| id         |                |                                                              | String |
+| status     | deposit status | 0:fail, 1:success                                            | String |
+| coinType   |                | eg. BTC                                                      | String |
+| quantity   |                |                                                              | String |
+| createTime | deposit time   |                                                              | Long   |
+| address    |                | if accountName=no, the field may be block deposit address or inner transfer address of exchange, or be memo. | String |
+| txid       | block hash     |                                                              | String |
+| acountName |                | default is 'no', or be contract address                      | String |
+
+response example：
 
 ```json
 {
-  "type": "orderbook",
-  "code": "KRW-BTC",
-  "total_ask_size": 450.3526,
-  "total_bid_size": 63.3006,
-  "orderbook_units": [
-    {"ask_price": 478800, "bid_price": 478300, "ask_size": 4.3478, "bid_size": 5.6370},
-    {"ask_price": 489700, "bid_price": 477900, "ask_size": 2.3642, "bid_size": 0.9705},
-    {"ask_price": 493100, "bid_price": 471200, "ask_size": 411.8686, "bid_size": 3.9279}
-  ],
-  "timestamp": 1725927377287,
-  "level": 0,
-  "stream_type": "REALTIME"
+    "msg":"success",
+    "code":"0",
+    "data":[
+        {
+            "coinType":"BTC",
+            "address":"TW5T6Hr9jmvMAcc24p6LwFguzN2tucyHD9",
+            "quantity":"50",
+            "createTime":1590740736177,
+            "txid":"195419472734384128",
+            "acountName":"no",
+            "id":"195419472734384128",
+            "status":"1"
+        }
+    ],
+    "timestamp":1602816606787
 }
 ```
 
-> **Note**: Bids and asks are interleaved — NOT separate arrays. Each `orderbook_units` entry contains one ask level and one bid level at that depth position.
+#### 4. query withdraw history
 
----
+request uri：{base-endpoint}/wallet/withdrawHistory
 
-### Connection Management (PING/PONG)
+request method：POST
 
-- **Idle timeout**: ~120 seconds without any data → server closes connection
-- **Keep-alive**: Send text `PING` → server responds with `{"status":"UP"}` every 10 seconds
-- **RFC 6455**: Standard WebSocket PING/PONG frames also supported
-- Most WS libraries have built-in ping support
+request parameter infomation:
 
-```
-> PING
-< {"status":"UP"}
-< {"status":"UP"}
-...
-```
+| Field | Description           | Required(Y or N) | Mark                                         | Type    |
+| ----- | --------------------- | ---------------- | -------------------------------------------- | ------- |
+| coin  | coin type             | N                | eg: BTC                                      | String  |
+| start | query start time      | Y                |                                              | Long    |
+| end   | query end time        | N                | end - start should less than or equal 90 day | Long    |
+| limit | resposne record limit | N                | Default：50，max record size: 50             | Integer |
 
----
+response:
 
-### WS Errors
+| Field        | Description | Mark                              | Type   |
+| ------------ | ----------- | --------------------------------- | ------ |
+| id           |             |                                   | String |
+| status       |             | 0,1,2,3=pending, 7=success,8=fail | String |
+| coinType     |             |                                   | String |
+| quantity     |             |                                   | String |
+| createTime   |             |                                   | Long   |
+| address      |             |                                   | String |
+| txid         |             |                                   | String |
+| withdrawType |             | 0:inner transfer，1: wallet       | String |
+| fee          |             |                                   |        |
 
-Error response format:
+response example：
+
 ```json
-{"error": {"name": "ERROR_TYPE", "message": "description"}}
+{
+    "msg":"success",
+    "code":"0",
+    "data":[
+        {
+            "coinType":"BTC",
+            "address":"muwrRD3uVPkHNEC1D8HNBsaSrXUP2cWCyR",
+            "quantity":"5",
+            "createTime":1560850512385,
+            "fee":"0.002",
+            "withdrawType":"1",
+            "memo":"",
+            "id":"70050787097739264",
+            "status":"0",
+          	"txid":"xxxxxxxxxxxx"
+        }
+    ],
+    "timestamp":1602817609134
+}
 ```
 
-| Error | Description |
-|-------|-------------|
-| `WRONG_FORMAT` | Invalid JSON format |
-| `NO_TICKET` | Missing or invalid ticket |
-| `NO_TYPE` | Missing type field |
-| `NO_CODES` | Missing codes field |
-| `INVALID_PARAM` | Empty codes or unsupported format |
+### [Normal api for spot]
 
----
+#### 1. ticker
 
-## Old API (Legacy — Still Working)
+request url: {base-endpoint}/spot/ticker
 
-The old Bithumb API at `/public/` is still functional:
+request method: GET
 
-- **Products**: `GET /public/ticker/ALL_KRW` → `data` object keyed by symbol
-- **Trades**: `GET /public/transaction_history/{symbol}` → `transaction_date` (ISO), `type` (bid/ask), `units_traded`, `price`, `total`
-- **Old WS**: `wss://pubwss.bithumb.com/pub/ws` — discriminator `type`, handlers: `transaction` (trades), `depth` (orderbook)
+request parameter infomation: 
 
-### Old REST Trade Fields
+| Field  | Description             | Required(Y or N) | Mark                        | Type   |
+| ------ | ----------------------- | ---------------- | --------------------------- | ------ |
+| symbol | Unique tag(ex:ETH-USDT) | Y                | =ALL,get all symbol tickers | String |
 
-| REST Field | Canonical | Description |
-|------------|-----------|-------------|
-| `contPrice` | `price` | Trade price |
-| `contQty` | `quantity` | Trade quantity |
-| `buySellGb` | `side` | `1`=buy, `2`=sell |
-| `contDtm` | `timestamp` | Trade datetime (ISO string) |
+response: 
 
-> **Note**: Bithumb Futures (`bithumbfutures.com`) and Bithumb Pro/Global (`global-api.bithumb.pro`) are both **dead** as of 2026-02. Only Bithumb Korea spot is operational.
+| Field | Description                        | Mark | Type   |
+| ----- | ---------------------------------- | ---- | ------ |
+| c     | last price in the past of 24 hours |      | String |
+| h     | high price in the past of 24 hours |      | String |
+| l     | low price in the past of 24 hours  |      | String |
+| p     | price change in the past of hours  |      | String |
+| v     | deal quantity in the past of hours |      | String |
+| s     | symbol                             |      | String |
+
+response example: 
+
+	{
+	"data": [
+	    {
+	        "c": "3700.458408",
+	        "h": "3700.458408",
+	        "l": "3700.458408",
+	        "p": "0.0000",
+	        "v": "0.00",
+	        "s": "BTC-USDT"
+	    }
+	    ],
+	"success": true,
+	"msg": "",
+	"code": "0",
+	"params": []
+	}
+
+#### 2. orderbook
+
+request url: {base-endpoint}/spot/orderBook
+
+request method: GET
+
+request parameter infomation: 
+
+| Field  | Description             | Required(Y or N) | Mark | Type   |
+| ------ | ----------------------- | ---------------- | ---- | ------ |
+| symbol | Unique tag(ex:ETH-USDT) | Y                |      | String |
+
+response: 
+
+| Field  | Description    | Mark | Type                                      |
+| ------ | -------------- | ---- | ----------------------------------------- |
+| b      | Bids           |      | String[2]（first:price, second:quantity） |
+| s      | Asks           |      | String[2]（first:price, second:quantity） |
+| ver    | version number |      | String                                    |
+| symbol |                |      | String                                    |
+
+response example: 
+
+	{
+	"data": {
+	    "b": [
+	        [
+	            "3700.458232",
+	            "0.6189503471163566"
+	        ]
+	    ],
+	    "s": [
+	        [
+	            "3700.458408",
+	            "0.4235737788300525"
+	        ],
+	        [
+	            "3700.46623",
+	            "0.3"
+	        ],
+	        [
+	            "3700.471159",
+	            "0.11"
+	        ]
+	    ],
+	    "ver":"1",
+	    "symbol":"ETH-USDT"
+	},
+	"success": true,
+	"msg": "",
+	"code": "0",
+	"params": []
+	}
+
+#### 3. trade records（last 100）
+
+request url: {base-endpoint}/spot/trades
+
+request method: GET
+
+request parameter infomation: 
+
+| Field  | Description | Required(Y or N) | Mark | Type   |
+| ------ | ----------- | ---------------- | ---- | ------ |
+| symbol |             | Y                |      | String |
+
+response: 
+
+| Field | Description   | Mark        | Type   |
+| ----- | ------------- | ----------- | ------ |
+| p     | deal price    |             | String |
+| s     | trade type    | buy or sell | String |
+| v     | deal quantity |             | String |
+| t     | timestamp     |             | String |
+| ver   |               |             | String |
+
+response example: 
+	
+	{
+	"data": [
+		{
+		   "p":"3700.458232",
+		   "s":"buy",
+		   "t":"1552616758",
+		   "v":"0.3456"
+		}
+	 ],
+	 "success": true,
+	 "msg": "",
+	 "code": "0",
+	 "params": []
+	}
+
+#### 4. kline
+
+request url: {base-endpoint}/spot/kline
+
+request method: GET
+
+request parameter infomation: 
+
+| Field  | Description | Required(Y or N) | Mark                                                         | Type   |
+| ------ | ----------- | ---------------- | ------------------------------------------------------------ | ------ |
+| symbol |             | Y                |                                                              | String |
+| type   | kline type  | Y                | m1,m3,m5,m15,m30,h1,h2,h4,h6,h8,h12,d1,d3,w1,M1(m=minute，h=hour,d=day,w=week,M=month) | String |
+| start  | start time  | Y                | unit: second                                            | Long   |
+| end    | end time    | Y                | unit: second                                            | Long   |
+
+response: 
+
+| Field | Description         | Mark | Type   |
+| ----- | ------------------- | ---- | ------ |
+| c     | close price         |      | String |
+| h     | hign price          |      | String |
+| l     | low price           |      | String |
+| o     | open price          |      | String |
+| s     | total deal money    |      | String |
+| t     | total deal times    |      | String |
+| time  | timestamp           |      | String |
+| v     | total deal quantity |      | String |
+
+response example: 
+	
+	{
+	"data": [
+	     {
+		"c":"3700.458232",
+		"h":"3700.458232",
+		"l":"3700.458232",
+		"o":"3700.458232",
+		"s":"0.1234",
+		"t":"1",
+		"time":"1552616758",
+		"v":"0.12"
+	    }
+	  ],
+	 "success": true,
+	 "msg": "",
+	 "code": "0",
+	 "params": []
+	}
+
+### [Authentication api for spot]
+
+#### 1. create order for virtual coin (**need transaction authentication**)
+
+request url: {base-endpoint}/spot/placeOrder
+
+request method: POST
+
+request parameter infomation: 
+
+| Field     | Description | Required(Y or N) | Mark                                          | Type   |
+| --------- | ----------- | ---------------- | --------------------------------------------- | ------ |
+| symbol    |             | Y                |                                               | String |
+| type      | order type  | Y                | limit(limit price) or market(market price) | String |
+| side      | order side  | Y                | buy or sell                                   | String |
+| price     |             | Y                | when type is market, the value = -1           | String |
+| quantity  |             | Y                | eg.BTC-USDT,normally point at the quantity of BTC,when type=market,side=buy,point at the quantity of USDT, and the quantity should greater than or equal to the minimum trading volume of BTC                                | String |
+| timestamp |             | Y                |                                               | String |
+
+response description: 
+
+| Field   | Description | Mark | Type   |
+| ------- | ----------- | ---- | ------ |
+| orderId |             |      | String |
+| symbol  |             |      | String |
+
+response example: 
+
+	{
+	"data": {
+		"orderId":"23132134242",
+		"symbol":"BTC-USDT"
+	   },
+	"code": "0",
+	"msg": "success",
+	"timestamp": 1551346473238,
+	"params": []
+	}
+
+#### 2. cancel order for virtual coin(**need transaction authentication**)
+
+request url: {base-endpoint}/spot/cancelOrder
+
+request method: POST
+
+request parameter infomation: 
+
+| Field   | Description | Required(Y or N) | Mark | Type   |
+| ------- | ----------- | ---------------- | ---- | ------ |
+| orderId |             | Y                |      | String |
+| symbol  |             | Y                |      | String |
+
+#### 3. query virtual coin asset account
+
+request url: {base-endpoint}/spot/assetList
+
+request method: POST
+
+request parameter infomation: 
+
+| Field     | Description              | Required(Y or N) | Mark                                | Type   |
+| --------- | ------------------------ | ---------------- | ----------------------------------- | ------ |
+| coinType  | coin type                | N                | if null, response ALL virtual asset | String |
+| assetType | asset type (spot,wallet) | Y                | spot for virtual                    | String |
+
+response description: 
+
+| Field       | Description        | Mark                    | Type   |
+| ----------- | ------------------ | ----------------------- | ------ |
+| coinType    | coin type          |                         | String |
+| count       | usable amount      |                         | String |
+| frozen      | frozen amount      |                         | String |
+| btcQuantity | probably equal BTC |                         | String |
+| type        | type               | 1=virtual coin，2=legal |        |
+
+response example: 
+
+	{
+	"data": [
+	     {
+	      "coinType":"BTC",
+		  "count":"100",
+		  "frozen":"10",
+		  "btcQuantity":"110",
+		  "type":"1"
+	    }
+	  ],
+	"code": "0",
+	"msg": "success",
+	"timestamp": 1551346473238,
+	"params": []
+	}
+
+#### 4. trade for order detail
+
+request url: {base-endpoint}/spot/orderDetail
+
+request method: POST
+
+request parameter infomation: 
+
+| Field   | Description        | Required(Y or N) | Mark         | Type   |
+| ------- | ------------------ | ---------------- | ------------ | ------ |
+| orderId |                    | Y                |              | String |
+| symbol  |                    | Y                |              | String |
+| page    | current page       | N                | default = 1  | String |
+| count   | current page count | N                | default = 10 | String |
+
+response description: 
+
+| Field | Description   | Mark | Type |
+| ----- | ------------- | ---- | ---- |
+| num   | total numbers |      | Long |
+| list  | trade detail  |      | List |
+
+response description (List): 
+
+| Field         | Description  | Mark                    | Type   |
+| ------------- | ------------ | ----------------------- | ------ |
+| orderId       |              |                         | String |
+| orderSign     | order status | deal by taker or maker? | String |
+| getCount      | get          |                         | String |
+| getCountUnit  | coin type    |                         | String |
+| loseCount     | lose         |                         | String |
+| loseCountUnit | coin type    |                         | String |
+| price         | deal price   |                         | String |
+| priceUnit     | coin type    |                         | String |
+| fee           | deal fee     | fee                     | String |
+| feeUnit       | coin type    |                         | String |
+| time          | time         |                         | Long   |
+| fsymbol       | symbol       | BTC-USDT                | String |
+| side          | order side   | buy or sell             | String |
+
+response example: 
+	
+	{
+	"data":{
+	    "num":"10",
+	    "list":[
+	         {
+		     "orderId":"12300993210",
+		     "orderSign":"taker",
+	             "getCount":"0.1",
+		     "getCountUnit":"BTC",
+	             "loseCount":"370.01",
+	             "loseCountUnit":"USDT",
+		     "price":"3700.01",
+		     "priceUnit":"USDT",
+		     "fee":"0.0001",
+		     "feeUnit":"BTC",
+   		     "time":"1552878781",
+		     "fsymbol":"BTC-USDT",
+		     "side":"buy"
+		 },
+		 ...
+	      ]
+	 },
+	"code": "0",
+	"msg": "success",
+	"timestamp": 1551346473238,
+	"params": []
+    }
+
+
+#### 5. query history order list
+
+request url: {base-endpoint}/spot/orderList
+
+request method: POST
+
+request parameter information: 
+
+| Field      | Description                                                  | Required(Y or N) | Mark | Type   |
+| ---------- | ------------------------------------------------------------ | ---------------- | ---- | ------ |
+| side       | order side（buy，sell）                                      | Y                |      | String |
+| symbol     |                                                              | Y                |      | String |
+| status     | order status（traded (history order)）                       | Y                |      | String |
+| queryRange | the range of order（thisweek(in 7 day)，thisweekago(before 7 ago)） | Y                |      | String |
+| page       | current page                                                 | N                |      | String |
+| count      | current page count                                           | N                |      | String |
+
+response description:
+
+| Field | Description   | Mark | Type |
+| ----- | ------------- | ---- | ---- |
+| num   | total numbers |      | Long |
+| list  | orde list     |      | List |
+
+list description: 
+
+| Field      | Description        | Mark                           | Type    |
+| ---------- | ------------------ | ------------------------------ | ------- |
+| orderId    |                    |                                | String  |
+| symbol     |                    |                                | String  |
+| price      | order price        |                                | decimal |
+| tradedNum  | completed quantity |                                | Decimal |
+| quantity   | total quantity     |                                | Decimal |
+| avgPrice   | average price      |                                | Decimal |
+| status     | order status       | send，pending，success，cancel | String  |
+| type       | order type         | market，limit                  | String  |
+| side       | order side         | buy，sell                      | String  |
+| createTime | order create time  |                                | Date    |
+| tradeTotal |                    |                                | Decimal |
+
+response example: 
+
+```
+"data":{
+    "num":"10",
+    "list":[
+         {
+	    "orderId":"12300993210",
+	    "symbol":"BTC-USDT",
+	    "price":"3700",
+	    "tradedNum":"0.01",
+	    "quantity":"0.5",
+	    "avgPrice":"0",
+	    "status":"pending",
+	    "type":"limit",
+	    "side":"buy",
+	    "createTime":"1552878781",
+	    "tradeTotal":"0.5"
+	 },
+         ...
+      ]
+  },
+"code": "0",
+"msg": "success",
+"timestamp": 1551346473238,
+"params": []
+}
+```
+
+#### 6. query single order
+
+request url: {base-endpoint}/spot/singleOrder
+
+request method: POST
+
+request parameter infomation: 
+
+| Field   | Description | Required(Y or N) | Mark | Type   |
+| ------- | ----------- | ---------------- | ---- | ------ |
+| orderId |             | Y                |      | String |
+| symbol  |             | Y                |      | String |
+
+response description: 
+
+| Field      | Description        | Mark                           | Type    |
+| ---------- | ------------------ | ------------------------------ | ------- |
+| orderId    |                    |                                | String  |
+| symbol     |                    |                                | String  |
+| price      | order price        |                                | decimal |
+| tradedNum  | completed quantity |                                | Decimal |
+| quantity   | total quantity     |                                | Decimal |
+| avgPrice   | average price      |                                | Decimal |
+| status     | order status       | send，pending，success，cancel | String  |
+| type       | order type         | market，limit                  | String  |
+| side       | order side         | buy，sell                      | String  |
+| createTime | create time        |                                | Date    |
+| tradeTotal |                    |                                | Decimal |
+
+response example: 
+
+```
+"data":{
+	"orderId":"12300993210",
+	"symbol":"BTC-USDT",
+	"price":"3700",
+	"tradedNum":"0.01",
+	"quantity":"0.5",
+	"avgPrice":"0",
+	"status":"pending",
+	"type":"limit",
+	"side":"buy",
+	"createTime":"1552878781",
+	"tradeTotal":"0.5"
+  },
+"code": "0",
+"msg": "success",
+"timestamp": 1551346473238,
+"params": []
+}
+```
+
+#### 7. query open order list
+
+request url: {base-endpoint}/spot/openOrders
+
+request method: POST
+
+request parameter information: 
+
+| Field  | Description        | Required(Y or N) | Mark | Type   |
+| ------ | ------------------ | ---------------- | ---- | ------ |
+| symbol |                    | Y                |      | String |
+| page   | current page       | N                |      | String |
+| count  | current page count | N                |      | String |
+
+response description: 
+
+| Field | Description   | Mark | Type |
+| ----- | ------------- | ---- | ---- |
+| num   | total numbers |      | Long |
+| list  | orde list     |      | List |
+
+list description: 
+
+| Field      | Description        | Mark                           | Type    |
+| ---------- | ------------------ | ------------------------------ | ------- |
+| orderId    |                    |                                | String  |
+| symbol     |                    |                                | String  |
+| price      | order price        |                                | decimal |
+| tradedNum  | completed quantity |                                | Decimal |
+| quantity   | total quantity     |                                | Decimal |
+| avgPrice   | average price      |                                | Decimal |
+| status     | order status       | send，pending，success，cancel | String  |
+| type       | order type         | market，limit                  | String  |
+| side       | order side         | buy，sell                      | String  |
+| createTime | order create time  |                                | Date    |
+| tradeTotal |                    |                                | Decimal |
+
+response example: 
+
+```
+"data":{
+    "num":"10",
+    "list":[
+         {
+	    "orderId":"12300993210",
+	    "symbol":"BTC-USDT",
+	    "price":"3700",
+	    "tradedNum":"0.01",
+	    "quantity":"0.5",
+	    "avgPrice":"0",
+	    "status":"pending",
+	    "type":"limit",
+	    "side":"buy",
+	    "createTime":"1552878781",
+	    "tradeTotal":"0.5"
+	 },
+         ...
+      ]
+  },
+"code": "0",
+"msg": "success",
+"timestamp": 1551346473238,
+"params": []
+}
+```
+
+#### 8. query my trades
+
+request url: {base-endpoint}/spot/myTrades
+
+request method: POST
+
+request parameter information: 
+
+| Field     | Description       | Required(Y or N) | Mark                                | Type    |
+| --------- | ----------------- | ---------------- | ----------------------------------- | ------- |
+| symbol    |                   | Y                |                                     | String  |
+| startTime | trades start time | N                | if null, will use current timestamp | Long    |
+| limit     |                   | N                |                                     | Integer |
+
+response description:
+
+| Field     | Description | Mark | Type       |
+| --------- | ----------- | ---- | ---------- |
+| id        |             |      | Long       |
+| price     |             |      | BigDecimal |
+| amount    |             |      | BigDecimal |
+| side      |             |      | String     |
+| direction |             |      | String     |
+| time      |             |      | Date       |
+
+response example: 
+
+```
+"data":[
+	    "id":1,
+	    "price":100.01,
+	    "amount":0.1,
+	    "side":"buy",
+	    "direction":"taker",
+	    "time":1557047375000,
+      ],
+"code": "0",
+"msg": "success",
+"timestamp": 1551346473238,
+"params": []
+}
+```
+
+#### 9.batch cancel order (**need transaction authentication**)
+
+request url: {base-endpoint}/spot/cancelOrder/batch
+
+request method: POST
+
+request parameter infomation: 
+
+| Field  | Description | Required(Y or N) | Mark                                                         | Type   |
+| ------ | ----------- | ---------------- | ------------------------------------------------------------ | ------ |
+| ids    |             | N                | ids split by "," batch max ids <= 100 for single request, if ids = "" or null or no ids parameter, will cancel all order for symbol. | String |
+| symbol |             | Y                |                                                              | String |
+
+request body example:
+
+```json
+{
+"symbol":"ETH-USDT",
+"ids":"74740189190115328,74740189190115329,74740189190115330"
+}
+```
+
+#### 10.batch place order（**need transaction authentication**）
+
+request url：{base-endpoint}/spot/placeOrders
+
+request method：POST
+
+request parameter infomation:
+
+| Field       | Description | Required(Y or N) | Mark                                                         | Type   |
+| ----------- | ----------- | ---------------- | ------------------------------------------------------------ | ------ |
+| multiParams |             | Y                | Array of single place's order parameters，0 < order's list of size <= 10 | String |
+
+request body example:
+
+```json
+{
+"multiParams":"[{\"symbol\":\"ETH-BTC\",\"type\":\"limit\",\"side\":\"buy\",\"price\":\"1.1234\",\"quantity\":\"10\",\"timestamp\":1576229333470,\"msgNo\":\"test1576229333470\"},{\"symbol\":\"ETH-BTC\",\"type\":\"limit\",\"side\":\"buy\",\"price\":\"1.1234\",\"quantity\":\"10\",\"timestamp\":1576229333470,\"msgNo\":\"test1576229333470\"}]
+"
+}
+```
+
+response example：
+
+```json
+{ 
+	"msg":"success",
+	"code":"0",
+	"data":[
+		{
+			"data":
+				{
+					"symbol":"ETH-BTC",
+					"orderId":"134556412346773504"
+				},
+			"code":"0",
+			"msg":"success",
+			"timestamp":1576229851850
+		},
+		{
+			"data":
+				{
+					"symbol":"ETH-BTC",
+					"orderId":"134556412699095040"
+				},
+			"code":"0",
+			"msg":"success",
+			"timestamp":1576229851934
+		}
+		],
+	"timestamp":1576229851934
+}
+```
+
+
+
+### [Normal api for contract] (Deprecated)
+
+#### 1. orderBook
+
+request url: {base-endpoint}/contract/orderBook
+
+request method: GET
+
+request parameter infomation: 
+
+| Field  | Description | Required(Y or N) | Mark | Type   |
+| ------ | ----------- | ---------------- | ---- | ------ |
+| symbol |             | Y                |      | String |
+
+response description: 
+
+| Field | Description | Mark                                            | Type   |
+| ----- | ----------- | ----------------------------------------------- | ------ |
+| b     | Bids        | split by ":",first is price, second is quantity | String |
+| s     | Asks        | split by ":",first is price, second is quantity | String |
+| type  | type        |                                                 | String |
+
+response example: 
+
+```
+"data":{
+	"b":["3701:1","3700:0.5"],
+	"s":["3800:0.2","3801.1:0.3"],
+	"type":""
+   },
+"code": "0",
+"msg": "success",
+"timestamp": 1551346473238,
+"params": []
+}
+```
+
+#### 2. ticker
+
+request url: {base-endpoint}/contract/ticker
+
+request method: GET
+
+request parameter infomation: 
+
+| Field  | Description | Required(Y or N) | Mark | Type   |
+| ------ | ----------- | ---------------- | ---- | ------ |
+| symbol |             | Y                |      | String |
+
+response description: 
+
+| Field        | Description                                               | Mark | Type   |
+| ------------ | --------------------------------------------------------- | ---- | ------ |
+| symbol       | contract symbol                                           |      | String |
+| type         | Type                                                      |      | String |
+| lastPrice    | last price                                                |      | String |
+| high         | high price in the past of 24 hours                        |      | String |
+| low          | low price in the past of 24 hours                         |      | String |
+| volume       | completed quantity in the past of 24 hours                |      | String |
+| change       | need * 100                                                |      | String |
+| openValue    | not completed value                                       |      | String |
+| fundRate0    | contract fee change value in the next time                |      | String |
+| fundTime0    | contract fee change time(million second) in the next time |      | String |
+| adlRanker    | ADL range                                                 |      | String |
+| ver          | version number                                            |      | String |
+| openInterest |                                                           |      | String |
+| turnover     |                                                           |      | String |
+
+response example: 
+
+```
+"data":{
+	"symbol":"BTC-USDT",
+	"type":"",
+	"lastPrice":"3700",
+	"high":"3800.1",
+	"low":"3699.01",
+	"volume":"23",
+	"change":"0.0123",
+	"openValue":"10",
+	"fundRate0":"",
+	"fundTime0":"",
+	"adlRanker":"",
+	"ver":"0",
+	"openInterest":"",
+	"turnover":""
+    },
+"code": "0",
+"msg": "success",
+"timestamp": 1551346473238,
+"params": []
+}
+```
+
+### [Authentication api for contract] (Deprecated)
+
+#### 1. create order for contract
+
+request url: {base-endpoint}/contract/order/create
+
+request method: POST
+
+request parameter infomation: 
+
+| Field            | Description                 | Required(Y or N) | Mark                                                         | Type   |
+| ---------------- | --------------------------- | ---------------- | ------------------------------------------------------------ | ------ |
+| property         | current is normal           | Y                |                                                              | String |
+| symbol           |                             | Y                | ex: BTCUSD                                                   | String |
+| type             |                             | Y                | market or limit                                              | String |
+| amount           |                             | Y                | must be whole number                                         | String |
+| amountDisplay    | show quantity for ice order | Y                |                                                              | String |
+| price            |                             | N                | don't need if type is market, else must be  an integral multiple of tickerPrice. | String |
+| side             | order side                  | Y                | buy or sell                                                  | String |
+| postOnly         | only do maker?              | Y                | false or true                                                | String |
+| reduceOnly       | only for reduce position?   | Y                | false or true                                                | String |
+| timeInForce      | order time inforce type     | Y                | default is GTC, 'GTC'（always valid until cancel), 'FOK'（all  completed or cancel）, 'IOC'（completed or cancel fast, or part completed） | String |
+| leverage         | leverage value              | N                |                                                              | String |
+| triggerPrice     | trigger price               | N                | when property is trigger.                                    | String |
+| benchmarkPrice   |                             | N                |                                                              | String |
+| triggerPriceType |                             | N                |                                                              | String |
+
+response description:
+
+| Field   | Description | Mark | Type   |
+| ------- | ----------- | ---- | ------ |
+| orderId |             |      | String |
+
+response example: 
+
+```
+"data":{
+	"orderId":"12314342399321"
+  },
+"code": "0",
+"msg": "success",
+"timestamp": 1551346473238,
+"params": []
+}
+```
+
+#### 2. cancel order for contract
+
+request url: {base-endpoint}/contract/order/cancel
+
+request method: POST
+
+request parameter infomation: 
+
+| Field   | Description | Required(Y or N) | Mark | Type   |
+| ------- | ----------- | ---------------- | ---- | ------ |
+| orderId |             | Y                |      | String |
+
+response description: when code = "0" is success
+
+#### 3. edit leverage
+
+request url: {base-endpoint}/contract/leverageEdit
+
+request method: POST
+
+request parameter infomation: 
+
+| Field    | Description       | Required(Y or N) | Mark | Type   |
+| -------- | ----------------- | ---------------- | ---- | ------ |
+| symbol   |                   | Y                |      | String |
+| leverage | new leverage info | Y                |      | String |
+
+request description: when code="0" is success
+
+#### 4. position info
+
+request url: {base-endpoint}/contract/position
+
+request method: POST
+
+request parameter infomation: 
+
+| Field  | Description | Required(Y or N) | Mark | Type   |
+| ------ | ----------- | ---------------- | ---- | ------ |
+| symbol |             | Y                |      | String |
+
+response description: 
+
+| Field            | Description           | Mark | Type   |
+| ---------------- | --------------------- | ---- | ------ |
+| positionId       |                       |      | String |
+| symbol           |                       |      | String |
+| amount           | position amount       |      | String |
+| margin           | position margin       |      | String |
+| positionValue    | position value        |      | String |
+| leverage         |                       |      | String |
+| status           | position status       |      | String |
+| openPositionTime | open position time    |      | String |
+| flatPositionTime | flat position time    |      | String |
+| realProfit       | completed profit      |      | String |
+| liquidation      | force completed price |      | String |
+| side             | position side         |      | String |
+| frozen           | position frozen       |      | String |
+
+#### 5. adjust margin
+
+request url: {base-endpoint}/contract/margin/update
+
+request method: POST
+
+request parameter infomation: 
+
+| Field        | Description                              | Required(Y or N) | Mark | Type   |
+| ------------ | ---------------------------------------- | ---------------- | ---- | ------ |
+| symbol       |                                          | Y                |      | String |
+| changeAmount | amount change with positive and negative | Y                |      | String |
+
+response description：when code="0" is success
+
+#### 6. query asset account for contract
+
+request url: {base-endpoint}/contract/asset/info
+
+request method: POST
+
+request parameter infomation: 
+
+| Field      | Description | Required(Y or N) | Mark | Type   |
+| ---------- | ----------- | ---------------- | ---- | ------ |
+| page       |             | Y                |      | Int    |
+| count      |             | Y                |      | Int    |
+| coinIdLike | coin type   | N                |      | String |
+
+response description: 
+
+| Field    | Description | Mark | Type   |
+| -------- | ----------- | ---- | ------ |
+| pageInfo |             |      | Object |
+| records  |             |      | Array  |
+
+pageInfo:（refer to orderList）
+
+records: 
+
+| Field    | Description        | Mark | Type   |
+| -------- | ------------------ | ---- | ------ |
+| btcValue | probably equal BTC |      | String |
+| coinId   | coin type          |      | String |
+| count    | usable amount      |      | String |
+| frozen   | frozen amount      |      | String |
+
+#### 7. query user contract info
+
+request url: {base-endpoint}/contract/info
+
+request method: POST
+
+request parameter infomation: 
+
+| Field  | Description | Required(Y or N) | Mark | Type   |
+| ------ | ----------- | ---------------- | ---- | ------ |
+| symbol |             | Y                |      | String |
+
+response description: 
+
+| Field     | Description     | Mark | Type   |
+| --------- | --------------- | ---- | ------ |
+| symbol    |                 |      | String |
+| leverage  | leverage number |      | String |
+| fundRate0 |                 |      | String |
+| riskLimit | risk limit      |      | String |
+
+#### 8. query user contract account info 
+
+request url: {base-endpoint}/contract/account/info
+
+request method: POST
+
+request parameter information: 
+
+| Field | Description | Required(Y or N) | Mark | Type   |
+| ----- | ----------- | ---------------- | ---- | ------ |
+| coin  | coin symbol | Y                |      | String |
+
+response description: 
+
+| Field                | Description      | Mark | Type   |
+| -------------------- | ---------------- | ---- | ------ |
+| coin                 | coin symbol      |      | String |
+| totalAmount          | total amount     |      | String |
+| remainMargin         | remain margin    |      | String |
+| openPositionMargin   |                  |      | String |
+| openOrderMarginTotal |                  |      | String |
+| availableAmount      | available amount |      | String |
+
+#### 9. query order list (open order or history order list)
+
+request url: {base-endpoint}/contract/orders
+
+request method: POST
+
+request parameter information: 
+
+| Field  | Description                   | Required(Y or N) | Mark       | Type    |
+| ------ | ----------------------------- | ---------------- | ---------- | ------- |
+| symbol |                               | Y                |            | String  |
+| type   | order type（open or history） | Y                |            | String  |
+| page   |                               | N                | default 1  | Integer |
+| count  |                               | N                | default 10 | Integer |
+
+response description: 
+
+| Field    | Description | Mark | Type   |
+| -------- | ----------- | ---- | ------ |
+| pageInfo |             |      | Object |
+| records  |             |      | Array  |
+
+pageInfo: 
+
+| Field       | Description | Mark | Type    |
+| ----------- | ----------- | ---- | ------- |
+| page        |             |      | Integer |
+| count       |             |      | Integer |
+| pageTotal   |             |      | Integer |
+| recordTotal |             |      | Integer |
+
+records: 
+
+| Field      | Description      | Mark                                      | Type   |
+| ---------- | ---------------- | ----------------------------------------- | ------ |
+| orderId    |                  |                                           | String |
+| symbol     |                  |                                           | String |
+| type       | order type       | limit or market                           | String |
+| side       | order side       | buy or sell                               | String |
+| price      | price            | when type=market is 0                     | String |
+| amountReal | real amount      |                                           | String |
+| amountFill | completed amount |                                           | String |
+| status     | order status     | open、cancel、filled、rejected、untrigger | String |
+| avgPrice   | average price    |                                           | String |
+| time       | create time      |                                           | Long   |
+
+#### 10. query user contract trades
+
+request url: {base-endpoint}/contract/trades
+
+request method: POST
+
+request parameter information: 
+
+| Field  | Description | Required(Y or N) | Mark       | Type    |
+| ------ | ----------- | ---------------- | ---------- | ------- |
+| symbol |             | Y                |            | String  |
+| page   |             | N                | default=1  | Integer |
+| count  |             | N                | default=10 | Integer |
+
+response description: 
+
+| Field    | Description | Mark | Type   |
+| -------- | ----------- | ---- | ------ |
+| pageInfo |             |      | Object |
+| records  |             |      | Array  |
+
+pageInfo:(refer to orderList)
+
+records: 
+
+| Field   | Description | Mark | Type    |
+| ------- | ----------- | ---- | ------- |
+| symbol  |             |      | String  |
+| orderId |             |      | String  |
+| isTaker |             |      | Boolean |
+| side    | buy or sell |      | String  |
+| fee     |             |      | String  |
+| price   |             |      | String  |
+| amount  |             |      | String  |
+| time    |             |      | String  |
+| version |             |      | Long    |
+
+
+
+## [code list]
+
+| code  | msg                                          | Description | Mark |
+| ----- | -------------------------------------------- | ----------- | ---- |
+| 0     | success                                      |             |      |
+| 9000  | missing parameter                            | apiKey or signature is absent |      |
+| 9001  | version not matched                          |             |      |
+| 9002  | verifySignature failed                       |             |      |
+| 9004  | access denied or request's params absent                               | if access denied, please check your bind ip,api's  permission,or account's status |      |
+| 9005  | key expired                                  |             |      |
+| 9006  | no server                                    |             |      |
+| 9007 | request invalid | check your request timestamp(compare with server time),msgNo's length need to less than or equal 50 | |
+| 9008 | api request params error | | |
+| 9999  | system error                                 |             |      |
+| 9010 | access denied(ip is invalid) | request ip not in your bind's ip whitelist |      |
+| 9011 | access denied(no permission) | no api's permission | |
+| 9012 | access denied(account is abnormal) | account is abnormal | |
+|       |                                              |             |      |
+|       |                                              |             |      |
+|    20000   |    order params error                                           |             |      |
+| 20002 | user asset account abnormal | | |
+| 20003 | user asset not enough                        |             |      |
+| 20004 | order absent | | |
+| 20010 | trade pair had been closed | | |
+| 20012 | cancel faild,order status changed | order's status is succeed or canceled |      |
+| 20043 | price accuracy is wrong for placing order    | check symbol's accuracy from config api |      |
+| 20044 | quantity accuracy is wrong for placing order | check symbol's accuracy from config api |      |
+| 20048 | trade pair not open | | |
+| 20053 | need sign protocol in website                | if place order at first time, need to sign protocol in bithumb global website at trade page, just place one order before using trade's api. |      |
+| 20054 | order price out of range                     | check symbol's percentPrice from config api |      |
+| 20056 | order quantity out of range | the max quantity need to less than 100000000 |      |
+|       |                                              |             |      |
+|       |                                              |             |      |
+|       |                                              |             |      |
+#                        WebSocket Document
+
+## 1、General information
+
+- The base endpoint of websocket is wss://global-api.bithumb.pro/message/realtime,
+- The websocket server supply some topics for api user, such as ticker,orderbook etc. user can get real time msg by subscribing the topic which include normal (no security, like ticker, orderbook etc.) and private (need authenticate, like order change,position change etc. ).
+- The single connection between server and client can keepalive a long time, so keep connection need client send {"cmd":"ping"},if the websocket server receive the msg,then server will call back a {"code":"0","msg":"pong"} 
+specially, some topic response include field "ver",the field mark this message's version, prevent message backtracking
+- specially, if you had subscribed a private topic with the authentication's connection, just use the exists, one account just have one authentication's connection with private topic in the same moment.
+
+## 2、Access Process
+
+### Access：
+
+The websocket server endpoint is wss(ws)://{server address}/message/realtime or wss(ws)://{server address}/message/realtime?subscribe=ORDERBOOK:BTC-USDT,TICKER:BTC-USDT,it's mean that client can subscribe topics when  create connection to server, and with encrypted msg in header for private identity authentication which can subscribe private topic.if authenticate failed,the connection will be closed by server.
+
+encrypted msg in header：
+
+	{
+		"apiKey":"",(from website)
+		"apiTimestamp":"1551848831",(the connect time（millisecond), type is string)
+		"apiSignature":""(the signature data)
+	}
+**sign example**:
+
+request path="/message/realtime"
+
+signatureString=request path + current timestamp(millisecond) + apiKey
+
+apiSignature = sha256_HMAC(signatureString,secretKey)
+
+response msg style：
+
+	{
+		"code":4,
+		"data":{},
+		"timestamp":1552037368,
+		"topic":"CONTRACT_TICKER"
+	}
+
+code: the tag for response 
+data: response data
+timestamp: response time
+topic: topic type
+
+### Commands：
+
+the base command style ：
+
+{"cmd":"<command>", "args":["args1","args2","args3"...]}
+
+cmd have four type：
+subscribe: for subscribe some of topic
+unSubscribe: for cancel subscribe some of topic
+authKey: for private identity authentication, client can send this cmd once the connection is created for get authority of private topic
+ping: for heart cmd, client can send this cmd with a fixed time period(30 senonds), if timeout not send, the connection will be closed by server.
+
+args requests：
+
+- subscribe cmd：support multi topics, such as:["TICKER:BTC-USDT","ORDERBOOK10:BTC-USDT"]
+- unSubscribe cmd: remove topic, as same as subscribe.
+- authKey cmd：args is fixed,["apiKey","timestamp"(millisecond,type is string),"apiSignature"]
+- ping cmd：no args
+
+**sign example**:
+
+ request path="/message/realtime"
+
+ signatureString=request path + current timestamp(millisecond) + apiKey
+
+ apiSignature = sha256_HMAC(signatureString,secretKey)
+
+### topic：
+
+topic for certain type msg,the style such as "topic" or "topic:symbol", example: TICKER:BTC-USDT, support public and private.
+
+#### public topic：
+
+##### TICKER: the last new spot ticker msg
+
+response data：
+
+| Field  | Description                            | Mark                         | Type   |
+| ------ | -------------------------------------- | ---------------------------- | ------ |
+| c      | the last new price                     |                              | String |
+| h      | the highest price in the past 24 hours |                              | String |
+| l      | the lowest price in the past 24 hours  |                              | String |
+| p      | price changed in the past 24 hours     |                              | String |
+| symbol |                                        |                              | String |
+| v      | deal quantity in the past 24 hours     |                              | String |
+| ver    | version number                         | prevent message backtracking | String |
+
+example：
+
+```
+{
+	"code":4,
+	"data": {
+		"c":"0.0015007503751875",
+		"h":"4005",
+		"l":"3998",
+		"p":"0.01",
+		"symbol":"TBTCUSD",
+		"v":"3577",
+		"ver":"314"
+	},
+	"timestamp":1553234681,
+	"topic":"TICKER"
+}
+```
+
+##### ORDERBOOK: the last spot order book changed data
+
+import：The creation of a complete order book on the client side must strictly depend on the processing of the 'ver' field. When the client subscribes to this topic, the message of code = 00007 is the incremental change information of the order book, and the message of code = 00006 is the one-time complete order book information. However, the 'ver' of these two times may not be continuous. At this time, the message may be lost. The complete order book The creation process is as follows：
+
+1. The client first subscribes to the order book subject of websocket of the specific transaction pair, and stores the change information of the order book with code = 00007 in the cache of the client;
+
+2. The client requests the complete order book information once through the REST API;
+
+3. Finally, the cached order book change information and the complete order book are merged once. The rules for merging as follows:
+
+   a. Judge that the change version "ver" of the first order book received by websocket should be less than or equal to the complete order book version "ver" + 1, otherwise the above process should be resumed to rebuild the order book;
+
+   b. Judge that the change version "ver" of each order book must be greater than the complete order book version "ver", otherwise, discard the change information of the order book.
+
+example: https://github.com/bithumb-pro/java-api-client/blob/master/src/test/java/cn/bithumb/pro/api/example/BuildOrderBook.java
+
+response data：
+
+| Field  | Description    | Mark                         | Type                                         |
+| ------ | -------------- | ---------------------------- | -------------------------------------------- |
+| b      | bids           |                              | String[2],firt is price，second is quantity  |
+| s      | asks           |                              | String[2],first is price，second is quantity |
+| symbol |                |                              | String                                       |
+| ver    | version number | prevent message backtracking | String                                       |
+
+example：
+
+```
+{
+  "code":4,
+  "data":{
+  	"b":[["4003.5","1"],["4001.5","890"],["4000.5","10"],["3997","36"],["3996","100"]],
+  	"s":[["4005","100"],["4006","107"]],
+  	"symbol":"TBTCUSD",
+  	"ver":"375"
+  },
+  "timestamp":1553235407,
+  "topic":"CONTRACT_ORDERBOOK"
+}
+```
+
+##### TRADE：the last spot trade msg
+
+response data：
+
+| Field  | Description    | Mark                         | Type   |
+| ------ | -------------- | ---------------------------- | ------ |
+| p      | deal price     |                              | String |
+| s      | trade type     | buy or sell                  | String |
+| v      | deal quantity  |                              | String |
+| t      | trade time     |                              | String |
+| symbol |                |                              | String |
+| ver    | version number | prevent message backtracking | String |
+
+example：
+
+```
+{
+  "code":4,
+  "data":{
+  	"p":"4003.5",
+  	"s":"buy",
+  	"v":"0.1",
+  	"t":"",
+  	"symbol":"TBTCUSD",
+  	"ver":"375"
+  },
+  "timestamp":1553235407,
+  "topic":"CONTRACT_ORDERBOOK"
+}
+```
+
+CONTRACT_TICKER:the last new contract ticker msg
+
+response data：
+
+| Field  | Description                         | Mark | Type   |
+| ------ | -------------------------------- | ---- | ------ |
+| change | price changed in the past 24 hours |      | String |
+| fundRate0 | the value at next funding fee rate changed |      | String |
+| fundTime0 | the time at next funding fee rate changed |      | String |
+| high  | high price in the past 24 hours |      | String |
+| low    | low price in the past 24 hours |      | String |
+| lastPrice | the last deal price   |      | String |
+| openValue | open position |      | String |
+| symbol |                          |      | String |
+| volume | deal amount in the past 24 hours |      | String |
+| ver    | version number             | mark orderbook is the last, prevent message backtracking | String |
+| openInterest |  |  | String |
+| turnover |  |  | String |
+
+example：
+
+    {
+    	"code":4,
+    	"data": {
+    		"change":"0.0015007503751875",
+    		"fundRate0":"0.00375",
+    		"fundTime0":"1553241600",
+    		"high":"4005",
+    		"low":"3998",
+    		"lastPrice":"4004",
+    		"openValue":"1.1581583219035874",
+    		"symbol":"TBTCUSD",
+    		"volume":"3577",
+    		"ver":"314",
+    		"openInterest":"",
+    		"turnover":""
+    	},
+    	"timestamp":1553234681,
+    	"topic":"CONTRACT_TICKER"
+    }
+
+CONTRACT_ORDERBOOK:the last new contract orderbook msg,if client subscribe the topic,once orderbook changed, server will send msg which is orderbook changed to channel.specially,when quantity=0,mark the price in orderbook had not exist.
+
+response data：
+
+| Field  | Description    | Mark | Type                                         |
+| ------ | -------------- | ---- | -------------------------------------------- |
+| b      | bids           |      | String[2],first is price, second is quantity |
+| s      | asks           |      | String[2],first is price,second is quantity  |
+| symbol |                |      | String                                       |
+| ver    | version number |      | String                                       |
+
+example：
+
+```
+{
+  "code":4,
+  "data":{
+  	"b":[["4003.5","1"],["4001.5","890"],["4000.5","10"],["3997","36"],["3996","100"]],
+  	"s":[["4005","100"],["4006","107"]],
+  	"symbol":"TBTCUSD",
+  	"ver":"375"
+  },
+  "timestamp":1553235407,
+  "topic":"CONTRACT_ORDERBOOK"
+}
+```
+
+CONTRACT_ORDERBOOK10: the last new contract orderbook msg(include the last new 10 asks and 10 bids),if client subscribe the topic,once orderbook changed, server will send msg to channel.
+
+response data refer to CONTRACT_ORDERBOOK
+
+#### private topic：
+
+##### ORDER: the last new private spot order msg, if client subscribe the topic,once user order changed, server will send msg to channel.
+
+response data：
+
+| Field          | Description            | Mark                                          | Type   |
+| -------------- | ---------------------- | --------------------------------------------- | ------ |
+| oId            | order id               |                                               | String |
+| price          | order price            | if type is "market", the value is "-1"        | String |
+| quantity       | order quantity         |                                               | String |
+| side           |                        | buy or sell                                   | String |
+| symbol         |                        |                                               | String |
+| type           |                        | limit or market                               | String |
+| status         |                        | created，partDealt，fullDealt，canceled       | String |
+| dealPrice      | Last executed price    | if status = canceled, the value is "0"        | String |
+| dealQuantity   | Last executed quantity | if status = canceled, the value is "0"        | String |
+| dealVolume     | Last executed volume   | if status = canceled, the value is "0"        | String |
+| fee            |                        | if status = canceled, the value is "0"        | String |
+| feeType        |                        | if status = canceled, the value is ""         | String |
+| cancelQuantity |                        | if status is not "canceled", the value is "0" | String |
+| time           | order update time      |                                               | Long   |
+
+example：
+
+```
+{
+"code":"00007",
+"data":{"cancelQuantity":"10060.7","dealPrice":"0","dealQuantity":"0","dealVolume":"0","fee":"0","feeType":"","oId":"69663509668139008","price":"100.607","quantity":"100","side":"buy","status":"canceled","symbol":"BTC-USDT","time":1560758352705,"type":"limit"},
+"topic":"ORDER",
+"timestamp":1560758352743}
+```
+
+CONTRACT_ORDER:  the last new private contract order msg, if client subscribe the topic,once user order changed, server will send msg to channel.
+
+response data：
+
+| Field  | Description    | Mark                  | Type                                     |
+| ---------- | ------------------ | ----------------------------- | -------------------------------------------- |
+| amountFill | filled amount   |                               | String |
+| amountReal | total amount       |                               | String |
+| avgPrice   | deal average price |                               | String                                       |
+| msgNo      | user defined       |                               | String                                       |
+| orderId    |                    |                               | String                                       |
+| price      |                    |                               | String                                       |
+| side       |                    | buy,sell                      | String                                       |
+| status     | order status       | (open,filled,cancel,rejected) | String                                       |
+| symbol     |                    |                               | String                                       |
+| type       | order type         | limit,market                  | String                                       |
+| time | create time |  | Long |
+
+example：
+
+```
+{
+	"code":4,
+	"data":{
+		"amountFill":"0",
+		"amountReal":"1",
+		"avgPrice":"4004",
+		"msgNo":"",
+		"orderId":"38112649639268352",
+		"price":"4004",
+		"side":"buy",
+		"status":"open",
+		"symbol":"TBTCUSD",
+		"type":"limit",
+		"time":1553236866000
+	},
+	"topic":"CONTRACT_ORDER",
+	"timestamp":1553235866
+}
+```
+
+CONTRACT_ASSET: the last new private contract asset account msg,if client subscribe the topic,once user asset account changed, server will send msg to channel.
+
+response data：
+
+| Field         | Description     | Mark | Type  |
+| ------------ | -------- | ---- | ------ |
+| availableAmount | Available Amount |      | String |
+| totalAmount | Total Amount |      | String |
+| coin | Coin type | | String |
+| openPositionMargin |  | | String |
+| openOrderMarginTotal | Open order margin | | String |
+| remainMargin |  | | String |
+
+example：
+
+```
+{
+	"code":4,
+	"data":{
+		"availableAmount":"100000.0068646403170306",
+		"totalAmount":"100000.0096280041581585",
+		"coin":"BTC",
+		"openPositionMargin":"0.0000200306255019",
+		"openOrderMarginTotal":"0.0027432190040949",
+		"remainMargin":"0.0027633638411279"
+	},
+	"topic":"CONTRACT_ASSET",
+	"timestamp":1553236515}
+```
+
+CONTRACT_POSITION:  the last new private contract position  msg,if client subscribe the topic,once position changed, server will send msg to channel.
+
+response data：
+
+| Field                    | Description                                      | Mark | Type   |
+| ------------------------ | ------------------------------------------------ | ---- | ------ |
+| symbol                   |                                                  |      | String |
+| positionId               | position id                                      |      | String |
+| amount                   | position amount                                  |      | String |
+| side                     | buy or sell                                      |      | String |
+| entryPrice               | open price                                       |      | String |
+| liquiPrice               | Forced liquidation                               |      | String |
+| frozen                   | frozen amount                                    |      | String |
+| margin                   | position margin                                  |      | String |
+| positionValue            | position value                                   |      | String |
+| markPrice                | mark price                                       |      | String |
+| maxRemovableMarginAmount | the max can removed margin amount                |      | String |
+| lastUpdateTime           | the last position changed time                   |      | String |
+| status                   | position status,  newOpen(first init),open,close |      | String |
+| realProfit               | acquired profit                                  |      | String |
+| leverage                 | leverage value                                   |      | String |
+
+example：
+
+```
+{
+	"code":4,
+	"data":{
+		"symbol":"BTCUSD",
+		"positionId":"100001",
+		"amount":"100",
+		"entryPrice":"4800",
+		"liquiPrice":"4820",
+		"frozen":"0.02083",
+		"margin":"0.03",
+		"positionValue":"0.02083",
+		"markPrice":"4802",
+		"maxRemovableMarginAmount":"0.001",
+		"lastUpdateTime":"1553580895",
+		"status":"open",
+		"realProfit":"0.01",
+		"leverage":"1"
+	},
+	"topic":"CONTRACT_POSITION",
+	"timestamp":1553236515
+}
+```
+
+CONTRACT_INFO: the last new private contract normal msg, if client subscribe the topic,once position、order、asset changed, server will send msg to channel.
+
+response data：
+
+| Field     | Description | Mark | Type   |
+| --------- | ----------- | ---- | ------ |
+| symbol    |             |      | String |
+| riskLimit | risk limit  |      | String |
+| leverage  |             |      | String |
+| fundRate0 |             |      | String |
+
+example：
+
+```
+{
+	"code":4,
+	"data":{
+		"symbol":"100000.0068646403170306",
+		"riskLimit":"100000.0096280041581585",
+		"leverage":"BTC",
+		"fundRate0":"0.0000200306255019"
+	},
+	"topic":"CONTRACT_INFO",
+	"timestamp":1553236515
+}
+```
+
+### code detail：
+
+code style is String，the success response code  is below 10000, or is wrong response
+
+| code  | msg                 | mark |
+| ----- | ------------------- | ---- |
+| 0     | pong                |      |
+| 00000 | Auth key success    |      |
+| 00001 | Subscribe success   |      |
+| 00002 | Connect success     |      |
+| 00003 | UnSubscribe success |      |
+| 00006 | Init msg            |      |
+| 00007 | Normal msg          |      |
+|       |                     |      |
+|       |                     |      |
+| 10000 | No cmd              |      |
+| 10001 | No apiKey           |      |
+| 10002 | Invalid apiKey      |      |
+| 10003 | Signature Fail      |      |
+| 10004 | Need verify apiKey  |      |
+| 10005 | No topic            |      |
+|       |                     |      |
+|       |                     |      |
+| 99999 | UnKnow error        |      |
