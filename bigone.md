@@ -1,4 +1,9 @@
 
+<!-- KEYWORDS: liquidation! force order! ADL! auto-deleverage! open interest! funding rate! depth! orderbook! object_map depth format! -->
+<!-- LIQUIDATION: No dedicated liquidation endpoint. Liquidations appear as ADL_BUY / ADL_SELL side values in the trade stream (both WS and REST). Use liquidation_sides config. -->
+<!-- OI + FUNDING: Available via WS instruments channel (wss://api.big.one/ws/contract/v2/instruments@{symbol}) AND REST /api/contract/v2/instruments. Fields: openInterest, fundingRate, nextFundingTime -->
+<!-- DEPTH: object_map format {"price": qty, ...}. WS: wss://api.big.one/ws/contract/v2/depth@{symbol}. REST: /api/contract/v2/depth@{symbol}/snapshot -->
+<!-- LS RATIO: NOT AVAILABLE -->
 
 Contract Error Codes
 This page documents the specific error codes (anomaly keywords) returned by the BigONE Contract OpenAPI (/api/contract/v2/).

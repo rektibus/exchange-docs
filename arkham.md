@@ -1,3 +1,40 @@
+# EnsoX Integration Notes (verified 2026-03-04)
+
+## Key Quirks
+- **WS is PUBLIC** — despite docs stating trades/l2_updates require API Key + HMAC, all channels work without auth on `wss://arkm.com/ws`. Tested: trades, ticker, l2_updates all confirm subscriptions and stream data.
+- **Single config covers spot+perps** — Products API (`/api/public/pairs`) returns both `spot` and `perpetual` types. `pairType` field routes them. Perp symbols: `BTC_USDT_PERP`, base: `BTC.P` (strip `.P` suffix via normalization).
+- **CEX→DEX PIVOT (Feb 2026)** — Arkham announced on Feb 11, 2026 a transition from centralized exchange to fully decentralized exchange. CEX had ~$620-700k daily volume before announcement. API endpoints remain live but trading activity dropped to near-zero. Perps are NOT discontinued in the API — entire CEX is winding down. Historical trades exist (last trade: mid-Feb 2026). All 49 perps show `volume24h: 0`, `openInterest: 0`. Config and field mapping are correct — will need to be updated when/if DEX launches with new endpoints.
+- **`status` field** — Pairs have `status: "listed"` (85) or `"staged"` (6). Filter on `listed` to exclude unreleased pairs.
+- **Timestamps in microseconds** everywhere (WS + REST).
+- **No time-range params** on public trades — `GET /public/trades?symbol=X&limit=1000` only (max 1000).
+
+## Endpoints Used
+
+| Purpose | Endpoint | Notes |
+|---------|----------|-------|
+| Products | `GET /api/public/pairs` | Returns bare array. `pairType: spot\|perpetual`, `status: listed\|staged` |
+| REST Trades | `GET /api/public/trades?symbol=X&limit=1000` | `{price, size, takerSide, time, symbol, revisionId}`, time=µs |
+| REST Ticker | `GET /api/public/ticker?symbol=X` | `{fundingRate, openInterest, openInterestUSD, nextFundingTime}` |
+| REST Tickers | `GET /api/public/tickers` | Bulk, same fields |
+| REST Funding History | `GET /api/public/funding-rate-history?symbol=X&start=Xus&end=Xus` | `{value, time}` |
+| Depth Snapshot | `GET /api/public/book?symbol=X` | Named format `{price, size}` |
+| WS Trades | `channel: "trades"` | `data.{price, size, takerSide, time, symbol}` |
+| WS Depth | `channel: "l2_updates"` | `data.{bids, asks, symbol}`, snapshot mode |
+| WS Ticker | `channel: "ticker"` | `data.{fundingRate, openInterestUSD, symbol, productType}` |
+
+## Field Mapping
+
+| Wire (WS/REST) | EnsoX Field | Notes |
+|-----------------|-------------|-------|
+| `takerSide` | side | `"buy"` / `"sell"` only |
+| `size` | quantity | |
+| `time` | timestamp | Microseconds |
+| `revisionId` | trade_id | |
+| `fundingRate` | funding_value | From ticker channel |
+| `openInterestUSD` | oi_value | From ticker channel (USD-denominated) |
+
+---
+
 Arkham Exchange API
 Change Log#
 2024-11-04 - Added rate limits

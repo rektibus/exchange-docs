@@ -1631,3 +1631,56 @@ The category Miscellaneous Errors: 10 (400 error) includes the following set:
 1007: Internal use
 1008: Trading disabled
 1009: Conversions disabled
+
+---
+
+## EnsoX Integration Notes
+
+### Adapter
+`zig_adapter` — no dedicated Elixir adapter. All parsing in Zig via config.
+
+### WS Trades Channel
+- URL: `wss://ws.bitso.com`
+- Subscribe: `{"action":"subscribe","book":"<symbol>","type":"trades"}` per symbol
+- Discriminator: `type` field
+- Envelope: `{"type":"trades","book":"btc_mxn","payload":[...],"sent":1675555546102}`
+- Trade fields (short names): `r`=rate/price, `a`=amount, `t`=side(0=buy,1=sell), `x`=timestamp(ms), `i`=trade_id, `v`=value, `mo`=maker_order_id, `to`=taker_order_id
+- `payload` is an ARRAY of trades → Zig `array_key: "payload"` handles iteration
+- Side: numeric `0`=buy, `1`=sell (not text)
+
+### WS Orders Channel (Depth)
+- Subscribe: `{"action":"subscribe","book":"<symbol>","type":"orders"}` per symbol
+- Top 20 bid/ask **snapshot**, refreshed on every change
+- Envelope: `{"type":"orders","book":"btc_mxn","payload":{"bids":[...],"asks":[...]}}`
+- Level fields: `r`=rate/price, `a`=amount (same short names as trades)
+- Mapped as depth handler with `level_format: "named"`, `is_snapshot: true`
+
+### WS diff-orders (NOT used)
+- Individual order state changes (open/cancelled/completed) — NOT depth levels
+- Classified as ack (`text_ack_patterns`)
+
+### REST Trades (Recovery)
+- Endpoint: `GET /v3/trades?book=<symbol>&limit=100&sort=asc`
+- Response: `{"success":true,"payload":[{"book","created_at","amount","maker_side","price","tid"}]}`
+- Pagination: `marker=<tid>` (trade ID-based, NOT time-based). No `after`/`before` time params.
+- Timestamp: ISO 8601 (`created_at`)
+- Side field: `maker_side` (text: "buy"/"sell")
+- Max 100 per request
+
+### REST Orderbook Snapshot
+- Endpoint: `GET /v3/order_book?book=<symbol>&aggregate=true`
+- Returns 50 bids + 50 asks (aggregated)
+- Level format: `{"book":"btc_mxn","price":"1253090","amount":"0.11177"}`
+- Response path: `payload.bids` / `payload.asks`
+
+### Products
+- Endpoint: `GET /v3/available_books`
+- Symbol format: `btc_mxn` (lowercase, underscore separator)
+- Response path: `payload`
+
+### Rate Limits
+- Public: 60 RPM (1 req/s) → `rate_limit_ms: 1000`
+- Private: 300 RPM (verified user)
+- Exceeding: 1-minute lockout, repeated = 24-hour block
+
+### Verified: 2026-03-04

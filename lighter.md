@@ -1782,3 +1782,42 @@ Go
 	AppErrTierChangeTooManyRequest   = NewBusinessError(62006, "too frequent tier change request")
 
 https://apidocs.lighter.xyz/reference/status
+---
+
+# Liquidation Data (from Allium)
+
+## Trade Types
+
+The `type` field in trades distinguishes three event types:
+- `"trade"` — regular trade
+- `"liquidation"` — liquidation event (taker is liquidated, maker is counterparty)
+- `"deleverage"` — auto-deleverage event
+
+## Liquidation Table Schema (Allium `lighter.dex.liquidations`)
+
+| Column | Description |
+|--------|-------------|
+| `coin` | Market symbol |
+| `amount` | Liquidation size in base asset units |
+| `price` | Execution price |
+| `usd_amount` | USD value |
+| `liquidated_account_id` | Account ID of liquidated party (taker) |
+| `counterparty_account_id` | Account ID of counterparty (maker) |
+| `buyer` | Account ID of buy side |
+| `seller` | Account ID of sell side |
+| `timestamp` | UTC timestamp |
+| `trade_id` | Unique trade identifier |
+| `liquidation_fee_rate` | Fee as decimal fraction |
+| `liquidation_fee_amount` | Fee in USD |
+| `liquidated_position_size_before` | Position before liquidation |
+| `liquidated_max_leverage` | Liquidated account's max leverage |
+| `maintenance_margin_fraction` | Market maintenance margin |
+| `closeout_margin_fraction` | Market closeout margin |
+
+## Detection for EnsoX
+
+Pattern 1 (`liquidation_key`): The trade's `type` field is the discriminator. When `type: "liquidation"` -> mark as liquidation. Config-only change — add `liquidation_key: "type"` and `liquidation_value: "liquidation"` to the trade handler.
+
+## Market Stats (from Allium `lighter.raw.market_stats`)
+
+Hourly snapshots: `market_id`, `symbol`, `index_price`, `mark_price`, `open_interest`, `funding_rate`, `current_funding_rate`, `daily_base_token_volume`, `daily_quote_token_volume`.

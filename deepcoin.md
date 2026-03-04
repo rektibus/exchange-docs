@@ -1,3 +1,11 @@
+<!-- KEYWORDS: liquidation! force order! liquidationOrder! PFO! funding rate! open interest! depth! orderbook! -->
+<!-- LIQUIDATION: WS topic "liquidationOrder" (PFO). Fields: I=symbol, D=side(0=buy,1=sell), P=price, V=volume, T=timestamp_seconds. Broadcast topic, no symbol filter needed. NO REST liquidation endpoint. -->
+<!-- FUNDING: REST live: /deepcoin/trade/fund-rate/current-funding-rate?instType=SwapU (bulk, instrumentId+fundingRate, wrapper=data.current_fund_rates). REST history: /deepcoin/trade/fund-rate/history?instId={{symbol}}&size=100 (paged, wrapper=data.list, fields: instrumentID+rate+CreateTime_seconds). Needs _funding handler with history_value=rate, history_ts=CreateTime for recovery. -->
+<!-- OI: NOT AVAILABLE — no endpoint or WS field -->
+<!-- LS RATIO: NOT AVAILABLE -->
+<!-- PROTOCOL: V2 required (?platform=api&version=v2). Subscribe: {"Action":"1","Symbol":"BTCUSDT","LocalNo":N,"ResumeNo":-1,"Topic":"trade"}. Ack: {"a":"RecvTopicAction","m":"Success"}. Side: D="0"=buy, D="1"=sell (VERIFIED LIVE). Timestamp in seconds. Ping: text "ping" → "pong", 30s interval. -->
+<!-- SYMBOL FORMAT: Products: BTC-USDT-SWAP. WS V2: BTCUSDT (ws_symbol_transform: strip_suffix:-SWAP,strip_dashes). Spot: BTC-USDT → BTC/USDT (replace_separator:/). REST trades use product format (instId=BTC-USDT-SWAP). -->
+<!-- REST TRADES: No pagination (after/before params silently ignored). Max 500 recent trades. Side: "buy"/"sell" strings. Timestamp: ms. Rate limit: 5/1s for market endpoints. -->
 Access Guide
 Access Guide
 Python DEMO
