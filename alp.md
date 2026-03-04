@@ -852,7 +852,7 @@ Note
 start_time and end_time interval must not exceed 30 days. If one is not set 30 days interval from set value is applied. If both are not set, default time interval is 30 days back from today. This method is disabled by default, set "Margin" flag during creation of an API-Key to use it.
 
 WebSocket API
-The WebSocket service by Alp Exchange is a real-time communication platform for traders. It offers public channels for accessing market data like prices and order book updates, as well as private (authenticated) channels for personal fund and order change notifications. This service ensures quick access to trading information, secure authentication, efficient order management, and an enhanced user experience, catering to the needs of both public and private traders. The service is available on wss://www.alp.com/alp-ws.
+The WebSocket service by Alp Exchange is a real-time communication platform for traders. It offers public channels for accessing market data like prices and order book updates, as well as private (authenticated) channels for personal fund and order change notifications. This service ensures quick access to trading information, secure authentication, efficient order management, and an enhanced user experience, catering to the needs of both public and private traders. The service is available on wss://www.alp.com/ws (NOTE: docs say /alp-ws but that returns HTTP 200 rejection — /ws is the working endpoint, verified 2026-03-04).
 
 Ping
 Ping Message: The server initiates the process by sending a "ping" message, string 1 to the client at regular intervals, every 20 seconds by default.
@@ -1108,3 +1108,65 @@ Error Code	Meaning
 429	Too Many Requests -- You're requesting fast! Slow down! See documentation for more details.
 500	Internal Server Error -- We had a problem with our server. Try again later.
 503	Service Unavailable -- We're temporarially offline for maintanance. Please try again later.
+
+---
+
+## EnsoX Integration Verification (2026-03-04)
+
+### WebSocket
+
+- **Working URL**: `wss://www.alp.com/ws` (docs say `/alp-ws` but that returns HTTP 200 rejection)
+- **Ping/Pong**: Server sends `"1"` every 20s, client responds `"2"`, timeout 30s
+- **Subscribe**: `["subscribe", "trade.BTC_USDT", "diff.BTC_USDT"]`
+- **Welcome**: `["welcome", timestamp, pingInterval_ns, pingTimeout_ns, clientID_uuid]`
+
+#### Trade Format
+```
+["t", timestamp, trade_id, symbol, amount, price, side]
+ [0]      [1]       [2]     [3]     [4]     [5]    [6]
+```
+- Side values: `"buy"` or `"sell"` (lowercase)
+- Timestamp: kiloseconds (float, multiply ×1000 for seconds)
+
+#### Depth Diff Format
+```
+["d", timestamp, symbol, [[asks_levels]], []]
+ [0]      [1]      [2]        [3]         [4]
+```
+- Asks at index 3, Bids at index 4 (separate top-level arrays, confirmed live)
+- Each level: `["price", "quantity"]` (quantity can be negative = removal)
+- Bids array often empty ([]) when only ask-side updates
+
+### REST
+
+- **Base URL**: `https://www.alp.com`
+- **Trades**: `GET /api/v3/trades?pair=BTC_USDT&limit=500`
+  - Response: `[{"id", "price", "amount", "timestamp", "pair", "type"}, ...]`
+  - Timestamp: kiloseconds float (e.g. `1772622.513816` × 1000 = unix seconds)
+  - Side field: `type` ("buy"/"sell")
+  - Max limit: ~607 (server cap, requesting 1000 returns 607)
+  - Offset pagination: **BROKEN** (same results regardless of offset param)
+- **Products**: `GET /api/v3/pairs`
+  - Response: `[{"name", "currency1", "currency2", "price_precision", "amount_precision", "minimum_order_size", "maximum_order_size", "minimum_order_value"}, ...]`
+  - 419 total pairs, 126 USDT pairs
+  - `name` = trading pair (e.g. `BTC_USDT`), `currency1` = base, `currency2` = quote
+- **Orderbook**: `GET /api/v3/orderbook?pair=BTC_USDT&limit_buy=N&limit_sell=N`
+  - Returns `{"buy": [...], "sell": [...]}`
+
+### Rate Limits
+
+- 50 burst requests at 4.8 req/s: ALL succeeded (HTTP 200)
+- No 429 encountered in testing
+- Docs mention 429 error code exists but don't specify thresholds
+- Config uses `rate_limit_ms: 100` (10 req/s) — conservative and safe
+
+### Config Field Map (rest_field_map)
+
+| REST Field | Config Maps To | Notes |
+|-----------|---------------|-------|
+| `price` | (passthrough) | Unmapped fields pass through via `Enum.into(trade)` |
+| `amount` | `quantity` | Mapped |
+| `timestamp` | (passthrough) | In kiloseconds, handled by `rest_timestamp_unit: "ks"` |
+| `type` | `side` | Mapped, values "buy"/"sell" |
+| `id` | `trade_id` | Mapped |
+| `pair` | (passthrough) | Symbol field |
